@@ -28,7 +28,7 @@ See the [ops-docs](docs/ops.md)
 ### Quick Start - Backend Dev
 - clone the code
 - install intellij
-- install Java23
+- install Java 21 (`brew install --cask temurin@21` on Mac)
 - right click the webapp/build.gradle file & select 'link project'
 - install postgres
 - run: `./schema/run-flyway.sh`
@@ -43,6 +43,14 @@ To do full tests and formatting before commit & push:
 - clone the code
 - open any of the .html file in a web browser
 - update the corresponding HTML, CSS & JS files; check-in & push
+
+#### R-Commons Volunteer Portal (`/rcommons/`)
+R-Commons is a volunteer-facing portal integrated into the app as static files served by Spring Boot.
+Unlike other frontend pages, R-Commons pages require the server to be running (they call live API endpoints).
+- Access at: `http://localhost:8080/rcommons/onboarding.html`
+- Linked from the homepage via the "Volunteer Portal" button
+- Source files: `webapp/src/main/resources/public/rcommons/`
+- Backend endpoint: `GET /rcommons/api/sites` (see `RCommonsController.java`)
 
 ### Quick Start - dockerized
 
@@ -127,6 +135,11 @@ sudo -u postgres psql
 - vanilla JS
 - aspectJ (for testing)
 - gradle
+
+#### R-Commons (`/rcommons/`)
+- vanilla JS (SPA with client-side routing)
+- CSS custom properties (design tokens)
+- Instrument Sans (Google Fonts)
 
 ### Tech Stack Non-Choices
 
