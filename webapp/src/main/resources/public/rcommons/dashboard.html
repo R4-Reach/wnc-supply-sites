@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R-Commons — Volunteer Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/layout.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-mark" style="background:#950000;">
+      <svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2c0 3-2 5-2 5s2 1.5 2 7"/><path d="M8 2c0 3 2 5 2 5s-2 1.5-2 7"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+    </div>
+    R-Commons
+  </div>
+  <div class="topbar-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search opportunities, orgs, needs…" id="global-search">
+  </div>
+  <div class="topbar-right">
+    <button class="notif-btn" onclick="navTo('messages')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="notif-pip"></div>
+    </button>
+    <div class="avatar-btn" id="topbar-avatar" onclick="navTo('profile')">?</div>
+    <button class="btn btn-secondary btn-sm" onclick="signOut()" style="font-size:12px;padding:5px 12px;">Sign out</button>
+  </div>
+</header>
+
+<div class="body-wrap">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Main</div>
+    <button class="nav-item active" onclick="navTo('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="navTo('opportunities')" id="nav-opportunities">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+      Opportunities
+      <span class="nav-badge green">6</span>
+    </button>
+    <button class="nav-item" onclick="navTo('needs')" id="nav-needs">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>
+      Active needs
+      <span class="nav-badge">4</span>
+    </button>
+    <button class="nav-item" onclick="navTo('hours')" id="nav-hours">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      My hours
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Community</div>
+    <button class="nav-item" onclick="navTo('map')" id="nav-map">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.5-8 13-8 13S4 15.5 4 10a8 8 0 0 1 8-8z"/></svg>
+      Supply map
+    </button>
+    <button class="nav-item" onclick="navTo('messages')" id="nav-messages">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      R-Link messages
+      <span class="nav-badge">2</span>
+    </button>
+    <button class="nav-item" onclick="navTo('orgs')" id="nav-orgs">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Organizations
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Account</div>
+    <button class="nav-item" onclick="navTo('profile')" id="nav-profile">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      My profile
+    </button>
+    <button class="nav-item" onclick="navTo('background')" id="nav-background">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Background check
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="role-chip" id="sidebar-role">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="4"/><path d="M5 1v8M1 5h8"/></svg>
+      <span id="sidebar-role-text">Loading…</span>
+    </div>
+    <div class="xp-section">
+      <div class="xp-label"><span id="sidebar-xp">0 XP</span><strong id="sidebar-xp-next">500 XP to Lv 2</strong></div>
+      <div class="xp-bar"><div class="xp-fill" id="sidebar-xp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN AREA ── -->
+<main class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title" id="dashboard-greeting">Good morning</div>
+        <div class="page-sub" id="dashboard-sub">Loading your dashboard…</div>
+      </div>
+      <button class="btn btn-primary" onclick="openCommit()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Log a commitment
+      </button>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-card-label">Total hours</div><div class="stat-card-val" id="stat-total-hours">—</div><div class="stat-card-sub">All time</div></div>
+      <div class="stat-card"><div class="stat-card-label">Commitments</div><div class="stat-card-val" id="stat-commitments">—</div><div class="stat-card-sub" id="stat-commitments-sub">Loading…</div></div>
+      <div class="stat-card"><div class="stat-card-label">XP earned</div><div class="stat-card-val" id="stat-xp-display">—</div><div class="stat-card-sub" id="stat-xp-sub">Loading…</div></div>
+      <div class="stat-card"><div class="stat-card-label">Items donated</div><div class="stat-card-val" id="stat-items-contributed">0</div><div class="stat-card-sub">To WSS network</div></div>
+    </div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Urgent needs near you</div>
+            <button class="btn btn-secondary btn-sm" onclick="navTo('needs')">View all</button>
+          </div>
+          <div class="opp-list" id="dashboard-urgent-list">
+            <div style="padding:14px 18px;font-size:13px;color:var(--text-3);">Loading…</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">My upcoming</div>
+            <button class="btn btn-secondary btn-sm" onclick="navTo('opportunities')">Find more</button>
+          </div>
+          <div class="opp-list" id="dashboard-upcoming-list">
+            <div style="padding:20px 18px;text-align:center;">
+              <div style="font-size:13px;color:var(--text-3);margin-bottom:6px;">Nothing scheduled yet</div>
+              <div style="font-size:12px;color:var(--text-3);">Sign up for a shift or RSVP to an event to see it here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">R-Link alerts</div>
+            <button class="btn btn-secondary btn-sm" onclick="navTo('messages')">All messages</button>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item unread"><div class="alert-pip unread"></div><div class="alert-text"><strong>His Humble Hands</strong> confirmed your commitment. Drop-off at 9am–5pm any day this week. Thank you!</div><div class="alert-time">2h ago</div></div>
+            <div class="alert-item unread"><div class="alert-pip unread"></div><div class="alert-text"><strong>Breathitt County Hunger Alliance</strong> urgently needs hot meals and pet food — 130 items still needed.</div><div class="alert-time">4h ago</div></div>
+            <div class="alert-item"><div class="alert-pip read"></div><div class="alert-text">Your volunteer hours for March have been confirmed. <strong>9 hours logged</strong> across 3 WSS sites.</div><div class="alert-time">Apr 1</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">My commitments</div>
+            <button class="btn btn-secondary btn-sm" onclick="navTo('needs')">View needs</button>
+          </div>
+          <div class="hours-list" id="dashboard-commitments-list">
+            <div style="padding:14px 18px;font-size:13px;color:var(--text-3);">No commitments yet.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent hours</div>
+            <button class="btn btn-secondary btn-sm" onclick="navTo('hours')">Full log</button>
+          </div>
+          <div class="hours-list" id="dashboard-hours-list">
+            <div style="padding:14px 18px;font-size:13px;color:var(--text-3);">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OPPORTUNITIES ── -->
+  <div class="page" id="page-opportunities">
+    <div class="page-header">
+      <div><div class="page-title">Opportunities</div><div class="page-sub">Matched to your role and skills</div></div>
+    </div>
+    <div class="card">
+      <div class="filter-row">
+        <select class="filter-select" onchange="filterOpps(this.value)">
+          <option value="all">All types</option>
+          <option value="shift">Shifts</option>
+          <option value="event">Events</option>
+          <option value="need">Needs</option>
+        </select>
+        <select class="filter-select" onchange="filterCat(this.value)">
+          <option value="all">All categories</option>
+          <option value="food">Food Distribution</option>
+          <option value="disaster">Disaster Response</option>
+          <option value="repair">Home Repair</option>
+          <option value="unassigned">Unassigned</option>
+        </select>
+        <select class="filter-select" onchange="filterSignup(this.value)" id="filter-signup-select">
+          <option value="available">Not signed up</option>
+          <option value="signedup">Signed up</option>
+          <option value="all">Show all</option>
+        </select>
+        <div class="filter-count" id="opp-count">Loading…</div>
+      </div>
+      <div class="opp-list" id="opp-list"></div>
+    </div>
+  </div>
+
+  <!-- ── NEEDS ── -->
+  <div class="page" id="page-needs">
+    <div class="page-header">
+      <div><div class="page-title">Active needs</div><div class="page-sub">Items and supplies requested by local organizations</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">WSS network — live urgent needs</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--urgent);animation:pulse 1.5s infinite;"></div>
+          <span id="wss-needs-count" style="font-size:12px;color:var(--text-3);">Loading…</span>
+          <button class="btn btn-secondary btn-sm" onclick="navTo('map')">View all sites</button>
+        </div>
+      </div>
+      <div id="wss-needs-list" class="opp-list"></div>
+    </div>
+    <div class="card">
+      <div class="filter-row">
+        <div style="font-size:12px;font-weight:700;color:var(--text-2);">All WSS urgent needs</div>
+        <div class="filter-count" id="needs-local-count">Loading…</div>
+      </div>
+      <div class="opp-list" id="needs-local-list">
+        <div style="padding:16px 18px;font-size:13px;color:var(--text-3);">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOURS ── -->
+  <div class="page" id="page-hours">
+    <div class="page-header">
+      <div><div class="page-title">My hours</div><div class="page-sub">Your volunteer log across all organizations</div></div>
+      <button class="btn btn-secondary" onclick="openLogHours()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Log hours manually
+      </button>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-card-label">Total logged</div><div class="stat-card-val" id="stat-hours-total">—</div><div class="stat-card-sub">All time</div></div>
+      <div class="stat-card"><div class="stat-card-label">This month</div><div class="stat-card-val" id="stat-hours-month">—</div><div class="stat-card-sub">Hours this month</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending confirm</div><div class="stat-card-val" id="stat-hours-pending">—</div><div class="stat-card-sub">Awaiting org</div></div>
+      <div class="stat-card"><div class="stat-card-label">Organizations</div><div class="stat-card-val" id="stat-hours-orgs">—</div><div class="stat-card-sub">Contributed to</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Hour log</div><div style="font-size:12px;color:var(--text-3);">Hours confirmed by the organization after your shift</div></div>
+      <div class="hours-list" id="hours-full-list"><div style="padding:16px 18px;font-size:13px;color:var(--text-3);">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ── MAP (WSS INTEGRATED) ── -->
+  <div class="page" id="page-map">
+    <div class="page-header">
+      <div><div class="page-title">Supply map</div><div class="page-sub" id="map-sub">Loading WSS supply sites…</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-secondary btn-sm" id="map-gray-btn" onclick="toggleGrayMode()" style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Gray-sky mode
+        </button>
+      </div>
+    </div>
+    <div id="gray-sky-banner" style="display:none;background:#950000;color:#fff;border-radius:var(--radius-md);padding:10px 16px;margin-bottom:16px;font-size:13px;font-weight:600;align-items:center;gap:10px;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Gray-Sky Mode active — showing only sites accepting donations with urgent needs
+    </div>
+    <div class="card" style="overflow:visible;">
+      <div class="filter-row" style="flex-wrap:wrap;gap:8px;">
+        <input type="text" id="wss-search" class="filter-select" placeholder="Search sites…" style="min-width:180px;" oninput="renderWSSList()">
+        <select class="filter-select" id="wss-state" onchange="renderWSSList()">
+          <option value="">All states</option>
+          <option value="NC">NC</option>
+          <option value="VA">VA</option>
+          <option value="KY">KY</option>
+          <option value="TN">TN</option>
+          <option value="WV">WV</option>
+        </select>
+        <select class="filter-select" id="wss-type" onchange="renderWSSList()">
+          <option value="">All types</option>
+          <option value="Distribution Center">Distribution Centers</option>
+          <option value="Food Pantry">Food Pantries</option>
+          <option value="Supply Hub">Supply Hubs</option>
+        </select>
+        <select class="filter-select" id="wss-urgency" onchange="renderWSSList()">
+          <option value="">Any urgency</option>
+          <option value="urgent">Has urgent needs</option>
+          <option value="accepting">Accepting donations</option>
+        </select>
+        <div class="filter-count" id="wss-count" style="margin-left:auto;"></div>
+      </div>
+      <div id="wss-list" style="max-height:520px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ── MESSAGES ── -->
+  <div class="page" id="page-messages">
+    <div class="page-header"><div><div class="page-title">R-Link messages</div><div class="page-sub">Updates and communications from organizations</div></div></div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">R-Link feed</div>
+        <span id="rlink-meta" style="font-size:11px;color:var(--text-3);font-weight:600;">Loading…</span>
+      </div>
+      <div class="alert-list" id="rlink-content">
+        <div class="alert-item unread"><div class="alert-pip unread"></div><div class="alert-text"><strong>His Humble Hands:</strong> Thank you for committing to the supply drop-off. We'll have someone available 9am–5pm. Any amount helps.</div><div class="alert-time">1h ago</div></div>
+        <div class="alert-item unread"><div class="alert-pip unread"></div><div class="alert-text"><strong>R-Link Community Alert:</strong> New urgent need from Breathitt County Hunger Alliance — hot meals and pet food needed urgently. 130 items still needed.</div><div class="alert-time">3h ago</div></div>
+        <div class="alert-item"><div class="alert-pip read"></div><div class="alert-text"><strong>ReCommunity Farms:</strong> Reminder — Saturday workday starts at 9am tomorrow. We'll have coffee and gloves.</div><div class="alert-time">Yesterday</div></div>
+        <div class="alert-item"><div class="alert-pip read"></div><div class="alert-text"><strong>R-Commons:</strong> Your March volunteer report is ready. 12 hours logged across 3 organizations.</div><div class="alert-time">Apr 1</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ORGS ── -->
+  <div class="page" id="page-orgs">
+    <div class="page-header"><div><div class="page-title">Organizations</div><div class="page-sub">Nonprofits and mutual aid groups in your area</div></div></div>
+    <div class="card">
+      <div class="filter-row">
+        <select class="filter-select"><option>All types</option><option>Food pantry</option><option>Shelter</option><option>Mutual aid</option><option>Education</option></select>
+        <div class="filter-count">12 organizations</div>
+      </div>
+      <div class="opp-list">
+        <div class="opp-item"><div class="opp-org-mark mark-red"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M5 7V5.5a3 3 0 0 1 6 0V7"/><rect x="2" y="7" width="12" height="7" rx="1"/></svg></div><div class="opp-info"><div class="opp-title">His Humble Hands</div><div class="opp-org">Food pantry & disaster relief · Caldwell, NC · You've volunteered here</div><div class="opp-meta"><span class="tag tag-done">Following</span><span class="tag tag-urgent">2 active needs</span></div></div><div class="opp-actions"><button class="btn btn-secondary btn-sm">View org</button></div></div>
+        <div class="opp-item"><div class="opp-org-mark mark-amber"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="6" r="2.5"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></div><div class="opp-info"><div class="opp-title">ReCommunity Farms</div><div class="opp-org">Mutual aid · 2.1 mi · You've volunteered here</div><div class="opp-meta"><span class="tag tag-done">Following</span></div></div><div class="opp-actions"><button class="btn btn-secondary btn-sm">View org</button></div></div>
+        <div class="opp-item"><div class="opp-org-mark mark-red"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M8 5v6M5 8h6"/></svg></div><div class="opp-info"><div class="opp-title">Breathitt County Hunger Alliance</div><div class="opp-org">Food distribution · Breathitt, KY</div><div class="opp-meta"><span class="tag tag-urgent">1 urgent need</span></div></div><div class="opp-actions"><button class="btn btn-primary btn-sm">Follow</button><button class="btn btn-secondary btn-sm">View org</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROFILE ── -->
+  <div class="page" id="page-profile">
+    <div class="page-header"><div><div class="page-title">My profile</div><div class="page-sub">Your volunteer identity and resume</div></div><button class="btn btn-secondary">Edit profile</button></div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">About</div></div>
+          <div class="card-body">
+            <div class="profile-section">
+              <div class="profile-header">
+                <div class="profile-avatar" id="profile-avatar">?</div>
+                <div><div class="profile-name" id="profile-name">Loading…</div><div class="profile-role" id="profile-role"></div></div>
+              </div>
+              <div>
+                <div class="form-label" style="margin-bottom:6px;">Character class</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;" id="profile-classes"><span class="role-chip" style="opacity:0.4;">Loading…</span></div>
+              </div>
+              <div>
+                <div class="form-label" style="margin-bottom:6px;">Skills</div>
+                <div class="skills-wrap" id="profile-skills"><span class="skill-chip" style="opacity:0.4;">Loading…</span></div>
+              </div>
+              <div>
+                <div class="form-label" style="margin-bottom:6px;">Bio</div>
+                <div style="font-size:13px;color:var(--text-2);line-height:1.6;" id="profile-bio">—</div>
+              </div>
+              <div>
+                <div class="form-label" style="margin-bottom:4px;">Availability</div>
+                <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Click a cell to toggle availability.</div>
+                <div class="avail-grid" id="avail-grid">
+                  <div class="avail-head"></div><div class="avail-head">Sun</div><div class="avail-head">Mon</div><div class="avail-head">Tue</div><div class="avail-head">Wed</div><div class="avail-head">Thu</div><div class="avail-head">Fri</div><div class="avail-head">Sat</div>
+                  <div class="avail-row-label">Morning</div>
+                  <div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div>
+                  <div class="avail-row-label">Afternoon</div>
+                  <div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div>
+                  <div class="avail-row-label">Evening</div>
+                  <div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell on" onclick="toggleAvail(this)"></div><div class="avail-cell" onclick="toggleAvail(this)"></div>
+                </div>
+                <div class="avail-note">Skill match is weighted 5× more than availability. Keep this updated for best results.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Volunteer resume</div><button class="btn btn-secondary btn-sm">Export PDF</button></div>
+          <div class="hours-list">
+            <div class="hours-item"><div class="hours-dot confirmed"></div><div class="hours-info"><div class="hours-title">His Humble Hands</div><div class="hours-org">Disaster relief volunteer · Jan–Apr 2025</div></div><div><div class="hours-val">18 hrs</div></div></div>
+            <div class="hours-item"><div class="hours-dot confirmed"></div><div class="hours-info"><div class="hours-title">ReCommunity Farms</div><div class="hours-org">Farm workday volunteer · Feb–Apr 2025</div></div><div><div class="hours-val">18 hrs</div></div></div>
+            <div class="hours-item"><div class="hours-dot confirmed"></div><div class="hours-info"><div class="hours-title">Civilian Disaster Response Org</div><div class="hours-org">Supply distribution · Mar 2025</div></div><div><div class="hours-val">10 hrs</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Badges earned</div></div>
+          <div class="card-body">
+            <div class="badges-wrap">
+              <span class="badge earned"><svg viewBox="0 0 11 11"><path d="M5.5 1l1 3h3l-2.5 2 1 3-2.5-1.5L3 10l1-3L1.5 5h3z"/></svg>First commitment</span>
+              <span class="badge earned"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4"/><path d="M5.5 3v2.5l1.5 1"/></svg>10 hours</span>
+              <span class="badge earned"><svg viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="4"/><path d="M5.5 2.5v8"/><path d="M2.5 5.5h6"/></svg>Weaver</span>
+              <span class="badge earned"><svg viewBox="0 0 11 11"><path d="M5.5 9S1.5 6 1.5 4A2 2 0 0 1 5.5 2.6 2 2 0 0 1 9.5 4C9.5 6 5.5 9 5.5 9z"/></svg>Caregiver</span>
+              <span class="badge"><svg viewBox="0 0 11 11"><rect x="1.5" y="1.5" width="8" height="8" rx="1"/><path d="M1.5 5h8"/></svg>50 hours</span>
+              <span class="badge"><svg viewBox="0 0 11 11"><path d="M5.5 1.5l1.2 2.8H9.5L7.3 6l.9 2.8L5.5 7.2 3.2 8.8l.9-2.8L1.9 4.3H4.3z"/></svg>Crisis responder</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">XP &amp; level</div></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+              <div id="profile-xp-val" style="font-size:32px;font-weight:700;color:var(--text-1);">—</div>
+              <div id="profile-xp-sub" style="font-size:14px;color:var(--text-3);">/ 500 XP · Level 1</div>
+            </div>
+            <div class="xp-bar" style="height:8px;margin-bottom:12px;"><div class="xp-fill" id="profile-xp-fill" style="width:0%;"></div></div>
+            <div id="profile-xp-note" style="font-size:12px;color:var(--text-3);line-height:1.7;">Complete commitments to earn XP and level up.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Items contributed</div></div>
+          <div class="card-body" style="text-align:center;padding:20px 18px;">
+            <div style="font-size:48px;font-weight:700;color:var(--accent);letter-spacing:-2px;line-height:1;" id="profile-items-contributed">0</div>
+            <div style="font-size:13px;color:var(--text-3);margin-top:6px;">physical items donated to the WSS network</div>
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px;" id="profile-contributions-breakdown">
+              <div style="font-size:12px;color:var(--text-3);">Make your first commitment to see your impact here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BACKGROUND CHECK ── -->
+  <div class="page" id="page-background">
+    <div class="page-header"><div><div class="page-title">Background check</div><div class="page-sub">One check, shareable across all R-Commons organizations</div></div></div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Your check status</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:16px;">
+            <div style="background:var(--sky-lt);border:1px solid var(--sky);border-radius:var(--radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0070C0" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <div><div style="font-size:13px;font-weight:600;color:#0070C0;">Background check verified</div><div style="font-size:12px;color:var(--text-3);margin-top:2px;">Completed Jan 14, 2025 · Expires Jan 14, 2026</div></div>
+            </div>
+            <div>
+              <div class="form-label" style="margin-bottom:8px;">Shared with organizations</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);"><span>His Humble Hands</span><span style="color:var(--accent);font-size:11px;font-weight:600;">Shared</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);"><span>ReCommunity Farms</span><span style="color:var(--accent);font-size:11px;font-weight:600;">Shared</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0;"><span>Breathitt County Hunger Alliance</span><span style="color:var(--accent);font-size:11px;font-weight:600;">Shared</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="form-label" style="margin-bottom:8px;">Upload credentials</div>
+              <div style="border:1.5px dashed var(--border-md);border-radius:var(--radius-md);padding:20px;text-align:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" style="display:block;margin:0 auto 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div style="font-size:13px;color:var(--text-2);font-weight:600;">Upload EMT, LSW, or other credentials</div>
+                <div style="font-size:12px;color:var(--text-3);margin-top:3px;">PDF, JPG, or PNG · Max 10MB</div>
+                <button class="btn btn-secondary" style="margin-top:12px;">Choose file</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Trust level</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="font-size:13px;color:var(--text-2);line-height:1.6;">Your background check unlocks higher-trust opportunities. Upload credentials to access specialized volunteer roles.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--sky-lt);border:1px solid var(--sky);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0070C0" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg><div><div style="font-size:12px;font-weight:600;color:#0070C0;">Level 1 — Verified</div><div style="font-size:11px;color:var(--text-3);">General volunteer roles</div></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--bg);border:1px solid var(--border);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><div style="font-size:12px;font-weight:600;color:var(--text-2);">Level 2 — Credentialed</div><div style="font-size:11px;color:var(--text-3);">Upload a credential to unlock</div></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--bg);border:1px solid var(--border);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><div style="font-size:12px;font-weight:600;color:var(--text-2);">Level 3 — Disaster certified</div><div style="font-size:11px;color:var(--text-3);">EMT, LSW, or disaster cert required</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+</div>
+
+<!-- ── LOG HOURS MODAL ── -->
+<div class="commit-panel" id="log-hours-panel" onclick="if(event.target===this)closeLogHours()">
+  <div class="commit-modal">
+    <div class="modal-header">
+      <div class="modal-title">Log volunteer hours</div>
+      <button class="modal-close" onclick="closeLogHours()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="need-summary" style="background:var(--muted-lt);border-color:var(--border-md);">
+        <div class="need-summary-title">Self-reported hours</div>
+        <div class="need-summary-org" style="color:var(--text-3);">Submitted as pending — orgs confirm after your shift</div>
+      </div>
+      <div class="form-group"><div class="form-label">Organization name</div><input class="form-input" id="lh-org" type="text" placeholder="e.g. His Humble Hands"></div>
+      <div class="form-group"><div class="form-label">Activity / shift description</div><input class="form-input" id="lh-activity" type="text" placeholder="e.g. Supply drop-off, sorting inventory"></div>
+      <div class="form-group">
+        <div class="form-label">Category</div>
+        <select class="form-select" id="lh-category">
+          <option value="Food Distribution">Food Distribution</option>
+          <option value="Disaster Response">Disaster Response</option>
+          <option value="Home Repair">Home Repair</option>
+          <option value="Community Outreach">Community Outreach</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Hours logged</div><input class="form-input" id="lh-hours" type="number" min="0.5" max="24" step="0.5" placeholder="e.g. 3"></div>
+      <div class="form-group"><div class="form-label">Shift date</div><input class="form-input" id="lh-date" type="date"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLogHours()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitLogHours()">Log hours</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SHIFT SIGN-UP MODAL ── -->
+<div class="commit-panel" id="shift-panel" onclick="if(event.target===this)closeShift()">
+  <div class="commit-modal">
+    <div class="modal-header">
+      <div class="modal-title">Sign up for shift</div>
+      <button class="modal-close" onclick="closeShift()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="need-summary" id="shift-summary">
+        <div class="need-summary-title" id="shift-title">Shift</div>
+        <div class="need-summary-org" id="shift-org">Organization</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+        <div style="display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span style="font-size:13px;color:var(--text-2);" id="shift-time">Time TBD</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.5-8 13-8 13S4 15.5 4 10a8 8 0 0 1 8-8z"/></svg><span style="font-size:13px;color:var(--text-2);" id="shift-location">Location TBD</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span style="font-size:13px;color:var(--text-2);" id="shift-spots">Spots available</span></div>
+      </div>
+      <div style="background:var(--accent-lt);border:1px solid #B0C0FF;border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <div style="font-size:12px;color:var(--text-2);">Signing up awards <strong style="color:var(--accent);">+75 XP</strong> when the shift is confirmed by the org.</div>
+      </div>
+      <div class="form-group"><div class="form-label">Note for the org (optional)</div><textarea class="form-textarea" id="shift-note" placeholder="e.g. I have my own safety equipment."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeShift()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmShift()">Confirm sign-up</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RSVP MODAL ── -->
+<div class="commit-panel" id="rsvp-panel" onclick="if(event.target===this)closeRSVP()">
+  <div class="commit-modal">
+    <div class="modal-header">
+      <div class="modal-title">RSVP to event</div>
+      <button class="modal-close" onclick="closeRSVP()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="need-summary" id="rsvp-summary">
+        <div class="need-summary-title" id="rsvp-title">Event</div>
+        <div class="need-summary-org" id="rsvp-org">Organization</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+        <div style="display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span style="font-size:13px;color:var(--text-2);" id="rsvp-time">Date & time TBD</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.5-8 13-8 13S4 15.5 4 10a8 8 0 0 1 8-8z"/></svg><span style="font-size:13px;color:var(--text-2);" id="rsvp-location">Location TBD</span></div>
+      </div>
+      <div style="background:var(--accent-lt);border:1px solid #B0C0FF;border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <div style="font-size:12px;color:var(--text-2);">RSVPing awards <strong style="color:var(--accent);">+25 XP</strong> right away.</div>
+      </div>
+      <div class="form-group"><div class="form-label">Anything to flag? (optional)</div><textarea class="form-textarea" id="rsvp-note" placeholder="e.g. I may be 10 minutes late."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRSVP()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRSVP()">Confirm RSVP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMMITMENT MODAL ── -->
+<div class="commit-panel" id="commit-panel" onclick="closeCommit(event)">
+  <div class="commit-modal">
+    <div class="modal-header">
+      <div class="modal-title">Make a commitment</div>
+      <button class="modal-close" onclick="closeCommitBtn()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="need-summary" id="modal-need-summary">
+        <div class="need-summary-title" id="modal-need-title">Make a commitment</div>
+        <div class="need-summary-org" id="modal-need-org">Select a need to commit</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label" style="margin-bottom:8px;">What will you bring? <span style="font-weight:400;color:var(--text-3);">Check all that apply</span></div>
+        <div class="item-check-list" id="item-check-list"></div>
+      </div>
+      <div class="form-group"><div class="form-label">Your name</div><input class="form-input" id="commit-volunteer-name" type="text" placeholder="Full name"></div>
+      <div class="form-group"><div class="form-label">Your phone number</div><input class="form-input" id="commit-volunteer-phone" type="tel" placeholder="(555) 555-5555"></div>
+      <div class="form-group"><div class="form-label">Drop-off date</div><select class="form-select" id="commit-date-select"><option>Today</option><option>Tomorrow</option></select></div>
+      <div class="form-group"><div class="form-label">Note for the org (optional)</div><textarea class="form-textarea" id="commit-note" placeholder="e.g. I'll be there around noon."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCommitBtn()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCommit()">Confirm commitment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg>
+  <span id="toast-msg">Commitment confirmed!</span>
+</div>
+
+<!-- ── SCRIPTS ── (order matters: data → api → profile → render → modals → nav) -->
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/render.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/nav.js"></script>
+
+</body>
+</html>

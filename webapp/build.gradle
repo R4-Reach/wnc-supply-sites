@@ -10,8 +10,20 @@ group = 'com.vanatta.helene'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(23)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs += ['--enable-preview']
+}
+
+tasks.withType(Test).configureEach {
+	jvmArgs(['--enable-preview'])
+}
+
+tasks.withType(JavaExec).configureEach {
+	jvmArgs(['--enable-preview'])
 }
 
 repositories {
