@@ -15,9 +15,9 @@ public class GoogleDistanceApi {
 
   /**
    * Outcome of a distance lookup. {@link #OK} → write the distance. {@link #INVALID_PAIR} → mark
-   * the pair invalid permanently (Google understood the request but can't route it).
-   * {@link #TRANSIENT_FAILURE} → leave the pair NULL for retry; Google itself is unhealthy (bad
-   * key, billing, throttle) and the next pair almost certainly fails the same way.
+   * the pair invalid permanently (Google understood the request but can't route it). {@link
+   * #TRANSIENT_FAILURE} → leave the pair NULL for retry; Google itself is unhealthy (bad key,
+   * billing, throttle) and the next pair almost certainly fails the same way.
    */
   public enum ResponseStatus {
     OK,

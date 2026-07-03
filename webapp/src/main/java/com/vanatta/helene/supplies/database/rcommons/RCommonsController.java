@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * API endpoints for the R-Commons volunteer portal (served as static files from
- * public/rcommons/).
+ * API endpoints for the R-Commons volunteer portal (served as static files from public/rcommons/).
  */
 @RestController
 @AllArgsConstructor
@@ -107,9 +106,7 @@ public class RCommonsController {
       this.urgentCount = r.urgentCount;
       this.neededCount = r.neededCount;
       this.urgentItems =
-          r.urgentItemsCsv != null
-              ? Arrays.asList(r.urgentItemsCsv.split(","))
-              : new ArrayList<>();
+          r.urgentItemsCsv != null ? Arrays.asList(r.urgentItemsCsv.split(",")) : new ArrayList<>();
     }
   }
 }

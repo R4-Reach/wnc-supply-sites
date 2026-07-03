@@ -95,7 +95,8 @@ class GoogleDistanceApiTest {
    */
   @Test
   void emptyRowsResponseParsing() {
-    String body = """
+    String body =
+        """
         {"destination_addresses":[],"origin_addresses":[],"rows":[],"status":"REQUEST_DENIED"}
         """;
     var result = new Gson().fromJson(body, GoogleDistanceApi.GoogleDistanceJson.class);
