@@ -13,6 +13,9 @@ public class VolunteerDao {
 
   static List<SiteSelect> fetchSiteSelect(Jdbi jdbi, List<String> states) {
     // todo: Write test
+    if (states == null || states.isEmpty()) {
+      return List.of();
+    }
 
     return jdbi.withHandle(
         handle ->

@@ -1,0 +1,63 @@
+/* ─────────────────────────────────────────────────
+   tokens.css — Design tokens for R-Commons
+   Brand palette: RED 1–4 (#950000 → #FF1414)
+                  BLUE 1–4 (#041087 → #8FC8F2)
+                  WHITE    (#FFFFFF)
+   ───────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand source colors (reference only) ──────── */
+  --brand-red-1:  #950000;
+  --brand-red-2:  #BD0C00;
+  --brand-red-3:  #E50908;
+  --brand-red-4:  #FF1414;
+  --brand-blue-1: #041087;
+  --brand-blue-2: #162DF0;
+  --brand-blue-3: #0080FD;
+  --brand-blue-4: #8FC8F2;
+  --brand-white:  #FFFFFF;
+
+  /* ── Backgrounds ───────────────────────────────── */
+  --bg:        #F0F4FA;   /* cool blue-white */
+  --surface:   #FFFFFF;   /* cards, modals */
+  --surface2:  #E8EEF8;   /* hover states, subtle wells */
+  --border:    #D4DCF0;   /* light blue-grey borders */
+  --border-md: #B0BEE0;   /* slightly darker, active borders */
+
+  /* ── Text ──────────────────────────────────────── */
+  --text-1:    #0A0E2A;   /* near-black with deep navy cast */
+  --text-2:    #3A4470;   /* mid-navy for secondary text */
+  --text-3:    #8090B8;   /* muted blue-grey for labels, meta */
+
+  /* ── Primary accent: electric blue (BLUE 2) ────── */
+  /* Used for: CTAs, active nav, links, primary buttons */
+  --accent:    #162DF0;
+  --accent-lt: #EBF0FF;   /* blue tint for selected states, chips */
+  --accent-md: #0080FD;   /* BLUE 3 — hover state for buttons */
+
+  /* ── Urgency accent: deep red (RED 1/2) ─────────── */
+  /* Used sparingly: urgent badges, critical alerts only */
+  --urgent:    #950000;
+  --urgent-lt: #FFEBEB;   /* very faint red for urgent backgrounds */
+  --urgent-bright: #E50908; /* RED 3 — pip dots, icons */
+
+  /* ── Sky accent: light blue (BLUE 4) ────────────── */
+  /* Used for: info tags, light chips, decorative */
+  --sky:       #8FC8F2;
+  --sky-lt:    #E8F4FF;
+
+  /* ── Neutrals ───────────────────────────────────── */
+  --muted:     #6070A0;
+  --muted-lt:  #ECF0FA;
+
+  /* ── Radii ──────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ── Layout ─────────────────────────────────────── */
+  --sidebar-w: 210px;
+  --header-h:  52px;
+
+  font-family: 'Instrument Sans', 'Helvetica Neue', sans-serif;
+}

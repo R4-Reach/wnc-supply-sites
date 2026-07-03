@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R-Commons — Welcome</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/onboarding.css">
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div class="screen active" id="screen-login">
+  <div class="card">
+    <div class="logo-placeholder"></div>
+    <h1>Welcome back.</h1>
+    <p class="subtitle">Sign in to your volunteer account to see what your community needs today.</p>
+    <div class="demo-note">✦ Demo mode — enter any name and email to continue</div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="login-email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <div class="form-error" id="login-error"></div>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">
+      Sign in
+      <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+    </button>
+    <p class="hint">New volunteer? <a onclick="goToScreen('screen-register')">Create an account →</a></p>
+  </div>
+</div>
+
+<!-- ── REGISTER ── -->
+<div class="screen" id="screen-register">
+  <div class="card">
+    <div class="logo-placeholder"></div>
+    <h1>Join your community.</h1>
+    <p class="subtitle">Create a free volunteer account. Takes about 3 minutes.</p>
+    <div class="demo-note">✦ Demo mode — any info works here</div>
+    <div class="two-fields">
+      <div class="form-group">
+        <label class="form-label">First name</label>
+        <input class="form-input" type="text" id="reg-first" placeholder="Jordan">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last name</label>
+        <input class="form-input" type="text" id="reg-last" placeholder="Wilson">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="reg-email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="reg-password" placeholder="Min. 8 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label">City</label>
+      <input class="form-input" type="text" id="reg-city" placeholder="Asheville, NC">
+    </div>
+    <div class="form-error" id="reg-error"></div>
+    <button class="btn btn-primary" onclick="doRegister()" style="margin-top:8px;">
+      Create account & continue
+      <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+    </button>
+    <p class="hint">Already have an account? <a onclick="goToScreen('screen-login')">Sign in →</a></p>
+  </div>
+</div>
+
+<!-- ── STEP 1: CHARACTER CLASS ── -->
+<div class="screen" id="screen-class">
+  <div class="card card-wide">
+    <div class="logo-placeholder"></div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
+      </div>
+      <div class="progress-label">Step 1 of 3 — Character class</div>
+    </div>
+    <h1>What role fits you?</h1>
+    <p class="subtitle">Based on Deepa Iyer's Social Change Ecosystem. Pick up to 2 that feel most like you — these help match you to the right opportunities.</p>
+    <div class="class-limit-note">Selected: <span id="class-count">0</span> / 2</div>
+    <div class="class-grid">
+      <div class="class-card" data-class="Weaver"           onclick="toggleClass(this)"><span class="class-icon">🕸️</span><div class="class-name">Weaver</div><div class="class-desc">Connect people, orgs & ideas</div></div>
+      <div class="class-card" data-class="Experimenter"     onclick="toggleClass(this)"><span class="class-icon">🔬</span><div class="class-name">Experimenter</div><div class="class-desc">Innovate & take risks to adapt</div></div>
+      <div class="class-card" data-class="Frontline Responder" onclick="toggleClass(this)"><span class="class-icon">🚨</span><div class="class-name">Frontline Responder</div><div class="class-desc">Assemble resources in a crisis</div></div>
+      <div class="class-card" data-class="Visionary"        onclick="toggleClass(this)"><span class="class-icon">🔭</span><div class="class-name">Visionary</div><div class="class-desc">Imagine our boldest possibilities</div></div>
+      <div class="class-card" data-class="Builder"          onclick="toggleClass(this)"><span class="class-icon">🏗️</span><div class="class-name">Builder</div><div class="class-desc">Organize & implement ideas</div></div>
+      <div class="class-card" data-class="Caregiver"        onclick="toggleClass(this)"><span class="class-icon">🤲</span><div class="class-name">Caregiver</div><div class="class-desc">Nurture community & connection</div></div>
+      <div class="class-card" data-class="Disruptor"        onclick="toggleClass(this)"><span class="class-icon">⚡</span><div class="class-name">Disruptor</div><div class="class-desc">Shake up the status quo</div></div>
+      <div class="class-card" data-class="Healer"           onclick="toggleClass(this)"><span class="class-icon">🌿</span><div class="class-name">Healer</div><div class="class-desc">Tend to trauma & restore wellbeing</div></div>
+      <div class="class-card" data-class="Storyteller"      onclick="toggleClass(this)"><span class="class-icon">📖</span><div class="class-name">Storyteller</div><div class="class-desc">Craft & share community stories</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToScreen(previousScreen)">← Back</button>
+      <button class="btn btn-primary" id="btn-class-next" disabled onclick="goToScreen('screen-skills')">
+        Continue <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 2: SKILLS ── -->
+<div class="screen" id="screen-skills">
+  <div class="card card-wide">
+    <div class="logo-placeholder"></div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-step done"></div>
+        <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+      </div>
+      <div class="progress-label">Step 2 of 3 — Skills</div>
+    </div>
+    <h1>What are your skills?</h1>
+    <p class="subtitle">Select everything that applies. Organizations use these to match you to the right roles — you can add more later.</p>
+    <div class="section-label">Hands-on & physical</div>
+    <div class="skills-grid">
+      <div class="skill-chip" onclick="toggleSkill(this)">Driving / Transport</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Heavy lifting</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Construction / Carpentry</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Cooking / Food prep</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">First aid / CPR</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">EMT / Medical</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Childcare</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Elder care</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Animal care</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Farming / Agriculture</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Electrical</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Plumbing</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Forklift / Heavy equipment</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Warehouse / Logistics</div>
+    </div>
+    <div class="section-label">Professional & soft skills</div>
+    <div class="skills-grid">
+      <div class="skill-chip" onclick="toggleSkill(this)">Grant writing</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Fundraising</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Social media</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Photography / Video</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Translation / Interpreter</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Teaching / Tutoring</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Counseling / Mental health</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Legal</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Tech / Web development</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Event coordination</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Spanish</div>
+      <div class="skill-chip" onclick="toggleSkill(this)">Other language</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToScreen('screen-class')">← Back</button>
+      <button class="btn btn-primary" onclick="goToAvail()">
+        Continue <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3: AVAILABILITY ── -->
+<div class="screen" id="screen-avail">
+  <div class="card card-xl">
+    <div class="logo-placeholder"></div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-step done"></div>
+        <div class="progress-step done"></div>
+        <div class="progress-step active"></div>
+      </div>
+      <div class="progress-label">Step 3 of 3 — Availability</div>
+    </div>
+    <h1>When are you available?</h1>
+    <p class="subtitle">Tap cells to mark yourself available. Organizations use this alongside your skills to match you to shifts. Skill match is weighted 5× more than availability.</p>
+    <div class="avail-scroll">
+      <div class="avail-grid" id="avail-grid">
+        <div class="avail-head"></div>
+        <div class="avail-head">Sun</div>
+        <div class="avail-head">Mon</div>
+        <div class="avail-head">Tue</div>
+        <div class="avail-head">Wed</div>
+        <div class="avail-head">Thu</div>
+        <div class="avail-head">Fri</div>
+        <div class="avail-head">Sat</div>
+      </div>
+    </div>
+    <div class="avail-hint">Tap to toggle · Filled = available</div>
+    <hr class="avail-divider">
+    <div class="form-group">
+      <label class="form-label">Anything else? (optional)</label>
+      <textarea class="form-textarea" id="bio-input"
+        placeholder="e.g. I have a truck for transport. Available on short notice for disaster response."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToScreen('screen-skills')">← Back</button>
+      <button class="btn btn-primary" onclick="finishOnboarding()">
+        Finish setup <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUCCESS ── -->
+<div class="screen" id="screen-done">
+  <div class="card">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h1 style="text-align:center;margin-bottom:4px;">You're in.</h1>
+    <p class="subtitle" style="text-align:center;">Your profile is saved. Here's what we recorded.</p>
+    <div class="summary-section">
+      <div class="summary-section-label">Character class</div>
+      <div class="summary-chips" id="done-classes"></div>
+    </div>
+    <div class="summary-section">
+      <div class="summary-section-label">Skills</div>
+      <div class="summary-chips" id="done-skills"></div>
+    </div>
+    <div class="xp-banner">
+      <div class="xp-banner-icon">⚡</div>
+      <div class="xp-banner-text">You start with <strong>+100 XP</strong> for completing your profile. Keep volunteering to level up and unlock new opportunities.</div>
+    </div>
+    <button class="btn btn-primary" onclick="goToDashboard()">
+      Go to dashboard
+      <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

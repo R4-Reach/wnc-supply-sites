@@ -1,0 +1,111 @@
+/* ─────────────────────────────────────────────────
+   layout.css — Dashboard shell layout
+   App wrapper, topbar, sidebar, main content area
+   ───────────────────────────────────────────────── */
+
+/* ── APP SHELL ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+body { display: flex; flex-direction: column; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 3px solid var(--brand-red-1);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 16px; font-weight: 700; color: var(--text-1);
+  letter-spacing: -0.3px; min-width: var(--sidebar-w);
+}
+.topbar-logo .logo-mark { width: 30px; height: 30px; border-radius: 8px; }
+.topbar-logo .logo-mark svg { width: 16px; height: 16px; }
+.topbar-search { flex: 1; max-width: 420px; position: relative; }
+.topbar-search svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; stroke: var(--text-3); fill: none; stroke-width: 1.8;
+}
+.topbar-search input {
+  width: 100%; padding: 7px 12px 7px 34px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg); color: var(--text-1); outline: none; transition: border-color 0.15s;
+}
+.topbar-search input:focus { border-color: var(--accent); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.notif-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.notif-btn svg { width: 16px; height: 16px; stroke: var(--text-2); fill: none; stroke-width: 1.8; }
+.notif-pip {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--urgent-bright); border: 1.5px solid var(--surface);
+}
+.avatar-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--brand-red-1); display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  border: 2px solid var(--brand-red-2); cursor: pointer;
+}
+
+/* ── BODY WRAP ── */
+.body-wrap { display: flex; flex: 1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 16px 0;
+  position: sticky; top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  overflow-y: auto; flex-shrink: 0;
+}
+.sidebar-section { margin-bottom: 6px; }
+.sidebar-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text-3); padding: 8px 18px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 18px; border-radius: 0;
+  color: var(--text-2); font-size: 13px;
+  transition: all 0.15s; cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left; position: relative;
+}
+.nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; }
+.nav-item:hover { background: var(--bg); color: var(--text-1); }
+.nav-item.active { background: var(--accent-lt); color: var(--accent); font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 3px; background: var(--brand-red-1); border-radius: 0 3px 3px 0;
+}
+.nav-badge {
+  margin-left: auto; background: var(--urgent-bright); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 10px; min-width: 18px; text-align: center;
+}
+.nav-badge.green { background: var(--accent-md); }
+.sidebar-footer { margin-top: auto; padding: 12px 18px; border-top: 1px solid var(--border); }
+
+/* ── MAIN CONTENT ── */
+.main { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;
+}
+.page-title { font-size: 20px; font-weight: 700; color: var(--text-1); letter-spacing: -0.3px; }
+.page-sub   { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+
+/* ── TWO-COL LAYOUT ── */
+.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+.col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── PAGES ── */
+.page        { display: none; }
+.page.active { display: block; }
