@@ -1,7 +1,8 @@
-.gradle/
 .DS_store
-**/helene_need_list.csv
-**/supplies-helene-list.csv
+.idea
+.docs
+.gradle/
+.vscode
+
 **/build/**
-/.idea
-/.vscode
+
