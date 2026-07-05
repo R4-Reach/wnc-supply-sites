@@ -18,6 +18,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 23
+      - name: Install pre-commit
+        run: |
+          make setup
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run Tests
         run: make check
       - name: Login to GitHub Container Registry

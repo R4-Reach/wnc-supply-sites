@@ -12,5 +12,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 25
+      - name: Install pre-commit
+        run: |
+          make setup
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run Build Checks
         run: make check
