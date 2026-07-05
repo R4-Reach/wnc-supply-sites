@@ -221,3 +221,4 @@ then we'd check the DB for this token value.
   - `sudo -u postgres psql; \c wnc_helene;`
 - run `/root/redeploy.sh`
 
+a
