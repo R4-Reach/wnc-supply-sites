@@ -8,7 +8,6 @@ import com.vanatta.helene.supplies.database.manage.add.site.AddSiteData;
 import com.vanatta.helene.supplies.database.test.util.TestDataFile;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
@@ -33,7 +32,8 @@ public class TestConfiguration {
 
   static {
     HikariConfig config = new HikariConfig();
-    String dbUrl = Optional.ofNullable(System.getenv("DB_URL")).orElse("localhost:5432");
+    String dbUrl = "database:5432";
+    // Optional.ofNullable(System.getenv("DB_URL")).orElse("localhost:5432");
     config.setJdbcUrl(String.format("jdbc:postgresql://%s/wnc_helene_test", dbUrl));
     config.setUsername("wnc_helene");
     config.setPassword("wnc_helene");

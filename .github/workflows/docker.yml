@@ -4,11 +4,9 @@ name: Build Docker Container
 on:
   push:
     branches:
-      - master
+      - main
 jobs:
   build:
-    env:
-      IS_MASTER_BUILD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,20 +22,18 @@ jobs:
 #      - name: Run tests
 #        run: cd webapp; ./gradlew test
       - name: Login to GitHub Container Registry
-        if: ${{ env.IS_MASTER_BUILD }}
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: build docker container
-        if: ${{ env.IS_MASTER_BUILD }}
         run: |
-          docker build schema/ --tag ghcr.io/wnc-supply-sites/wnc-supply-sites/flyway:latest
-          docker push ghcr.io/wnc-supply-sites/wnc-supply-sites/flyway:latest
+          docker build schema/ --tag ghcr.io/r4-reach/wnc-supply-sites/flyway:latest
+          docker push ghcr.io/r4-reach/wnc-supply-sites/flyway:latest
 
           cd webapp;
 
           ./gradlew clean bootJar
-          docker build . --tag ghcr.io/wnc-supply-sites/wnc-supply-sites/webapp:latest
-          docker push ghcr.io/wnc-supply-sites/wnc-supply-sites/webapp:latest
+          docker build . --tag ghcr.io/r4-reach/wnc-supply-sites/webapp:latest
+          docker push ghcr.io/r4-reach/wnc-supply-sites/webapp:latest

@@ -73,7 +73,7 @@ test {
 //dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
 
 dockerCompose {
-	useComposeFiles = ['docker-compose.yml'] // like 'docker-compose -f <file>'; default is empty
+	useComposeFiles = ['../docker-compose.yml'] // like 'docker-compose -f <file>'; default is empty
 //	startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
 //	scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
 //	forceRecreate = false // pass '--force-recreate' and '--renew-anon-volumes' when calling 'docker-compose up' when set to 'true`
