@@ -1,0 +1,4 @@
+- hosts: server
+  tasks:
+    - name: Deploy latest webapp
+      command: sudo -u webapp /opt/webapp/deploy-webapp.sh

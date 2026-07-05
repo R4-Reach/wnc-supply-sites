@@ -1,7 +1,6 @@
 MAKEFLAGS += --always-make --warn-undefined-variables
 SHELL=/bin/bash
 .SHELLFLAGS = -eu -c
-
 check:
 	cd webapp && ./gradlew check
 
@@ -12,6 +11,7 @@ WSS_APP_PORT ?= 8080
 WSS_DB_PORT ?= 5432
 export WSS_APP_PORT
 export WSS_DB_PORT
+SSH_USER ?= $${USER}
 
 # Launch only the database + migrations (no webapp) on a known port. Use this when running the
 # webapp itself from your IDE against localhost:$(WSS_DB_PORT).
@@ -28,3 +28,10 @@ up-detached:
 
 down:
 	docker compose down -v
+
+deploy: ## Triggers prod to pull latest docker and restart services
+	ANSIBLE_CONFIG="deploy/ansible.cfg" \
+	  ansible-playbook \
+	    -e ansible_user=$(SSH_USER) \
+	    --inventory deploy/ansible/inventory.linode.yml \
+	    deploy/ansible/playbook.yml
