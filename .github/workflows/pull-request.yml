@@ -1,0 +1,15 @@
+# Runs all build checks on any pull request
+name: Pull Request Check
+on:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - name: Run Build Checks
+        run: make check
