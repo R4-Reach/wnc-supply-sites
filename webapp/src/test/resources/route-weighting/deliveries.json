@@ -92,7 +92,7 @@
       { "name": "disposable tableware", "priority": "URGENT" },
       { "name": "n95 mask", "priority": "URGENT" }
     ],
-    "distance": 61.5 
+    "distance": 61.5
   },
   {
     "show": true,
@@ -141,7 +141,7 @@
       { "name": "Toys", "priority": "NORMAL" },
       { "name": "Tuna", "priority": "URGENT" }
     ],
-    "distance": 38.9 
+    "distance": 38.9
   },
   {
     "show": false,

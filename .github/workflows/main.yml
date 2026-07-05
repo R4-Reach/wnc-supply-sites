@@ -1,10 +1,10 @@
+---
 # When master is updated, runs a docker build
 # and pushes a docker image to Github registry
 name: Build Main and Deploy
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,10 +18,15 @@ jobs:
         with:
           distribution: temurin
           java-version: 23
+      - uses: astral-sh/setup-uv@v5
+      - name: Install pre-commit
+        run: |
+          make setup
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run Tests
         run: make check
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -30,9 +35,7 @@ jobs:
         run: |
           docker build schema/ --tag ghcr.io/r4-reach/wnc-supply-sites/flyway:latest
           docker push ghcr.io/r4-reach/wnc-supply-sites/flyway:latest
-
           cd webapp;
-
           ./gradlew clean bootJar
           docker build . --tag ghcr.io/r4-reach/wnc-supply-sites/webapp:latest
           docker push ghcr.io/r4-reach/wnc-supply-sites/webapp:latest
@@ -53,7 +56,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Cache Ansible Galaxy collections
         uses: actions/cache@v4
         with:

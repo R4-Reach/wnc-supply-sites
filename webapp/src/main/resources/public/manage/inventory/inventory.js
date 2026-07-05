@@ -9,7 +9,7 @@ async function checkAndToggleInventory(event, siteId, itemName) {
   // check that the event target was a tag
   const eventTargetClassList = Array.from(event.target.classList);
   if (eventTargetClassList.includes("item-tag-inner")) return;
-  
+
   // toggle the checkbox
   const checkbox = document.getElementById(`${itemName}Checkbox`);
   checkbox.checked = !checkbox.checked;
@@ -276,15 +276,15 @@ async function addItem(siteId) {
               <!-- Urgently Needed -->
               <fieldset class="vertical">
                 <div class="horizontal item-status-div">
-                  <input 
-                      type="radio" 
-                      id="${itemNameEncoded}Urgent" 
-                      name="${itemNameEncoded}Status" 
+                  <input
+                      type="radio"
+                      id="${itemNameEncoded}Urgent"
+                      name="${itemNameEncoded}Status"
                       onclick="changeItemStatus(${siteId}, '${itemNameEncoded}')"
                       ${urgentChecked}/>
-                  <label 
-                      for="${itemNameEncoded}Urgent" 
-                      class="urgent" 
+                  <label
+                      for="${itemNameEncoded}Urgent"
+                      class="urgent"
                       id="${itemNameEncoded}UrgentLabel">
                     Urgently Needed
                   </label>
@@ -293,47 +293,47 @@ async function addItem(siteId) {
 
                 <!-- Needed -->
                 <div class="horizontal item-status-div">
-                  <input 
-                      type="radio" 
-                      id="${itemNameEncoded}Needed" 
-                      name="${itemNameEncoded}Status" 
+                  <input
+                      type="radio"
+                      id="${itemNameEncoded}Needed"
+                      name="${itemNameEncoded}Status"
                       onclick="changeItemStatus(${siteId}, '${itemNameEncoded}')"
                       ${neededChecked}/>
-                  <label 
-                      for="${itemNameEncoded}Needed" 
-                      class="needed" 
+                  <label
+                      for="${itemNameEncoded}Needed"
+                      class="needed"
                       id="${itemNameEncoded}NeededLabel">
                     Needed
                   </label>
                 </div>
-                
+
                 <!-- Available -->
                 <div class="horizontal item-status-div">
-                  <input 
-                      type="radio" 
-                      id="${itemNameEncoded}Available" 
-                      name="${itemNameEncoded}Status" 
+                  <input
+                      type="radio"
+                      id="${itemNameEncoded}Available"
+                      name="${itemNameEncoded}Status"
                       onclick="changeItemStatus(${siteId}, '${itemNameEncoded}')"
                       ${availableChecked}/>
-                  <label 
-                      for="${itemNameEncoded}Available" 
-                      class="available" 
+                  <label
+                      for="${itemNameEncoded}Available"
+                      class="available"
                       id="${itemNameEncoded}AvailableLabel">
                     Available
                   </label>
                 </div>
-                
+
                 <!-- Oversupply -->
                 <div class="horizontal item-status-div">
-                  <input 
-                      type="radio" 
-                      id="${itemNameEncoded}Oversupply" 
-                      name="${itemNameEncoded}Status" 
+                  <input
+                      type="radio"
+                      id="${itemNameEncoded}Oversupply"
+                      name="${itemNameEncoded}Status"
                       onclick="changeItemStatus(${siteId}, '${itemNameEncoded}')"
                       ${oversupplyChecked}/>
-                  <label 
-                      for="${itemNameEncoded}Oversupply" 
-                      class="oversupply" 
+                  <label
+                      for="${itemNameEncoded}Oversupply"
+                      class="oversupply"
                       id="${itemNameEncoded}OversupplyLabel">
                     Oversupply (too much)
                   </label>
@@ -454,7 +454,7 @@ function instantiateInputEventListener() {
 
 function instantiateTagsEventListener() {
   const tags = document.getElementsByClassName("item-tag-inner");
-  
+
   // color the tag
   for (let i = 0; i < tags.length; i++) {
     const tag = tags[i];
@@ -466,7 +466,7 @@ function instantiateTagsEventListener() {
   const tagsContainer = document.getElementById("tags-container");
   tagsContainer.addEventListener("click", (e) => {
     const classes = Array.from(e.target.classList);
-    
+
     // check if the clicked item was a tag
     if (!classes.includes("item-tag-inner")) return;
 
@@ -478,7 +478,7 @@ function instantiateTagsEventListener() {
 function filterItems() {
   const textInputValue = document.getElementById("filter-text-input").value;
   const selectedTags = getListOfSelectedTags();
-  
+
   hideElementsBasedOnFilters(textInputValue, selectedTags);
 }
 
@@ -494,7 +494,7 @@ function hideElementsBasedOnFilters(filterText, filterTags) {
     const itemTags = getTagListFromItem(inventoryItem);
 
     const filterTagsContainItemTags = itemTags.some((tag) => filterTags.length === 0 ? true : filterTags.includes(tag));
-    
+
     const filterContainsItemName = itemName.includes(filterText.toLowerCase());
     if (filterContainsItemName && filterTagsContainItemTags){
       inventoryItem.classList.remove("hidden")
@@ -534,6 +534,3 @@ function formatTagElementValue(tag){
   tag.value = formattedString;
   return tag;
 }
-
-
-

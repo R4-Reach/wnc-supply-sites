@@ -95,4 +95,3 @@ function checkField(fieldElement) {
     return true;
   }
 }
-

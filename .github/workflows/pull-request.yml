@@ -1,3 +1,4 @@
+---
 # Runs all build checks on any pull request
 name: Pull Request Check
 on:
@@ -11,5 +12,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 25
+      - uses: astral-sh/setup-uv@v5
+      - name: Install pre-commit
+        run: |
+          make setup
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run Build Checks
         run: make check

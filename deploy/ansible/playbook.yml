@@ -1,3 +1,4 @@
+---
 - hosts: server
   tasks:
     - name: Deploy latest webapp

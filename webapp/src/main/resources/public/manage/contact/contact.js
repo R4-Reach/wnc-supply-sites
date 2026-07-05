@@ -21,7 +21,7 @@ function addAdditionalManager(siteId) {
   const newRow = `
     <div class="horizontal  additional-contact">
       <input class="managerId" type="hidden" value="">
-      Name: <input class="name" type="text" maxlength="32" size="18"> 
+      Name: <input class="name" type="text" maxlength="32" size="18">
       Phone: <input class="phone" type="text" maxlength="16" size="12">
       <button onclick="updateContact(${siteId})">Update</button>
       <button disabled onclick="removeContact(${siteId})" class="remove-button">Remove</button>
@@ -201,4 +201,3 @@ function updateContact(siteId) {
         errorDiv.innerHTML = "Failed to save, server not available. " + error;
       });
 }
-
