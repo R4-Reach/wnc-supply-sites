@@ -68,6 +68,16 @@ public class SendAccessTokenController {
       SendAccessTokenDao.createUser(jdbi, phoneNumber);
     }
 
+    if (SendAccessTokenDao.isThrottled(jdbi, phoneNumber)) {
+      log.warn("Too many access code requests for phone number: {}", phoneNumber);
+      return ResponseEntity.status(429)
+          .body(
+              SendAccessCodeResponse.invalid(
+                  """
+                    Too many access code requests. Please wait a few minutes before trying again.
+                  """));
+    }
+
     // generate an access code & CRF token
     String accessCode = accessTokenGenerator.generate();
     String csrf = csrfGenerator.get();

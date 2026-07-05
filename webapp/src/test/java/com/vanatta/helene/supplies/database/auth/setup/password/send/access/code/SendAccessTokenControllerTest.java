@@ -73,6 +73,21 @@ class SendAccessTokenControllerTest {
     assertThat(SetupPasswordHelper.accessTokenExists(accessCode, csrf)).isTrue();
   }
 
+  @Test
+  void sendAccessCode_throttledAfterMaxRequests() {
+    SetupPasswordHelper.withRegisteredNumber(number);
+
+    for (int i = 0; i < SendAccessTokenDao.THROTTLE_MAX_REQUESTS; i++) {
+      assertThat(controller.sendAccessCode(input).getStatusCode().value()).isEqualTo(200);
+    }
+
+    ResponseEntity<SendAccessTokenController.SendAccessCodeResponse> response =
+        controller.sendAccessCode(input);
+    assertThat(response.getStatusCode().value()).isEqualTo(429);
+    assertThat(response.getBody().getError()).isNotNull();
+    assertThat(response.getBody().getCsrf()).isNull();
+  }
+
   /**
    * Validates a bug fix where a user is trying to log in, they are white listed because they belong
    * to a site and not because they already exist in the table 'wss_user'.
