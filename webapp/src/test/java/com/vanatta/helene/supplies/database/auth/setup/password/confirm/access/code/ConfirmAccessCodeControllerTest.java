@@ -120,6 +120,72 @@ class ConfirmAccessCodeControllerTest {
     assertThat(response.getBody().getValidationToken()).isNull();
   }
 
+  private static final String realCode = "557603";
+  private static final String csrf = "1a24abcd-029f-49fe-8d76-af1c4b93bc28";
+  private static final String wrongCodeInput =
+      String.format("{\"confirmCode\":\"000000\",\"csrf\":\"%s\"}", csrf);
+
+  private void insertRealCode() {
+    String number = "123___4444";
+    SetupPasswordHelper.withRegisteredNumber(number);
+    SendAccessTokenDao.insertSmsPasscode(
+        TestConfiguration.jdbiTest,
+        SendAccessTokenDao.InsertAccessCodeParams.builder()
+            .phoneNumber(number)
+            .accessCode(realCode)
+            .csrfToken(csrf)
+            .build());
+  }
+
+  /** After the max number of failed attempts, even the correct code is rejected. */
+  @Test
+  void lockedOutAfterMaxAttempts() {
+    insertRealCode();
+
+    for (int i = 0; i < ConfirmAccessCodeDao.MAX_ATTEMPTS; i++) {
+      assertThat(controller.confirmAccessCode(wrongCodeInput).getStatusCode().value())
+          .isEqualTo(401);
+    }
+
+    assertThat(controller.confirmAccessCode(jsonInput).getStatusCode().value()).isEqualTo(401);
+  }
+
+  /** One failed attempt below the limit still leaves the correct code usable. */
+  @Test
+  void succeedsJustBelowAttemptLimit() {
+    insertRealCode();
+
+    for (int i = 0; i < ConfirmAccessCodeDao.MAX_ATTEMPTS - 1; i++) {
+      assertThat(controller.confirmAccessCode(wrongCodeInput).getStatusCode().value())
+          .isEqualTo(401);
+    }
+
+    assertThat(controller.confirmAccessCode(jsonInput).getStatusCode().value()).isEqualTo(200);
+  }
+
+  /** A code older than the expiry window is rejected even when correct. */
+  @Test
+  void expiredCodeRejected() {
+    insertRealCode();
+    TestConfiguration.jdbiTest.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "update sms_passcode set date_created = now() - interval '20 minutes'")
+                .execute());
+
+    assertThat(controller.confirmAccessCode(jsonInput).getStatusCode().value()).isEqualTo(401);
+  }
+
+  /** A code that has already been confirmed cannot be confirmed a second time. */
+  @Test
+  void alreadyConfirmedCodeRejected() {
+    insertRealCode();
+
+    assertThat(controller.confirmAccessCode(jsonInput).getStatusCode().value()).isEqualTo(200);
+    assertThat(controller.confirmAccessCode(jsonInput).getStatusCode().value()).isEqualTo(401);
+  }
+
   @Test
   void confirmAccessBadCsrfToken() {
     String number = "123___4444";

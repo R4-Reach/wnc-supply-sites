@@ -9,6 +9,37 @@ import org.jdbi.v3.core.Jdbi;
 
 public class SendAccessTokenDao {
 
+  /** Window over which access-code requests for a single phone number are counted. */
+  static final int THROTTLE_MINUTES = 15;
+
+  /** Maximum access-code requests allowed for a single phone number within the throttle window. */
+  static final int THROTTLE_MAX_REQUESTS = 5;
+
+  /**
+   * Returns true if the phone number has already requested {@link #THROTTLE_MAX_REQUESTS} or more
+   * access codes within the last {@link #THROTTLE_MINUTES} minutes. Reuses the sms_passcode table
+   * as the rate-limit ledger.
+   */
+  static boolean isThrottled(Jdbi jdbi, String phoneNumber) {
+    String query =
+        """
+        select count(*)
+        from sms_passcode
+        where wss_user_id = (select id from wss_user where phone = :phone)
+          and date_created > now() - (:minutes * interval '1 minute')
+        """;
+    int recentRequests =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(query)
+                    .bind("phone", phoneNumber)
+                    .bind("minutes", THROTTLE_MINUTES)
+                    .mapTo(Integer.class)
+                    .one());
+    return recentRequests >= THROTTLE_MAX_REQUESTS;
+  }
+
   public static boolean isPhoneNumberRegistered(Jdbi jdbi, String inputPhoneNumber) {
     if (inputPhoneNumber == null || inputPhoneNumber.isBlank()) {
       return false;
