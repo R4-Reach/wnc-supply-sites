@@ -12,6 +12,3 @@ insert into county(name, state) values('Saskatchewan', 'Canada');
 insert into county(name, state) values('Northwest Territories', 'Canada');
 insert into county(name, state) values('Nunavut', 'Canada');
 insert into county(name, state) values('Yukon', 'Canada');
-
--- Add missing Carroll County, Missouri
-insert into county(name, state) values('Carroll', 'MO');

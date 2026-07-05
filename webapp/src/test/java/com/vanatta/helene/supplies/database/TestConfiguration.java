@@ -8,6 +8,7 @@ import com.vanatta.helene.supplies.database.manage.add.site.AddSiteData;
 import com.vanatta.helene.supplies.database.test.util.TestDataFile;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
@@ -32,9 +33,12 @@ public class TestConfiguration {
 
   static {
     HikariConfig config = new HikariConfig();
-    String dbUrl = "database:5432";
-    // Optional.ofNullable(System.getenv("DB_URL")).orElse("localhost:5432");
-    config.setJdbcUrl(String.format("jdbc:postgresql://%s/wnc_helene_test", dbUrl));
+    // Host and port are injected by the docker-compose gradle plugin (exposeAsEnvironment) so the
+    // tests connect to the dynamically-published port of the 'database' service. Falls back to
+    // localhost:5432 for IDE runs against a manually-started database.
+    String host = Optional.ofNullable(System.getenv("DATABASE_HOST")).orElse("localhost");
+    String port = Optional.ofNullable(System.getenv("DATABASE_TCP_5432")).orElse("5432");
+    config.setJdbcUrl(String.format("jdbc:postgresql://%s:%s/wnc_helene", host, port));
     config.setUsername("wnc_helene");
     config.setPassword("wnc_helene");
     config.addDataSourceProperty("maximumPoolSize", "16");

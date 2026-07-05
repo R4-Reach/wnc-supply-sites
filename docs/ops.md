@@ -1,10 +1,9 @@
 
 ## Prod Ops
 
-Applications are running in docker containers. 'webapp' is prod, 'staging' is test.
-Whether they are connected to airtable is controlled by environment variables.
-Staging connects to DB `wnc_helene_test` while webapp connects to the DB `wnc_helene`
-All environment variables are in the redeploy sripts in `/root`
+The webapp runs in a docker container ('webapp') and connects to the DB `wnc_helene`.
+Whether it is connected to airtable is controlled by environment variables.
+All environment variables are in the redeploy scripts in `/root`
 
 
 ### QuickStart
@@ -48,7 +47,6 @@ View columns of a table: `\d [table name]`
 ```
 sudo -u postgres psql
 \c wnc_helene
-\c wnc_helene_test
 ```
 
 
@@ -92,9 +90,8 @@ https://github.com/DanVanAtta/wnc-supply-sites/tree/master/schema
 
 Create a new file in there and put the SQL commands in there.
 
-Then run: `./schema/run-flyway.sh`
-That will apply all new migrations to your local test database "wnc_helene_test",
-and to "wnc_helene"
+Then restart the local stack (`make db` or `make up`). The `flyway` compose service applies all
+new migrations to your local database "wnc_helene" on startup.
 
 In production, flyway is automatically run as part of the 'redeploy' scripts.
 
@@ -175,9 +172,6 @@ sudo -u postgres psql
 create database wnc_helene;
 create user wnc_helene with password '....';
 alter database wnc_helene owner to wnc_helene;
-
-create database wnc_helene_test;
-alter database wnc_helene_test owner to wnc_helene;
 ```
 
 

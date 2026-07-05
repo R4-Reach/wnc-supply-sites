@@ -1,23 +1,12 @@
 # WNC Supply Sites
 
 Live URL: [https://WNC-Supply-Sites.com]
-Live URL: [https://SoCal-Supply-Sites.com]
-
-Staging: [https://staging.wnc-supply-sites.com]
 
 Webapp for Hurricane Helene disaster relief. The website provides
 a search and simple inventory management interface for supply sites.
 This allows supply sites to indicate their needs, urgent & surplus
 items. Ultimately the goal is to allow for supply items to be redistributed
 from sites that have too much, to those that need those items.
-
-## Contributing
-
-- Need system/linux admin
-- Pull requests are welcome, open an issue first if you plan to contribute
-  so we can coordinate.
-- Need help with data entry, supply drivers, dispatchers & communication
-  coordinators
 
 ## Ops
 
@@ -29,9 +18,9 @@ See the [ops-docs](docs/ops.md)
 - clone the code
 - install intellij
 - install Java 21 (`brew install --cask temurin@21` on Mac)
+- install docker
 - right click the webapp/build.gradle file & select 'link project'
-- install postgres
-- run: `./schema/run-flyway.sh`
+- start the database (postgres + migrations, in docker): `make db`
 - Run `SuppliesDatabaseApplication.java`
   - in run configuration, set the environment variable: `WEBHOOK_SECRET=secret`
   - in run configuration, set the environment variable: `DEFAULT_DEPLOYMENT_ENABLED=true`
@@ -46,7 +35,6 @@ To do full tests and formatting before commit & push:
 
 #### R-Commons Volunteer Portal (`/rcommons/`)
 R-Commons is a volunteer-facing portal integrated into the app as static files served by Spring Boot.
-Unlike other frontend pages, R-Commons pages require the server to be running (they call live API endpoints).
 - Access at: `http://localhost:8080/rcommons/onboarding.html`
 - Linked from the homepage via the "Volunteer Portal" button
 - Source files: `webapp/src/main/resources/public/rcommons/`
@@ -57,7 +45,10 @@ Unlike other frontend pages, R-Commons pages require the server to be running (t
 - install docker
 - clone the code
 - cd to the project directory
-- run: `docker compose up`
+- run: `make up` (builds the app jar, then launches the database, migrations, and webapp)
+- access the webapp at http://localhost:8080
+- stop and clean up with `make down`
+- ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 make up`
 
 ### Branching Strategy & Workflow
 
@@ -69,29 +60,22 @@ Unlike other frontend pages, R-Commons pages require the server to be running (t
 
 ### Local Setup
 
-- install postgres to your machine (bare-metal)
-   - ideally this would be a postgres on docker. If you get that setup, please update these README instructions
-- There is a docker-compose.yml that is fully working. That can be used for a database.
-  If using that, kindly update this Readme with those working instructions
-- Create databases. Two of them. Login and user are same for both. One is 'wnc_helene' which will be used 
-  when running the app locally and accessing via "localhost:8080", the other DB, 'wnc_helene_test' is used 
-  by unit tests.
+The database runs in docker via `docker-compose.yml` — no bare-metal postgres needed.
 
+- `make db` — start postgres + apply migrations (use when running the webapp from your IDE)
+- `make up` — start the full stack (database, migrations, and webapp) in docker
+- `make down` — stop everything and remove the database volume (wipes local data)
 
-```bash
-sudo -u postgres psql
-create database wnc_helene;
-create user wnc_helene with password 'wnc_helene';
-alter database wnc_helene owner to wnc_helene;
+Database, user, and schema creation are handled automatically:
+- `./.docker-compose/database/01-init.sql` creates the `wnc_helene` database and user on first
+  startup.
+- the `flyway` compose service applies all `schema/V*.sql` migrations to `wnc_helene`
+  (the database the app and unit tests use locally).
 
-create database wnc_helene_test;
-create user wnc_helene_test with password 'wnc_helene';
-alter database wnc_helene_test owner to wnc_helene;
-```
+To recreate the database from scratch, run `make down` (removes the volume) then `make db`.
 
-- Run flyway to excecute migration files. A helper script is in `schema/`
-- To redo the 'test' database from scratch, run `./recreate-db.sh`. 
-  Edit & modify the script to recreate `wnc_helene` from scratch.
+The default ports are `5432` (database) and `8080` (webapp); override with `WSS_DB_PORT` /
+`WSS_APP_PORT`.
 
 #### Docker
 
@@ -101,10 +85,10 @@ alter database wnc_helene_test owner to wnc_helene;
 
 Access local DB (on docker)
 ```
-docker exec -it helene-distro-database-1 bash
+docker exec -it wnc-supply-sites-database-1 bash
 su postgres
 psql
-\c wnc_helene_test
+\c wnc_helene
 ```
 
 #### Access local DB (on bare-metal)

@@ -65,16 +65,21 @@ test {
 }
 
 
-/** WIP with automatically starting a docker database
- * Need to:
- * - skip the gradle and application containers
- * - make sure that we can still build on windows
- */
-//dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
+// Starts the docker-compose stack (database -> flyway -> app) before `test` runs, tears it down
+// afterwards, and exposes each service's dynamically-published host/port to the test JVM.
+dockerCompose.isRequiredBy(test)
+
+// The `app` container mounts the built bootJar (build/libs/supplies-database.jar), so it must be
+// built before the stack is brought up.
+tasks.named('composeUp') {
+	dependsOn 'bootJar'
+}
 
 dockerCompose {
-	useComposeFiles = ['../docker-compose.yml'] // like 'docker-compose -f <file>'; default is empty
-//	startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
+	useComposeFiles = ['docker-compose.yml'] // relative to dockerComposeWorkingDirectory (../ = wnc-supply-sites)
+	// Track `database` and `app` (so their dynamic ports appear in servicesInfos); app's depends_on
+	// chain still pulls in the one-shot `flyway` migration container.
+	startedServices = ['database', 'app']
 //	scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
 //	forceRecreate = false // pass '--force-recreate' and '--renew-anon-volumes' when calling 'docker-compose up' when set to 'true`
 //	noRecreate = false // pass '--no-recreate' when calling 'docker-compose up' when set to 'true`
@@ -117,27 +122,29 @@ dockerCompose {
 //	useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1, default is true. If set to true, `dockerExecutable compose` is used for execution, so executable property is ignored.
 //	dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
 	dockerComposeWorkingDirectory = project.file('../') // /path/where/docker-compose/is/invoked/from')
+	// Local `make up` publishes fixed ports (5432/8080); the test stack must not collide with a
+	// running local stack, so publish ephemeral host ports (0 -> OS-assigned) for the tests.
+	environment.put 'WSS_DB_PORT', '0'
+	environment.put 'WSS_APP_PORT', '0'
 //	dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
 //	environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
 }
 
 test.doFirst {
-	// exposes "${serviceName}_HOST" and "${serviceName}_TCP_${exposedPort}" environment variables
-	// for example exposes "WEB_HOST" and "WEB_TCP_80" environment variables for service named `web` with exposed port `80`
-	// if service is scaled using scale option, environment variables will be exposed for each service instance like "WEB_1_HOST", "WEB_1_TCP_80", "WEB_2_HOST", "WEB_2_TCP_80" and so on
-	dockerCompose.exposeAsEnvironment(test)
-	// exposes "${serviceName}.host" and "${serviceName}.tcp.${exposedPort}" system properties
-	// for example exposes "web.host" and "web.tcp.80" system properties for service named `web` with exposed port `80`
-	// if service is scaled using scale option, environment variables will be exposed for each service instance like "web_1.host", "web_1.tcp.80", "web_2.host", "web_2.tcp.80" and so on
-//	dockerCompose.exposeAsSystemProperties(test)
-	// get information about container of service `web` (declared in docker-compose.yml)
-//	def webInfo = dockerCompose.servicesInfos.web.firstContainer
-	// in case scale option is used, dockerCompose.servicesInfos.containerInfos will contain information about all running containers of service. Particular container can be retrieved either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
-//	def webInfo = dockerCompose.servicesInfos.web.'web_1'
-	// pass host and exposed TCP port 80 as custom-named Java System properties
-//	systemProperty 'myweb.host', webInfo.host
-//	systemProperty 'myweb.port', webInfo.ports[80]
-	// it's possible to read information about exposed UDP ports using webInfo.updPorts[1234]
+	// Explicitly inject each service's host and dynamically-published port into the test JVM.
+	// TestConfiguration reads DATABASE_HOST / DATABASE_TCP_5432 to reach the test database; the
+	// APP_* vars are available for future HTTP-level integration tests against the running webapp.
+	def dbInfo = dockerCompose.servicesInfos.database.firstContainer
+	def appInfo = dockerCompose.servicesInfos.app.firstContainer
+	environment 'DATABASE_HOST', dbInfo.host
+	environment 'DATABASE_TCP_5432', dbInfo.ports[5432]
+	environment 'APP_HOST', appInfo.host
+	environment 'APP_TCP_8080', appInfo.ports[8080]
+	// The in-process @SpringBootTest context builds its datasource from DB_URL/DB_NAME
+	// (see application.properties); point it at the same dynamic database.
+	environment 'DB_URL', "${dbInfo.host}:${dbInfo.ports[5432]}"
+	environment 'DB_NAME', 'wnc_helene'
+	logger.lifecycle("docker-compose test wiring: database=${dbInfo.host}:${dbInfo.ports[5432]}, app=${appInfo.host}:${appInfo.ports[8080]}")
 }
 
 spotless {
