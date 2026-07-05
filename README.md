@@ -12,7 +12,7 @@ from sites that have too much, to those that need those items.
 
 See the [ops-docs](docs/ops.md)
 
-## Development 
+## Development
 
 ### Quick Start - Backend Dev
 - clone the code
@@ -49,6 +49,10 @@ R-Commons is a volunteer-facing portal integrated into the app as static files s
 - access the webapp at http://localhost:8080
 - stop and clean up with `make down`
 - ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 make up`
+
+### Pre-commit
+
+Run `make setup` to configure pre-commit to run on push.
 
 ### Branching Strategy & Workflow
 
@@ -111,7 +115,7 @@ sudo -u postgres psql
 
 
 ### Tech Stack
- 
+
 - springboot
 - JDBI
 - postgres
@@ -172,7 +176,7 @@ Controller classes are classic spring webserver endpoints. Controller
 methods should handle control flow and ideally get actions done
 by calling functional private static methods or DAO methods.
 
-Controller's and packages are organized by functionality. 
+Controller's and packages are organized by functionality.
 
 If a controller is 'tight', pretty small and straight forward,
 then the DB access methods might sometimes be directly in the controller.
@@ -220,4 +224,3 @@ then we'd check the DB for this token value.
 - run any psql migrations:
   - `sudo -u postgres psql; \c wnc_helene;`
 - run `/root/redeploy.sh`
-

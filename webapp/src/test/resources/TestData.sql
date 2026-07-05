@@ -217,5 +217,3 @@ insert into site_item(site_id, item_id, item_status_id) values(
     (select id from item where name = 'water'),
     (select id from item_status where name = 'Needed')
    );
-
-

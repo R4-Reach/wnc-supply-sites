@@ -125,7 +125,7 @@ sudo chsh -s /usr/bin/bash $USERNAME
 sudo mkdir -p /home/$USERNAME/.ssh/
 
 ## Set up the SSH key for access
-sudo chmod 0700 /home/$USERNAME/.ssh/ 
+sudo chmod 0700 /home/$USERNAME/.ssh/
 echo "$PUBLIC_SSH_KEY" | sudo tee /home/$USERNAME/.ssh/authorized_keys
 sudo chmod 0600 /home/$USERNAME/.ssh/authorized_keys
 sudo chown -R $USERNAME:$USERNAME /home/$USERNAME
@@ -406,7 +406,7 @@ Add this block to `/etc/nginx/sites-enabled/default`:
 
 - daily docker prune via cronjob
 ```
-$ cat /etc/cron.daily/docker-prune 
+$ cat /etc/cron.daily/docker-prune
 #!/bin/bash
 date >> /var/log/docker/docker-prune.log
 docker system prune -f >> /var/log/docker/docker-prune.log
@@ -414,11 +414,11 @@ docker system prune -f >> /var/log/docker/docker-prune.log
 
 - daily logrotate of application log files with 14 day retention
 ```
-$ cat /etc/logrotate.d/docker 
+$ cat /etc/logrotate.d/docker
 /var/log/docker/staging.log
 /var/log/docker/webapp.log
 {
-        rotate 14 
+        rotate 14
         daily
         missingok
         notifempty

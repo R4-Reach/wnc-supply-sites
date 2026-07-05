@@ -1,3 +1,4 @@
+---
 # Runs all build checks on any pull request
 name: Pull Request Check
 on:

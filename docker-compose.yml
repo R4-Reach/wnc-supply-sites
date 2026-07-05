@@ -1,3 +1,4 @@
+---
 services:
   database:
     image: postgres:16.6
@@ -5,10 +6,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    ports:
-      # Fixed host port for local `make up` (override with WSS_DB_PORT). `make check` sets
-      # WSS_DB_PORT=0 so the isolated test stack gets an ephemeral port and never collides.
-      - "${WSS_DB_PORT:-5432}:5432"
+    # Fixed host port for local `make up` (override with WSS_DB_PORT). `make check` sets
+    # WSS_DB_PORT=0 so the isolated test stack gets an ephemeral port and never collides.
+    ports: ['${WSS_DB_PORT:-5432}:5432']
     volumes:
       - ./.docker-compose/database/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
@@ -18,8 +18,7 @@ services:
       timeout: 3s
   flyway:
     image: flyway/flyway
-    volumes:
-      - ./schema/:/flyway/sql
+    volumes: [./schema/:/flyway/sql]
     command: >
       -locations=filesystem:/flyway/sql
       -connectRetries=60
@@ -34,14 +33,12 @@ services:
     # Must match the build toolchain (Java 21); the jar is compiled with --enable-preview, whose
     # class files are locked to their exact JDK major version and will not run on a newer runtime.
     image: azul/zulu-openjdk:21-latest
-    volumes:
-      - ./webapp/build/libs/:/build/
+    volumes: [./webapp/build/libs/:/build/]
     command: >
       java --enable-preview -jar /build/supplies-database.jar
-    ports:
-      # Fixed host port for local `make up` (override with WSS_APP_PORT). `make check` sets
-      # WSS_APP_PORT=0 for an ephemeral port.
-      - "${WSS_APP_PORT:-8080}:8080"
+    # Fixed host port for local `make up` (override with WSS_APP_PORT). `make check` sets
+    # WSS_APP_PORT=0 for an ephemeral port.
+    ports: ['${WSS_APP_PORT:-8080}:8080']
     depends_on:
       flyway:
         condition: service_completed_successfully

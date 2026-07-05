@@ -1,8 +1,19 @@
 MAKEFLAGS += --always-make --warn-undefined-variables
 SHELL=/bin/bash
 .SHELLFLAGS = -eu -c
+
 check:
+	pre-commit run --all-files
+
+verify:
 	cd webapp && ./gradlew check
+
+format:
+	cd webapp && ./gradlew spotlessApply
+
+setup: ## Install pre-commit (via uv) and on-push git hook
+	uv tool install pre-commit
+	pre-commit install --hook-type pre-push --overwrite
 
 # Launch the full stack (database + migrations + webapp) locally on known ports.
 # The webapp is served at http://localhost:$(WSS_APP_PORT) and the database at localhost:$(WSS_DB_PORT).

@@ -119,8 +119,8 @@ table.inventoryTable td {
 }
 
 #tags-container {
-  max-height: 200px; 
-  border:1px solid gray; 
+  max-height: 200px;
+  border:1px solid gray;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;

@@ -1,6 +1,9 @@
 #
 # https://help.github.com/articles/dealing-with-line-endings/
 #
+# Default: treat all files as text and normalize to lf in the repo
+* text=auto eol=lf
+
 # Linux start script should use lf
 /gradlew        text eol=lf
 
@@ -9,4 +12,3 @@
 
 # Binary files should be left untouched
 *.jar           binary
-

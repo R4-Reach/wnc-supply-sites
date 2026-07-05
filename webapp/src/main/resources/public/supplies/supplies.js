@@ -85,7 +85,7 @@ function addSelectionFiltersFromSession(selections){
     const currentFilterSet = readSelectionsFromSession(filter);
     currentFilterSet.forEach((filterValue) => {
       addSelection(filter, filterValue)
-    }); 
+    });
   });
 }
 
@@ -134,7 +134,7 @@ function saveCheckboxToSession(fieldsetName, name, wasChecked) {
   const fieldsetInSession = getFieldsetValueFromSession(fieldsetName);
 
   const itemExistsInFieldset = fieldsetInSession.includes(name);
-   
+
   if (wasChecked && !itemExistsInFieldset) {
     fieldsetInSession.push(name);
     sessionStorage.setItem(fieldsetName, JSON.stringify(fieldsetInSession));
@@ -153,7 +153,7 @@ function getFieldsetValueFromSession(fieldsetName) {
   if (!fieldsetInSession) {
     sessionStorage.setItem(fieldsetName, JSON.stringify([]));
     return JSON.parse(sessionStorage.getItem(fieldsetName));
-  } 
+  }
   return JSON.parse(fieldsetInSession);
 }
 
@@ -189,7 +189,7 @@ function removeFromSession(filterCategory, filterValue) {
   const newFilterSet = currentFilterSet.reduce((acc, cur) => {
     if (cur !== filterValue) acc.push(cur);
     return acc;
-  }, []) 
+  }, [])
   sessionStorage.setItem(`${filterCategory}-filter`, JSON.stringify(newFilterSet));
 }
 
@@ -399,4 +399,3 @@ function initializeModal() {
         sessionStorage.setItem("calledToAction", "true");
     }
 };
-
