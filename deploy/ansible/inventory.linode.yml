@@ -5,8 +5,10 @@ access_token: "{{ lookup('env', 'R4_LINODE_TOKEN') }}"
 compose:
   ansible_host: ipv4[0]
 
+tags:
+  - server
+
 # keyed_groups creates an Ansible host group for each Linode tag.
 keyed_groups:
   - key: tags
-    prefix: "tag"
-    separator: "_"
+    separator: ''
