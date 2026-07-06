@@ -49,31 +49,6 @@ public class SimpleHtmlController {
     return new RedirectView("/");
   }
 
-  @GetMapping("/about/")
-  ModelAndView showAbout() {
-    return new ModelAndView("about/about");
-  }
-
-  @GetMapping("/about/changelog/")
-  ModelAndView showChangelog() {
-    return new ModelAndView("about/changelog/changelog");
-  }
-
-  @GetMapping("/about/partners/")
-  ModelAndView showPartners() {
-    return new ModelAndView("about/partners/partners");
-  }
-
-  @GetMapping("/about/thestory/")
-  ModelAndView showTheStory() {
-    return new ModelAndView("about/thestory/thestory");
-  }
-
-  @GetMapping("/behind-the-scenes/")
-  ModelAndView showBehindTheScenes() {
-    return new ModelAndView("behind-the-scenes/index");
-  }
-
   @GetMapping("/registration/")
   ModelAndView showRegistrationPage(HttpServletRequest request) {
 
