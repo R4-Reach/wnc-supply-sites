@@ -35,4 +35,4 @@ repos:
         entry: bash -c 'make verify'
         language: system
         pass_filenames: false
-        files: \.java$
+        always_run: true
