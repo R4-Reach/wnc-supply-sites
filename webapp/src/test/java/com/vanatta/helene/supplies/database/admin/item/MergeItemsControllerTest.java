@@ -102,7 +102,7 @@ class MergeItemsControllerTest {
             .itemListWssIds(List.of(itemB.getWssId(), itemC.getWssId()))
             .build());
 
-    new MergeItemsController(jdbiTest, SendItemMergedUpdate.disabled())
+    new MergeItemsController(jdbiTest)
         .doMerge(
             Map.of(
                 "mergeInto", itemA.getId(), "mergeItems", List.of(itemB.getId(), itemC.getId())));

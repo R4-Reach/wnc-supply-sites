@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -21,24 +20,19 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class AuthInterceptor implements WebMvcConfigurer {
 
   private final CookieAuthenticator cookieAuthenticator;
-  private final WebhookAuthenticator webhookAuthenticator;
 
-  public AuthInterceptor(
-      @Value("${webhook.auth.secret}") String webhookAuthSecret,
-      CookieAuthenticator cookieAuthenticator) {
+  public AuthInterceptor(CookieAuthenticator cookieAuthenticator) {
     this.cookieAuthenticator = cookieAuthenticator;
-    this.webhookAuthenticator = new WebhookAuthenticator(webhookAuthSecret);
   }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(new AuthIntercept(cookieAuthenticator, webhookAuthenticator));
+    registry.addInterceptor(new AuthIntercept(cookieAuthenticator));
   }
 
   @AllArgsConstructor
   static class AuthIntercept implements HandlerInterceptor {
     private final CookieAuthenticator cookieAuthenticator;
-    private final WebhookAuthenticator webhookAuthenticator;
 
     @Override
     public boolean preHandle(
@@ -60,13 +54,6 @@ public class AuthInterceptor implements WebMvcConfigurer {
           // auth failed, delete cookie if present
           CookieUtil.deleteCookie(response, "auth");
           response.sendRedirect("/login/login?redirectUri=" + requestUri);
-          return false;
-        }
-      } else if (requestUri.startsWith("/webhook/")) {
-        if (webhookAuthenticator.hasCorrectSecret(request)) {
-          return true;
-        } else {
-          response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
           return false;
         }
       } else {

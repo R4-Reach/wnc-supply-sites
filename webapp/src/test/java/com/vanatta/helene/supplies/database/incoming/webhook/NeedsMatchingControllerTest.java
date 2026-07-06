@@ -21,8 +21,7 @@ class NeedsMatchingControllerTest {
           """
           {"deliveryId":35,"fromSiteWssId":[337],"toSiteWssId":[115]}
           """;
-      NeedsMatchingController controller =
-          new NeedsMatchingController(TestConfiguration.jdbiTest, false, "");
+      NeedsMatchingController controller = new NeedsMatchingController(TestConfiguration.jdbiTest);
       ResponseEntity<String> response = controller.addSuppliesToDelivery(input);
       assertThat(response.getStatusCode().value()).isEqualTo(200);
     }

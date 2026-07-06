@@ -21,10 +21,7 @@ class DeliveryConfirmationControllerTest {
 
   DeliveryConfirmationController controller =
       new DeliveryConfirmationController(
-          jdbiTest,
-          SmsSender.newDisabled(jdbiTest),
-          SendDeliveryUpdate.disabled(),
-          new NotificationStateMachine(jdbiTest));
+          jdbiTest, SmsSender.newDisabled(jdbiTest), new NotificationStateMachine(jdbiTest));
 
   @Test
   void dispatcherConfirm() {

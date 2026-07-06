@@ -4,7 +4,6 @@ import com.vanatta.helene.supplies.database.DeploymentAdvice;
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
 import com.vanatta.helene.supplies.database.data.CountyDao;
 import com.vanatta.helene.supplies.database.data.SiteType;
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController;
 import java.util.HashMap;
@@ -30,7 +29,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class AddSiteController {
 
   private final Jdbi jdbi;
-  private final SendSiteUpdate sendSiteUpdate;
 
   /** Shows the form for adding a brand new site */
   @GetMapping("/manage/new-site/add-site")
@@ -102,7 +100,6 @@ public class AddSiteController {
     }
     try {
       long newSiteId = AddSiteDao.addSite(jdbi, addSiteData);
-      sendSiteUpdate.sendFullUpdate(newSiteId);
 
       String manageSiteUrl = SelectSiteController.buildSiteSelectedUrl(newSiteId);
       return ResponseEntity.ok(

@@ -2,7 +2,6 @@ package com.vanatta.helene.supplies.database.manage.status;
 
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
 import com.vanatta.helene.supplies.database.data.SiteType;
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController;
 import com.vanatta.helene.supplies.database.manage.UserSiteAuthorization;
@@ -32,7 +31,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class SiteStatusController {
 
   private final Jdbi jdbi;
-  private final SendSiteUpdate sendSiteUpdate;
 
   /** Displays the 'manage-status' page. */
   @GetMapping("/manage/status/status")
@@ -138,7 +136,6 @@ public class SiteStatusController {
         throw new IllegalArgumentException("Unmapped status flag: " + statusFlag);
     }
 
-    sendSiteUpdate.sendFullUpdate(Long.parseLong(siteId));
     return ResponseEntity.ok().body("Updated");
   }
 }

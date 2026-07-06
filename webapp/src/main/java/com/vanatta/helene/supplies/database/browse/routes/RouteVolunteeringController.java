@@ -1,7 +1,6 @@
 package com.vanatta.helene.supplies.database.browse.routes;
 
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
-import com.vanatta.helene.supplies.database.driver.DriverDao;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,32 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class RouteVolunteeringController {
 
   private final Jdbi jdbi;
-  private final SendVolunteerRequest sendVolunteerRequest;
 
   @PostMapping("/browse/routes/volunteer")
   ResponseEntity<String> volunteer(
       @RequestBody DeliveryVolunteerRequest params,
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String driverPhone) {
     log.info("/browse/routes/volunteer - Received driver volunteer request: {}", params);
-
-    DeliveryVolunteerRequest json = createVolunteeringRequestJson(jdbi, params, driverPhone);
-    log.info("Sending volunteer request to airtable: {}", json);
-    try {
-      sendVolunteerRequest.send(json);
-      return ResponseEntity.ok("{\"result\": \"ok\"}");
-    } catch (Exception e) {
-      log.error("Error sending volunteering request to server: {}", json, e);
-      return ResponseEntity.internalServerError()
-          .body(String.format("{\"error\": \"%s\"}", e.getMessage()));
-    }
-  }
-
-  static DeliveryVolunteerRequest createVolunteeringRequestJson(
-      Jdbi jdbi, DeliveryVolunteerRequest volunteerRequest, String driverPhone) {
-    return volunteerRequest.toBuilder()
-        .driverAirtableId(DriverDao.lookupByPhone(jdbi, driverPhone).orElseThrow().getAirtableId())
-        .driverName(DriverDao.lookupByPhone(jdbi, driverPhone).orElseThrow().getFullName())
-        .build();
+    throw new UnsupportedOperationException("TODO: need to re-implement");
   }
 
   @Builder(toBuilder = true)

@@ -24,7 +24,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class DriverController {
 
   private final Jdbi jdbi;
-  private final SendDriverUpdate sendDriverUpdate;
 
   enum PageParams {
     location,
@@ -86,7 +85,6 @@ public class DriverController {
             .build();
 
     DriverDao.upsert(jdbi, updatedDriverData);
-    sendDriverUpdate.sendUpdate(updatedDriverData);
 
     return ResponseEntity.ok().build();
   }
@@ -95,15 +93,6 @@ public class DriverController {
   ModelAndView changeDriverActiveStatus(
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String userPhone) {
     DriverDao.toggleActiveStatus(jdbi, userPhone);
-
-    var updatedDriverData =
-        DriverDao.lookupByPhone(jdbi, userPhone)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Unexpected, could not find driver in database: " + userPhone));
-    sendDriverUpdate.sendUpdate(updatedDriverData);
-
     return new ModelAndView("redirect:/driver/portal");
   }
 }

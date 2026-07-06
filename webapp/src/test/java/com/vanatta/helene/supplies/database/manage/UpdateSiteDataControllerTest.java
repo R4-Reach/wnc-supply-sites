@@ -3,7 +3,6 @@ package com.vanatta.helene.supplies.database.manage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class UpdateSiteDataControllerTest {
   UpdateSiteDataController updateSiteDataController =
-      new UpdateSiteDataController(TestConfiguration.jdbiTest, SendSiteUpdate.newDisabled());
+      new UpdateSiteDataController(TestConfiguration.jdbiTest);
 
   /**
    * Loop through all fields that can be set to random data. Invoke the site update endpoint for a

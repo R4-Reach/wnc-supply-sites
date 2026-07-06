@@ -12,7 +12,6 @@ public class EnvLoggingConfiguration {
   EnvLoggingConfiguration(
       @Value("${jdbi.url}") String url,
       @Value("${jdbi.user}") String user,
-      @Value("${make.enabled}") boolean makeEnabled,
       @Value("${distance.calculator.enabled}") boolean distanceCalculatorEnabled,
       @Value("${distance.calculator.delay.ms}") int distanceCalculatorDelayMs,
       @Value("${google.maps.api.key}") String googleApiKey,
@@ -21,7 +20,6 @@ public class EnvLoggingConfiguration {
       @Value("${twilio.sms.enabled}") boolean twilioSmsEnabled) {
     log.info("ENV - JDBI URL: {}", url);
     log.info("ENV - JDBI USER: {}", user);
-    log.info("ENV - MAKE ENABLED: {}", makeEnabled);
     log.info("ENV - DISTANCE CALCULATOR ENABLED: {}", distanceCalculatorEnabled);
     log.info("ENV - DISTANCE CALCULATOR DELAY: {}", distanceCalculatorDelayMs);
     log.info("ENV - GOOGLE API KEY: {}", googleApiKey);

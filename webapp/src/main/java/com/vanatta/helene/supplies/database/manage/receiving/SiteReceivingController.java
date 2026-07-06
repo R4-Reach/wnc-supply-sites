@@ -1,7 +1,6 @@
 package com.vanatta.helene.supplies.database.manage.receiving;
 
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController;
 import com.vanatta.helene.supplies.database.manage.UserSiteAuthorization;
@@ -26,7 +25,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class SiteReceivingController {
 
   private final Jdbi jdbi;
-  private final SendSiteUpdate sendSiteUpdate;
 
   public static String buildLink(Long id) {
     return "/manage/receiving/receiving?siteId=" + id;

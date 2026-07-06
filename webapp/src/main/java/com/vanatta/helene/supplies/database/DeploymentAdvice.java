@@ -1,6 +1,5 @@
 package com.vanatta.helene.supplies.database;
 
-import com.vanatta.helene.supplies.database.data.HostNameLookup;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ public class DeploymentAdvice {
   public static final String DEPLOYMENT_STATE_LIST = "deploymentStateList";
   public static final String DEPLOYMENT_FULL_STATE_LIST = "deploymentFullStateList";
   private final Jdbi jdbi;
-  private final HostNameLookup hostNameLookup;
 
   @ModelAttribute(DEPLOYMENT_STATE_LIST)
   public List<String> stateList() {

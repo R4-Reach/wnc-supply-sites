@@ -2,7 +2,6 @@ package com.vanatta.helene.supplies.database;
 
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
 import com.vanatta.helene.supplies.database.auth.UserRole;
-import com.vanatta.helene.supplies.database.data.HostNameLookup;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,7 +22,6 @@ import org.springframework.web.servlet.view.RedirectView;
 public class SimpleHtmlController {
 
   private final Jdbi jdbi;
-  private final HostNameLookup hostNameLookup;
 
   private static final String CONTACT_US_LINK = "https://form.jotform.com/243608573773062";
 

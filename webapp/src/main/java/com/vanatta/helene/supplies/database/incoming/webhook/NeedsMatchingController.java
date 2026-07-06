@@ -2,13 +2,11 @@ package com.vanatta.helene.supplies.database.incoming.webhook;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import com.vanatta.helene.supplies.database.util.HttpPostSender;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,17 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class NeedsMatchingController {
 
   private static final String PATH_ADD_NEEDS = "/webhook/add-supplies-to-delivery";
-  private final String addToDeliveryWebhook;
-  private final boolean makeEnabled;
   private final Jdbi jdbi;
 
-  NeedsMatchingController(
-      Jdbi jdbi,
-      @Value("${make.enabled}") boolean makeEnabled,
-      @Value("${make.webhoook.addToDelivery}") String addToDeliveryWebhook) {
+  NeedsMatchingController(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.makeEnabled = makeEnabled;
-    this.addToDeliveryWebhook = addToDeliveryWebhook;
   }
 
   /**
@@ -79,11 +70,6 @@ public class NeedsMatchingController {
     List<String> neededItems = computeNeedsMatch(jdbi, fromWssId, toSiteWssId);
     log.info("Received needs computation request: {}, matched with needs: {}", body, neededItems);
 
-    if (!neededItems.isEmpty() && makeEnabled) {
-      var computedNeed =
-          ComputedNeeds.builder().deliveryId(deliveryId).itemList(neededItems).build();
-      HttpPostSender.sendAsJson(addToDeliveryWebhook, computedNeed);
-    }
     return ResponseEntity.ok("Matches: " + neededItems.size());
   }
 

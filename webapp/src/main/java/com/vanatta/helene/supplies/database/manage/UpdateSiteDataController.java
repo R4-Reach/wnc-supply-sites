@@ -1,6 +1,5 @@
 package com.vanatta.helene.supplies.database.manage;
 
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Slf4j
 public class UpdateSiteDataController {
   private final Jdbi jdbi;
-  private final SendSiteUpdate sendSiteUpdate;
 
   /** Info update for a site, eg: site-rename, site contact info changed. */
   @PostMapping("/manage/update-site")
@@ -45,8 +43,6 @@ public class UpdateSiteDataController {
 
     ManageSiteDao.updateSiteField(jdbi, Long.parseLong(siteId), siteField, newValue);
     log.info("Site updated: {}", params);
-    sendSiteUpdate.sendFullUpdate(Long.parseLong(siteId));
-
     return ResponseEntity.ok().body("Updated");
   }
 }

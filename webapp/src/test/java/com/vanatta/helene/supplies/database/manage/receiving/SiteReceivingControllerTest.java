@@ -3,7 +3,6 @@ package com.vanatta.helene.supplies.database.manage.receiving;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
-import com.vanatta.helene.supplies.database.export.update.SendSiteUpdate;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.util.HtmlSelectOptionsUtil;
 import java.util.List;
@@ -14,7 +13,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 class SiteReceivingControllerTest {
   SiteReceivingController siteReceivingController =
-      new SiteReceivingController(TestConfiguration.jdbiTest, SendSiteUpdate.newDisabled());
+      new SiteReceivingController(TestConfiguration.jdbiTest);
 
   @BeforeAll
   static void setupDb() {

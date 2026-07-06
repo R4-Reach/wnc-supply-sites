@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 class DriverControllerTest {
 
-  DriverController driverController = new DriverController(jdbiTest, SendDriverUpdate.disabled());
+  DriverController driverController = new DriverController(jdbiTest);
   Driver driver = TestConfiguration.buildDriver(-103L, "123-123-4444");
 
   @BeforeEach

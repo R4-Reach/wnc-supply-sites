@@ -23,7 +23,6 @@ class DeliveryConfirmationController {
 
   private final Jdbi jdbi;
   private final SmsSender smsSender;
-  private final SendDeliveryUpdate sendDeliveryUpdate;
   private final NotificationStateMachine notificationStateMachine;
 
   public static String buildConfirmUrl(String deliveryPublicKey, String confirmationCode) {
@@ -80,27 +79,23 @@ class DeliveryConfirmationController {
         notificationStateMachine
             .driverEnRoute(delivery)
             .forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-        sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
         DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
       }
       case ARRIVED_AT_PICKUP -> {
         notificationStateMachine
             .driverArrivedToPickup(delivery)
             .forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-        sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
         DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
       }
       case DEPARTED_PICKUP -> {
         notificationStateMachine
             .driverLeavingPickup(delivery)
             .forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-        sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
         DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_IN_PROGRESS);
       }
       case ARRIVED_AT_DROP_OFF -> {
         NotificationStateMachine.driverArrivedToDropOff(delivery)
             .forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-        sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.DELIVERY_COMPLETED);
         DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_COMPLETED);
       }
     }
@@ -140,7 +135,6 @@ class DeliveryConfirmationController {
           notificationStateMachine.requestConfirmations(
               DeliveryDao.fetchDeliveryByPublicKey(jdbi, deliveryKey).orElseThrow());
       messages.forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-      sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.CONFIRMING);
       DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.CONFIRMING);
     } else if (!delivery.getConfirmations().isEmpty()) {
       Arrays.stream(DeliveryConfirmation.ConfirmRole.values())
@@ -160,7 +154,6 @@ class DeliveryConfirmationController {
       var messages = notificationStateMachine.confirm(delivery);
       messages.forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
       if (delivery.isConfirmed()) {
-        sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.CONFIRMED);
         DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.CONFIRMED);
       }
     }
@@ -197,7 +190,6 @@ class DeliveryConfirmationController {
         notificationStateMachine.cancel(
             DeliveryDao.fetchDeliveryByPublicKey(jdbi, deliveryKey).orElseThrow());
     messages.forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
-    sendDeliveryUpdate.send(deliveryKey, DeliveryStatus.DELIVERY_CANCELLED);
     DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_CANCELLED);
     return ResponseEntity.ok(
         """

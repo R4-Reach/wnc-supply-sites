@@ -2,14 +2,11 @@ package com.vanatta.helene.supplies.database.manage.inventory;
 
 import com.vanatta.helene.supplies.database.auth.LoggedInAdvice;
 import com.vanatta.helene.supplies.database.data.ItemStatus;
-import com.vanatta.helene.supplies.database.export.update.SendInventoryUpdate;
-import com.vanatta.helene.supplies.database.export.update.SendNewItemUpdate;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao.ItemTagData;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController;
 import com.vanatta.helene.supplies.database.manage.UserSiteAuthorization;
 import com.vanatta.helene.supplies.database.supplies.site.details.SiteDetailDao;
-import com.vanatta.helene.supplies.database.util.ThreadRunner;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -45,14 +42,9 @@ public class InventoryController {
   }
 
   private final Jdbi jdbi;
-  private final SendNewItemUpdate sendNewItemUpdate;
-  private final SendInventoryUpdate sendInventoryUpdate;
 
-  public InventoryController(
-      Jdbi jdbi, SendNewItemUpdate sendNewItemUpdate, SendInventoryUpdate sendInventoryUpdate) {
+  public InventoryController(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.sendNewItemUpdate = sendNewItemUpdate;
-    this.sendInventoryUpdate = sendInventoryUpdate;
   }
 
   /** Returns null if ID is not valid or DNE. */
@@ -193,7 +185,6 @@ public class InventoryController {
       log.warn("Failed to add item, already exists. Params: {}", params);
       return ResponseEntity.badRequest().body("Item not added, already exists");
     }
-    sendNewItemUpdate.sendNewItem(itemName);
     return updateSiteItemActive(sites, params);
   }
 
@@ -225,7 +216,6 @@ public class InventoryController {
     log.info(
         "Activating item: {}, site: {}, status: {}", itemName, siteData.getSiteName(), itemStatus);
     InventoryDao.updateSiteItemActive(jdbi, Long.parseLong(siteId), itemName, itemStatus);
-    ThreadRunner.run(() -> sendInventoryUpdate.send(Long.parseLong(siteId), itemName));
 
     return ResponseEntity.ok("Updated");
   }
@@ -251,13 +241,6 @@ public class InventoryController {
 
     log.info("Deactivating item: {}, site: {}", itemName, siteData.getSiteName());
 
-    InventoryDao.getInventoryWssId(jdbi, Long.parseLong(siteId), itemName)
-        .ifPresent(
-            wssId ->
-                ThreadRunner.run(
-                    () ->
-                        sendInventoryUpdate.sendItemRemoval(
-                            itemName, siteData.getSiteName(), wssId)));
     InventoryDao.updateSiteItemInactive(jdbi, Long.parseLong(siteId), itemName);
     return ResponseEntity.ok("Updated");
   }
@@ -283,10 +266,6 @@ public class InventoryController {
 
     if (oldStatus != ItemStatus.fromTextValue(newStatus)) {
       InventoryDao.updateItemStatus(jdbi, Long.parseLong(siteId), itemName, newStatus);
-      var latestStatus = ItemStatus.fromTextValue(newStatus);
-      if (oldStatus != latestStatus) {
-        ThreadRunner.run(() -> sendInventoryUpdate.send(Long.parseLong(siteId), itemName));
-      }
     }
 
     return ResponseEntity.ok("Updated");

@@ -23,7 +23,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class MergeItemsController {
 
   private final Jdbi jdbi;
-  private final SendItemMergedUpdate sendItemMergedUpdate;
 
   @GetMapping("/admin/merge-items")
   ModelAndView showMergeItems() {
@@ -88,7 +87,6 @@ public class MergeItemsController {
 
     List<Long> itemsMergedWssIds = fetchWssIdsOfItems(jdbi, mergeItemsId);
     merge(jdbi, mergeIntoItemId, mergeItemsId);
-    sendItemMergedUpdate.sendMergedItems(itemsMergedWssIds);
     return ResponseEntity.ok("{\"result\": \"success\"}");
   }
 
