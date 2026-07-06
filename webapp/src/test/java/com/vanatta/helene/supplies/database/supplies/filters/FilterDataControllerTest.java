@@ -14,8 +14,7 @@ class FilterDataControllerTest {
 
   private static final Jdbi jdbiTest = TestConfiguration.jdbiTest;
   private final FilterDataController filterDataController =
-      new FilterDataController(
-          jdbiTest, new CookieAuthenticator(TestConfiguration.jdbiTest, false));
+      new FilterDataController(jdbiTest, new CookieAuthenticator(TestConfiguration.jdbiTest));
 
   @BeforeAll
   static void setup() {

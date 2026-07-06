@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.auth.setup.password.SetupPasswordHelper;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class LoginDaoTest {
@@ -15,36 +14,6 @@ class LoginDaoTest {
       return TestConfiguration.jdbiTest.withHandle(
           handle -> handle.createQuery(query).mapTo(Long.class).one());
     }
-
-    static void clearAuthKeyTable() {
-      String delete = "delete from auth_key";
-      TestConfiguration.jdbiTest.withHandle(handle -> handle.createUpdate(delete).execute());
-    }
-  }
-
-  @BeforeAll
-  static void setup() {
-    Helper.clearAuthKeyTable();
-  }
-
-  /**
-   * When auth key is null, it should be generated. Once generated, we should get a fixed value
-   * back.
-   */
-  @Test
-  void authKeyGenerationAndFetch() {
-
-    CookieAuthenticator cookieAuthenticator =
-        new CookieAuthenticator(TestConfiguration.jdbiTest, false);
-    var key = cookieAuthenticator.getAuthKey();
-    assertThat(key).isNotNull();
-
-    // validate that the authKe value is stable (same if we fetch it again)
-    assertThat(key).isEqualTo(cookieAuthenticator.getAuthKey());
-
-    // reload the authkey, should return the same value again
-    var reloadedKey = new CookieAuthenticator(TestConfiguration.jdbiTest, false).getAuthKey();
-    assertThat(key).isEqualTo(reloadedKey);
   }
 
   @Test

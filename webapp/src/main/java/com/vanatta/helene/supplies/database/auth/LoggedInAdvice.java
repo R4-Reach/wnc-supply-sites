@@ -25,8 +25,7 @@ public class LoggedInAdvice {
 
   @ModelAttribute(LOGGED_IN)
   public boolean loggedIn(HttpServletRequest request) {
-    return cookieAuthenticator.isAuthenticated(request)
-        || cookieAuthenticator.isAuthenticatedWithUniversalPassword(request);
+    return cookieAuthenticator.isAuthenticated(request);
   }
 
   @ModelAttribute(USER_PHONE)

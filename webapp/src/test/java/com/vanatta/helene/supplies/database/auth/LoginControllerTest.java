@@ -20,8 +20,7 @@ class LoginControllerTest {
    */
   @Test
   void registeredPhoneNumbersAreRedirectedToCreatePassword() {
-    LoginController loginController =
-        new LoginController(TestConfiguration.jdbiTest, "", "", false);
+    LoginController loginController = new LoginController(TestConfiguration.jdbiTest);
 
     DriverDao.upsert(jdbiTest, TestConfiguration.buildDriver(-555999L, "987 345 6789"));
 

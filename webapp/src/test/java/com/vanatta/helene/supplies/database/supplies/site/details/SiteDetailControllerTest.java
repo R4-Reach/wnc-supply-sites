@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 class SiteDetailControllerTest {
   SiteDetailController siteDetailController =
-      new SiteDetailController(jdbiTest, new CookieAuthenticator(jdbiTest, false));
+      new SiteDetailController(jdbiTest, new CookieAuthenticator(jdbiTest));
 
   /**
    * Validate that the site detail page contains all values from

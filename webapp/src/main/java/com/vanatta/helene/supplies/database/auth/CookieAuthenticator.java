@@ -2,10 +2,8 @@ package com.vanatta.helene.supplies.database.auth;
 
 import com.vanatta.helene.supplies.database.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Getter;
 import org.jdbi.v3.core.Jdbi;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,30 +13,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class CookieAuthenticator {
 
-  /** AuthKey value is cached. */
-  @Getter private final String authKey;
-
   private final Jdbi jdbi;
-  private final boolean allowUniversalLogin;
 
   @Autowired
-  public CookieAuthenticator(
-      Jdbi jdbi, @Value("${allow.universal.login}") boolean allowUniversalLogin) {
-    authKey = LoginDao.getAuthKeyOrGenerateIt(jdbi);
+  public CookieAuthenticator(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.allowUniversalLogin = allowUniversalLogin;
   }
 
   public boolean isAuthenticated(HttpServletRequest request) {
-    if (allowUniversalLogin && isAuthenticatedWithUniversalPassword(request)) {
-      return true;
-    }
     return CookieUtil.readAuthCookie(request)
         .map(auth -> LoginDao.isLoggedIn(jdbi, auth))
         .orElse(false);
-  }
-
-  public boolean isAuthenticatedWithUniversalPassword(HttpServletRequest request) {
-    return CookieUtil.readAuthCookie(request).map(auth -> auth.equals(authKey)).orElse(false);
   }
 }

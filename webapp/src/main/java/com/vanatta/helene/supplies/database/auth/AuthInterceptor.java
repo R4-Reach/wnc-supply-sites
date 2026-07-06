@@ -20,24 +20,19 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class AuthInterceptor implements WebMvcConfigurer {
 
-  private final boolean authEnabled;
   private final CookieAuthenticator cookieAuthenticator;
   private final WebhookAuthenticator webhookAuthenticator;
 
   public AuthInterceptor(
-      @Value("${auth.enabled}") String authEnabled,
       @Value("${webhook.auth.secret}") String webhookAuthSecret,
       CookieAuthenticator cookieAuthenticator) {
-    this.authEnabled = Boolean.parseBoolean(authEnabled);
     this.cookieAuthenticator = cookieAuthenticator;
     this.webhookAuthenticator = new WebhookAuthenticator(webhookAuthSecret);
   }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    if (authEnabled) {
-      registry.addInterceptor(new AuthIntercept(cookieAuthenticator, webhookAuthenticator));
-    }
+    registry.addInterceptor(new AuthIntercept(cookieAuthenticator, webhookAuthenticator));
   }
 
   @AllArgsConstructor
@@ -61,9 +56,6 @@ public class AuthInterceptor implements WebMvcConfigurer {
 
         if (cookieAuthenticator.isAuthenticated(request)) {
           return true;
-        } else if (cookieAuthenticator.isAuthenticatedWithUniversalPassword(request)) {
-          response.sendRedirect("/login/setup-password");
-          return false;
         } else {
           // auth failed, delete cookie if present
           CookieUtil.deleteCookie(response, "auth");

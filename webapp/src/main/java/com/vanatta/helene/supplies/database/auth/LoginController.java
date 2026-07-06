@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
@@ -23,19 +22,9 @@ import org.springframework.web.servlet.ModelAndView;
 public class LoginController {
 
   private final Jdbi jdbi;
-  private final String universalUser;
-  private final String universalPassword;
-  private final boolean allowUniversalLogin;
 
-  LoginController(
-      Jdbi jdbi,
-      @Value("${auth.user}") String user,
-      @Value("${auth.pass}") String pass,
-      @Value("${allow.universal.login}") boolean allowUniversalLogin) {
+  LoginController(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.universalUser = user;
-    this.universalPassword = pass;
-    this.allowUniversalLogin = allowUniversalLogin;
   }
 
   @GetMapping("/login/login")
@@ -73,16 +62,6 @@ public class LoginController {
       CookieUtil.setCookie(response, "auth", authToken);
       CookieUtil.setCookie(response, "user", user);
       return new ModelAndView("redirect:" + redirectUri);
-    } else if (universalUser.equalsIgnoreCase(user.trim())
-        && universalPassword.equalsIgnoreCase(password.trim())) {
-      if (allowUniversalLogin) {
-        LoginDao.recordLoginSuccess(jdbi, user);
-        String authToken = LoginDao.getAuthKeyOrGenerateIt(jdbi);
-        CookieUtil.setCookie(response, "auth", authToken);
-        return new ModelAndView("redirect:" + redirectUri);
-      } else {
-        return new ModelAndView("redirect:/login/setup-password");
-      }
     } else if (!PasswordDao.hasPassword(jdbi, user)
         && SendAccessTokenDao.isPhoneNumberRegistered(jdbi, user)) {
       return new ModelAndView("redirect:/login/setup-password");

@@ -67,27 +67,4 @@ public class LoginDao {
                     .findOne())
         .isPresent();
   }
-
-  /** Returns the universal login token */
-  public static String getAuthKeyOrGenerateIt(Jdbi jdbi) {
-    // select auth key
-    String authKeyFetch = "select cookie_key from auth_key";
-    String authKey =
-        jdbi.withHandle(
-            handle -> handle.createQuery(authKeyFetch).mapTo(String.class).findOne().orElse(null));
-
-    // if auth key is null, then generate it
-    if (authKey == null) {
-      authKey = UUID.randomUUID().toString();
-
-      // insert the generated auth key
-      String authKeyInsert = "insert into auth_key (cookie_key) values (:cookie_key)";
-      final String authKeyToInsert = authKey;
-      jdbi.withHandle(
-          handle ->
-              handle.createUpdate(authKeyInsert).bind("cookie_key", authKeyToInsert).execute());
-    }
-
-    return authKey;
-  }
 }
