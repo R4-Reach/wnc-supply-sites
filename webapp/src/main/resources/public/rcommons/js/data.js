@@ -191,12 +191,16 @@ document.querySelectorAll(".class-card").forEach(card => {
     // Save the original HTML
     card.dataset.original = card.innerHTML;
 
+    //on mouse enter, replace the content with the hover content
+
     card.addEventListener("mouseenter", () => {
         const className = card.dataset.class;
         if (hoverContent[className]) {
             card.innerHTML = hoverContent[className];
         }
     });
+
+    //on mouse leave, restore the original HTML
 
     card.addEventListener("mouseleave", () => {
         card.innerHTML = card.dataset.original;
