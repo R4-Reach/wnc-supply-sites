@@ -6,6 +6,8 @@
 
 var PAGES = ['dashboard','opportunities','needs','hours','map','messages','orgs','profile','background'];
 
+var MOB_MORE_PAGES = ['opportunities', 'hours', 'orgs', 'profile', 'background'];
+
 function navTo(page) {
   PAGES.forEach(function(p) {
     var el  = document.getElementById('page-' + p);
@@ -13,6 +15,29 @@ function navTo(page) {
     if (el)  el.classList.toggle('active', p === page);
     if (nav) nav.classList.toggle('active', p === page);
   });
+  document.querySelectorAll('.mob-nav-item[data-nav]').forEach(function(btn) {
+    var key = btn.getAttribute('data-nav');
+    var isActive = key === 'more'
+      ? MOB_MORE_PAGES.indexOf(page) !== -1
+      : key === page;
+    btn.classList.toggle('active', isActive);
+  });
+  document.querySelectorAll('.mob-more-btn[data-more-nav]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-more-nav') === page);
+  });
+}
+
+function openMobMore() {
+  document.getElementById('mob-more-panel').classList.add('open');
+}
+
+function closeMobMore() {
+  document.getElementById('mob-more-panel').classList.remove('open');
+}
+
+function mobNavTo(page) {
+  closeMobMore();
+  navTo(page);
 }
 
 // ─── TOAST ──────────────────────────────────────────────────────────────────
