@@ -1,0 +1,190 @@
+/* ─────────────────────────────────────────────────
+   responsive.css — Mobile & tablet breakpoints
+   Tablet:  900px–769px  (sidebar begins to crowd)
+   Mobile:  ≤ 768px      (full mobile layout)
+   ───────────────────────────────────────────────── */
+
+/* ── MOBILE BOTTOM NAV — base styles (must come before media queries) ── */
+.mob-nav {
+  display: none; /* shown only inside @media below */
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6px 4px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
+}
+
+.mob-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: color 0.15s;
+  min-width: 52px;
+  position: relative;
+}
+.mob-nav-item svg {
+  width: 20px; height: 20px;
+  stroke: currentColor; fill: none; stroke-width: 1.8;
+  flex-shrink: 0;
+}
+.mob-nav-item:hover  { color: var(--text-2); }
+.mob-nav-item.active { color: var(--brand-red-1); }
+
+/* Notification pip on messages tab */
+.mob-nav-pip {
+  position: absolute;
+  top: 2px; right: 10px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--urgent-bright);
+  border: 1.5px solid var(--surface);
+}
+
+/* ── MOBILE MORE SHEET — base styles (must come before media queries) ── */
+.mob-more-panel {
+  display: none; /* shown via .open class */
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 14, 42, 0.45);
+  align-items: flex-end;
+}
+.mob-more-panel.open { display: flex; }
+
+.mob-more-sheet {
+  background: var(--surface);
+  width: 100%;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mob-more-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.mob-more-title { font-size: 15px; font-weight: 700; color: var(--text-1); }
+
+.mob-more-list { display: flex; flex-direction: column; padding: 6px 0; }
+
+.mob-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.mob-more-btn svg {
+  width: 18px; height: 18px;
+  stroke: var(--text-2); fill: none; stroke-width: 1.8;
+  flex-shrink: 0;
+}
+.mob-more-btn:hover            { background: var(--bg); }
+.mob-more-btn.active           { color: var(--brand-red-1); }
+.mob-more-btn.active svg       { stroke: var(--brand-red-1); }
+
+.mob-more-divider { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+
+
+/* ── TABLET (900px–769px) ── */
+@media (max-width: 900px) and (min-width: 769px) {
+  :root { --sidebar-w: 160px; }
+  .two-col { grid-template-columns: 1fr 280px; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+  .topbar-search input { font-size: 12px; }
+}
+
+/* ── MOBILE (≤ 768px) ── */
+@media (max-width: 768px) {
+
+  /* ── TOPBAR ── */
+  .topbar { padding: 0 12px; gap: 10px; }
+  .topbar-logo { min-width: 0; }
+  .topbar-search { display: none; }
+  .topbar-right { gap: 8px; }
+  /* Hide shortcuts that bypass the bottom nav with no clear way back */
+  .notif-btn { display: none; }
+  .avatar-btn { display: none; }
+  .topbar-right .btn-secondary { display: none; }
+
+  /* ── SIDEBAR → HIDDEN ── */
+  .sidebar { display: none; }
+
+  /* ── BOTTOM NAV → VISIBLE (overrides display:none above) ── */
+  .mob-nav { display: flex; }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 16px 12px calc(68px + env(safe-area-inset-bottom)); }
+
+  /* ── PAGE HEADER ── */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* ── LAYOUTS ── */
+  .two-col   { grid-template-columns: 1fr; }
+  .stat-row  { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .two-fields { grid-template-columns: 1fr; }
+
+  /* ── STAT CARDS ── */
+  .stat-card { padding: 12px; }
+  .stat-card-val { font-size: 22px; }
+
+  /* ── FILTER ROW ── */
+  .filter-row  { flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+  .filter-count { width: 100%; }
+
+  /* ── AVAILABILITY GRID ── */
+  .avail-grid {
+    grid-template-columns: 58px repeat(7, minmax(28px, 1fr));
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .avail-cell { height: 24px; }
+
+  /* ── MODALS ── */
+  .commit-modal {
+    width: 95vw;
+    max-width: 95vw;
+    max-height: 88vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin-top: auto;
+  }
+  .commit-panel { align-items: flex-end; }
+
+  /* ── TOAST ── */
+  .toast { left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+  /* ── OPP ITEMS ── */
+  .opp-actions { display: none; }
+  .opp-item { padding: 12px 14px; }
+
+  /* ── CARD ── */
+  .card-header { padding: 12px 14px 10px; }
+  .card-body   { padding: 14px; }
+}

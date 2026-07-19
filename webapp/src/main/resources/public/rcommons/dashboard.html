@@ -9,13 +9,14 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 <div class="app">
 
 <!-- ── TOPBAR ── -->
 <header class="topbar">
-  <div class="topbar-logo">
+  <div class="topbar-logo" onclick="navTo('dashboard')" style="cursor:pointer;">
     <div class="logo-mark" style="background:#950000;">
       <svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2c0 3-2 5-2 5s2 1.5 2 7"/><path d="M8 2c0 3 2 5 2 5s-2 1.5-2 7"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
     </div>
@@ -593,6 +594,70 @@
       <button class="btn btn-secondary" onclick="closeCommitBtn()">Cancel</button>
       <button class="btn btn-primary" onclick="confirmCommit()">Confirm commitment</button>
     </div>
+  </div>
+</div>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mob-nav">
+  <button class="mob-nav-item active" data-nav="dashboard" onclick="navTo('dashboard')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Home
+  </button>
+  <button class="mob-nav-item" data-nav="needs" onclick="navTo('needs')">
+    <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>
+    Needs
+  </button>
+  <button class="mob-nav-item" data-nav="map" onclick="navTo('map')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.5-8 13-8 13S4 15.5 4 10a8 8 0 0 1 8-8z"/></svg>
+    Map
+  </button>
+  <button class="mob-nav-item" data-nav="messages" onclick="navTo('messages')">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <div class="mob-nav-pip"></div>
+    R-Link
+  </button>
+  <button class="mob-nav-item" data-nav="more" onclick="openMobMore()">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    More
+  </button>
+</nav>
+
+<!-- ── MOBILE MORE SHEET ── -->
+<div class="mob-more-panel" id="mob-more-panel" onclick="if(event.target===this)closeMobMore()">
+  <div class="mob-more-sheet">
+    <div class="mob-more-header">
+      <div class="mob-more-title">Menu</div>
+      <button class="modal-close" onclick="closeMobMore()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <nav class="mob-more-list">
+      <button class="mob-more-btn" data-more-nav="opportunities" onclick="mobNavTo('opportunities')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+        Opportunities
+      </button>
+      <button class="mob-more-btn" data-more-nav="hours" onclick="mobNavTo('hours')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        My hours
+      </button>
+      <button class="mob-more-btn" data-more-nav="orgs" onclick="mobNavTo('orgs')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+        Organizations
+      </button>
+      <button class="mob-more-btn" data-more-nav="profile" onclick="mobNavTo('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        My profile
+      </button>
+      <button class="mob-more-btn" data-more-nav="background" onclick="mobNavTo('background')">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Background check
+      </button>
+      <hr class="mob-more-divider">
+      <button class="mob-more-btn" onclick="signOut()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </nav>
   </div>
 </div>
 
