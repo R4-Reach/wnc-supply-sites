@@ -8,6 +8,8 @@ var PAGES = ['dashboard','opportunities','needs','hours','map','messages','orgs'
 
 var MOB_MORE_PAGES = ['opportunities', 'hours', 'calendar', 'orgs', 'profile', 'background', 'org-create'];
 
+var MOB_MORE_PAGES = ['opportunities', 'hours', 'orgs', 'profile', 'background'];
+
 function navTo(page) {
   PAGES.forEach(function(p) {
     var el  = document.getElementById('page-' + p);

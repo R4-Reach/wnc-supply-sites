@@ -4,10 +4,6 @@
    Mobile:  ≤ 768px      (full mobile layout)
    ───────────────────────────────────────────────── */
 
-/* ── TOPBAR VIEW SWITCHER — mobile only (desktop uses the sidebar's copy;
-   see #view-switcher-mobile in dashboard.html) ── */
-#view-switcher-mobile { display: none; }
-
 /* ── MOBILE BOTTOM NAV — base styles (must come before media queries) ── */
 .mob-nav {
   display: none; /* shown only inside @media below */
@@ -139,11 +135,6 @@
 
   /* ── SIDEBAR → HIDDEN ── */
   .sidebar { display: none; }
-
-  /* ── TOPBAR VIEW SWITCHER → VISIBLE (only way to reach Org mode once the
-     sidebar is gone; a real account would just know its own type, but this
-     demo still needs a way to preview both) ── */
-  #view-switcher-mobile { display: flex; }
 
   /* ── BOTTOM NAV → VISIBLE (overrides display:none above) ── */
   .mob-nav { display: flex; }
