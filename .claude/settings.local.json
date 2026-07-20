@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I{} basename {})",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(cp \"/media/elryan/The Arxives/TAoTE/Documents/GitHub/wnc-supply-sites/docs/superpowers/specs/2026-07-19-rcommons-data-schema-design.md\" ~/Downloads/)",
+      "Read(//home/elryan/Downloads/**)",
+      "Bash(grep -iv \"references\\\\|create table\\\\|owner to\\\\|column item_status\\\\|alter table item_status add\\\\|drop\\\\|not null$\")",
+      "Bash(cp \"/media/elryan/The Arxives/TAoTE/Documents/GitHub/wnc-supply-sites/docs/superpowers/specs/2026-07-19-rcommons-current-state-audit.md\" ~/Downloads/)",
+      "Bash(cp \"/media/elryan/The Arxives/TAoTE/Documents/GitHub/wnc-supply-sites/docs/superpowers/specs/2026-07-19-org-dashboard-ops-core-design.md\" ~/Downloads/)",
+      "Bash(cp \"/media/elryan/The Arxives/TAoTE/Documents/GitHub/wnc-supply-sites/docs/superpowers/specs/2026-07-19-org-dashboard-fundraising-design.md\" \"/media/elryan/The Arxives/TAoTE/Documents/GitHub/wnc-supply-sites/docs/superpowers/specs/2026-07-19-org-dashboard-marketing-design.md\" ~/Downloads/)",
+      "Skill(artifact-design)",
+      "Artifact",
+      "Bash(xxd)",
+      "Skill(run)",
+      "Bash(command -v python3)",
+      "Bash(node --check js/org.js)",
+      "Bash(node --check js/nav.js)",
+      "Bash(awk '$1>1')",
+      "Bash(python3 -m http.server 8974)",
+      "Bash(curl -s -o /dev/null -w \"css/layout.css -> %{http_code}\\\\n\" \"http://localhost:8974/css/layout.css\")",
+      "Bash(kill %1)",
+      "Bash(rm -f /tmp/rcommons-static-server2.log)",
+      "Bash(node --check js/calendar.js)",
+      "Bash(python3 -c ' *)",
+      "Bash(node --check rcommons/js/availability.js)",
+      "Bash(node --check js/auth.js)",
+      "Bash(node --check js/profile.js)",
+      "Bash(node --check js/availability.js)"
+    ]
+  }
+}

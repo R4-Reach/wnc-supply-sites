@@ -4,9 +4,9 @@
 
 // ─── NAVIGATION ─────────────────────────────────────────────────────────────
 
-var PAGES = ['dashboard','opportunities','needs','hours','map','messages','orgs','profile','background'];
+var PAGES = ['dashboard','opportunities','needs','hours','map','messages','orgs','profile','background','org-shifts','org-create','calendar','org-calendar'];
 
-var MOB_MORE_PAGES = ['opportunities', 'hours', 'orgs', 'profile', 'background'];
+var MOB_MORE_PAGES = ['opportunities', 'hours', 'calendar', 'orgs', 'profile', 'background', 'org-create'];
 
 function navTo(page) {
   PAGES.forEach(function(p) {
@@ -48,10 +48,6 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 3500);
 }
-
-// ─── AVAILABILITY CELL TOGGLE ────────────────────────────────────────────────
-
-function toggleAvail(cell) { cell.classList.toggle('on'); }
 
 // ─── R-LINK LIVE PANEL ───────────────────────────────────────────────────────
 
