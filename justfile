@@ -21,20 +21,26 @@ setup:
     pre-commit install --hook-type pre-push --overwrite
 
 # Launch only the database + migrations (no webapp) on a known port. Use this when running the
-# webapp itself from your IDE against localhost:$WSS_DB_PORT.
+# webapp itself from your IDE (IntelliJ auto-build + Spring DevTools handle live reload) against
+# localhost:$WSS_DB_PORT.
 db:
     docker compose up database flyway
 
-_bootjar:
-    cd webapp && ./gradlew bootJar
-
-# Launch the full stack (database + migrations + webapp) locally on known ports. The webapp is
-# served at http://localhost:$WSS_APP_PORT and the database at localhost:$WSS_DB_PORT.
-up: _bootjar
-    docker compose up
-
-up-detached: _bootjar
-    docker compose up -d
+# Fast local dev loop: Postgres + migrations in docker, webapp via `bootRun` (Spring DevTools) on
+# http://localhost:$WSS_APP_PORT. A background continuous compile recompiles on every save;
+# DevTools then hot-restarts the app and refreshes the browser (install a LiveReload extension for
+# port 35729). Edits to Mustache templates / static assets reload without a restart. Ctrl-C stops
+# the webapp, the background compile, and the docker services.
+up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker compose up -d --wait database
+    docker compose run --rm flyway
+    cd webapp
+    ./gradlew -t classes &
+    compile_pid=$!
+    trap 'kill "$compile_pid" 2>/dev/null || true; docker compose -f ../docker-compose.yml down' EXIT
+    SPRING_PROFILES_ACTIVE=local SERVER_PORT="$WSS_APP_PORT" DB_URL="localhost:$WSS_DB_PORT" ./gradlew bootRun
 
 down:
     docker compose down -v

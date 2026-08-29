@@ -11,7 +11,7 @@ agent-facing summary — don't duplicate the README.
 - `just verify` — full check (`./gradlew check`); must be green before push.
 - `just format` — apply spotless formatting.
 - `just db` — start Postgres + Flyway migrations in docker (needed for tests).
-- `just up` — run the full stack locally.
+- `just up` — Postgres + migrations in docker, webapp via `bootRun` with live reload.
 
 A pre-push git hook runs `verify`. Java itself is driven from `webapp/` via
 `./gradlew` (e.g. `cd webapp && ./gradlew spotlessApply test`).

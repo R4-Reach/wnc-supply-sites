@@ -59,16 +59,22 @@ R-Commons is a volunteer-facing portal integrated into the app as static files s
 ### Quick Start - dockerized
 
 - install docker
+- install a Java 21 JDK (the webapp runs on the host via Gradle; docker only runs Postgres)
 - install [just](https://just.systems) (`brew install just` on Mac)
 - clone the code
 - cd to the project directory
-- run: `just up` (builds the app jar, then launches the database, migrations, and webapp)
+- run: `just up` (launches Postgres + migrations in docker, then runs the webapp with live reload)
 - access the webapp at http://localhost:8080
-- stop and clean up with `just down`
+- stop and clean up with `just down` (or Ctrl-C, which also tears down the docker services)
 - ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 just up`
 
-`just up` runs the webapp under the `local` Spring profile, which seeds a known
-admin login so you can sign in without the SMS password-setup flow:
+`just up` runs the webapp via `bootRun` with Spring DevTools: it recompiles on
+save (a background `gradle -t classes` watch), hot-restarts the app, and, with a
+LiveReload browser extension, auto-refreshes the page. Mustache template and
+static-asset edits reload without a restart.
+
+It runs the webapp under the `local` Spring profile, which seeds a known admin
+login so you can sign in without the SMS password-setup flow:
 
 - phone: `11111111111`
 - password: `wncstrong`
@@ -94,7 +100,7 @@ Run `just setup` to configure pre-commit to run on push.
 The database runs in docker via `docker-compose.yml` — no bare-metal postgres needed.
 
 - `just db` — start postgres + apply migrations (use when running the webapp from your IDE)
-- `just up` — start the full stack (database, migrations, and webapp) in docker
+- `just up` — start postgres + migrations in docker, then run the webapp on the host with live reload
 - `just down` — stop everything and remove the database volume (wipes local data)
 
 Database, user, and schema creation are handled automatically:

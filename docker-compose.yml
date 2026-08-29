@@ -29,22 +29,3 @@ services:
     depends_on:
       database:
         condition: service_healthy
-  app:
-    # Must match the build toolchain (Java 21); the jar is compiled with --enable-preview, whose
-    # class files are locked to their exact JDK major version and will not run on a newer runtime.
-    image: azul/zulu-openjdk:21-latest
-    volumes: [./webapp/build/libs/:/build/]
-    command: >
-      java --enable-preview -jar /build/supplies-database.jar
-    # Fixed host port for local `just up` (override with WSS_APP_PORT). The gradle test stack
-    # (`just verify`) sets WSS_APP_PORT=0 for an ephemeral port.
-    ports: ['${WSS_APP_PORT:-8080}:8080']
-    depends_on:
-      flyway:
-        condition: service_completed_successfully
-    environment:
-      - DB_URL=database:5432
-      - WEBHOOK_SECRET=secret
-      - DB_NAME=wnc_helene
-      # Local-only profile; seeds a known admin login (see README "Quick Start - dockerized").
-      - SPRING_PROFILES_ACTIVE=local
