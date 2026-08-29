@@ -1,6 +1,5 @@
 package com.vanatta.helene.supplies.database.driver;
 
-import com.google.gson.Gson;
 import com.vanatta.helene.supplies.database.util.TruncateString;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class Driver {
-  Long airtableId;
+  Long wssId;
   private String fullName;
   private String phone;
   private boolean active;
@@ -30,9 +29,5 @@ public class Driver {
 
   public String getAvailability() {
     return TruncateString.truncate(availability, 1000);
-  }
-
-  static Driver parseJson(String json) {
-    return new Gson().fromJson(json, Driver.class);
   }
 }

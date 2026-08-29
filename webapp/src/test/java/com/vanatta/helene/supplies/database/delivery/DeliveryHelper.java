@@ -9,19 +9,19 @@ import java.util.List;
 public class DeliveryHelper {
 
   static Delivery withDispatcherConfirmedDelivery() {
-    var update = DeliveryUpdate.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
-    DeliveryDao.upsert(jdbiTest, update);
-    ConfirmationDao.dispatcherConfirm(jdbiTest, update.getPublicUrlKey());
-    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, update.getPublicUrlKey()).orElseThrow();
+    var fixture = DeliveryFixture.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
+    fixture.store(jdbiTest);
+    ConfirmationDao.dispatcherConfirm(jdbiTest, fixture.getPublicUrlKey());
+    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, fixture.getPublicUrlKey()).orElseThrow();
   }
 
   static Delivery withConfirmedDelivery() {
-    var update = DeliveryUpdate.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
-    DeliveryDao.upsert(jdbiTest, update);
-    ConfirmationDao.dispatcherConfirm(jdbiTest, update.getPublicUrlKey());
+    var fixture = DeliveryFixture.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
+    fixture.store(jdbiTest);
+    ConfirmationDao.dispatcherConfirm(jdbiTest, fixture.getPublicUrlKey());
 
     Delivery delivery =
-        DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, update.getPublicUrlKey()).orElseThrow();
+        DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, fixture.getPublicUrlKey()).orElseThrow();
 
     delivery
         .getConfirmations()
@@ -36,21 +36,21 @@ public class DeliveryHelper {
   }
 
   public static Delivery withNewDelivery() {
-    var update = DeliveryUpdate.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
-    DeliveryDao.upsert(jdbiTest, update);
-    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, update.getPublicUrlKey()).orElseThrow();
+    var fixture = DeliveryFixture.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
+    fixture.store(jdbiTest);
+    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, fixture.getPublicUrlKey()).orElseThrow();
   }
 
   public static Delivery withNewDelivery(long fromSiteId, long toSiteId) {
     long fromSiteWssId = SiteDetailDao.lookupSiteById(jdbiTest, fromSiteId).getWssId();
     long toSiteWssId = SiteDetailDao.lookupSiteById(jdbiTest, toSiteId).getWssId();
 
-    var update =
-        DeliveryUpdate.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData()).toBuilder()
+    var fixture =
+        DeliveryFixture.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData()).toBuilder()
             .dropOffSiteWssId(List.of(toSiteWssId))
             .pickupSiteWssId(List.of(fromSiteWssId))
             .build();
-    DeliveryDao.upsert(jdbiTest, update);
-    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, update.getPublicUrlKey()).orElseThrow();
+    fixture.store(jdbiTest);
+    return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, fixture.getPublicUrlKey()).orElseThrow();
   }
 }

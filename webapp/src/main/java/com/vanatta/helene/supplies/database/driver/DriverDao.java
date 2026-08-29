@@ -1,12 +1,7 @@
 package com.vanatta.helene.supplies.database.driver;
 
-import com.google.gson.Gson;
 import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 
 public class DriverDao {
@@ -17,7 +12,7 @@ public class DriverDao {
             h.createQuery(
                     """
                     select
-                      airtable_id,
+                      wss_id,
                       name fullName,
                       phone,
                       active,
@@ -41,11 +36,11 @@ public class DriverDao {
             h.createUpdate(
                     """
             insert into driver(
-                  airtable_id, name, phone, location,
+                  wss_id, name, phone, location,
                   active, black_listed, license_plates,
                   comments, availability, can_lift_50lbs, pallet_capacity)
             values(
-               :airtableId,
+               :wssId,
                :name,
                :phone,
                :location,
@@ -56,7 +51,7 @@ public class DriverDao {
                :availability,
                :can_lift_50lbs,
                :pallet_capacity
-            ) on conflict(airtable_id) do update set
+            ) on conflict(wss_id) do update set
                name = :name,
                phone = :phone,
                location = :location,
@@ -68,7 +63,7 @@ public class DriverDao {
                can_lift_50lbs = :can_lift_50lbs,
                pallet_capacity = :pallet_capacity
             """)
-                .bind("airtableId", driver.getAirtableId())
+                .bind("wssId", driver.getWssId())
                 .bind("name", driver.getFullName())
                 .bind("phone", PhoneNumberUtil.removeNonNumeric(driver.getPhone()))
                 .bind("location", driver.getLocation())
@@ -79,53 +74,6 @@ public class DriverDao {
                 .bind("availability", driver.getAvailability())
                 .bind("can_lift_50lbs", driver.isCan_lift_50lbs())
                 .bind("pallet_capacity", driver.getPallet_capacity())
-                .execute());
-  }
-
-  @Builder
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Data
-  public static class DriverUpdate {
-    long airtableId;
-    String fieldName;
-    String newValue;
-
-    String columnToUpdate() {
-      return switch (fieldName) {
-        case "active" -> "active";
-        case "licensePlates" -> "license_plates";
-        case "blacklisted" -> "black_listed";
-        default -> throw new IllegalStateException("Unexpected value: " + fieldName);
-      };
-    }
-
-    Object getNewValue() {
-      return switch (fieldName) {
-        case "licensePlates" -> newValue;
-        case "active", "blacklisted" -> newValue != null;
-        default -> throw new IllegalStateException("Unexpected value: " + fieldName);
-      };
-    }
-
-    static DriverUpdate parseJson(String json) {
-      return new Gson().fromJson(json, DriverUpdate.class);
-    }
-  }
-
-  @SuppressWarnings("SqlSourceToSinkFlow")
-  static void update(Jdbi jdbi, DriverUpdate driverUpdate) {
-    jdbi.withHandle(
-        handle ->
-            handle
-                .createUpdate(
-                    String.format(
-                        """
-                      update driver set %s = :newValue, last_updated = now() where airtable_id = :airtableId
-                      """,
-                        driverUpdate.columnToUpdate()))
-                .bind("newValue", driverUpdate.getNewValue())
-                .bind("airtableId", driverUpdate.getAirtableId())
                 .execute());
   }
 

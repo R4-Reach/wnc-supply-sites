@@ -95,34 +95,20 @@ public class SiteDetailController {
       @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> userSites,
       @ModelAttribute(DeploymentAdvice.DEPLOYMENT_STATE_LIST) List<String> stateList,
       @RequestParam(required = false) Long id,
-      @RequestParam(required = false) Long airtableId,
       @RequestParam(required = false) Long wssId,
       HttpServletRequest request) {
     return siteDetail(
-        userSites, stateList, id, airtableId, wssId, cookieAuthenticator.isAuthenticated(request));
+        userSites, stateList, id, wssId, cookieAuthenticator.isAuthenticated(request));
   }
 
   // @VisibleForTesting
   public ModelAndView siteDetail(
-      List<Long> userSites,
-      List<String> stateList,
-      Long id,
-      Long airtableId,
-      Long wssId,
-      boolean isLoggedIn) {
-    if (id == null && airtableId == null && wssId == null) {
+      List<Long> userSites, List<String> stateList, Long id, Long wssId, boolean isLoggedIn) {
+    if (id == null && wssId == null) {
       return new ModelAndView("redirect:" + SuppliesController.PATH_SUPPLY_SEARCH);
     }
 
     if (id == null) {
-      if (airtableId != null) {
-        id = SiteDetailDao.lookupSiteIdByAirtableId(jdbi, airtableId);
-        if (id == null) {
-          log.warn("Invalid airtable id received for site detail lookup: {}", airtableId);
-          return new ModelAndView("redirect:" + SuppliesController.PATH_SUPPLY_SEARCH);
-        }
-      }
-
       if (wssId != null) {
         id = SiteDetailDao.lookupSiteIdByWssId(jdbi, wssId);
         if (id == null) {

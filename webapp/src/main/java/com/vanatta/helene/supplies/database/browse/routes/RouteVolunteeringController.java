@@ -42,7 +42,6 @@ public class RouteVolunteeringController {
     List<Long> itemList;
     String fromDate;
     String toDate;
-    long driverAirtableId;
     String driverName;
   }
 }

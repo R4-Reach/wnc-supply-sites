@@ -17,7 +17,6 @@ import org.jdbi.v3.core.Jdbi;
 public class TestConfiguration {
 
   // these values come from TestData.sql
-  public static final long SITE1_AIRTABLE_ID = -200;
   public static final long SITE1_WSS_ID = -10;
   public static final long SITE2_WSS_ID = -20;
   public static final long WATER_WSS_ID = -40;
@@ -164,11 +163,11 @@ public class TestConfiguration {
                 .execute());
   }
 
-  public static Driver buildDriver(long airtableId, String phoneNumber) {
+  public static Driver buildDriver(long wssId, String phoneNumber) {
     return Driver.builder()
         .location("city")
         .active(true)
-        .airtableId(airtableId)
+        .wssId(wssId)
         .licensePlates("WXC444")
         .fullName("driver")
         .phone(phoneNumber)

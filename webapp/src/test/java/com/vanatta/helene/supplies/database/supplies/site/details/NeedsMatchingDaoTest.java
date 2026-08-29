@@ -7,16 +7,24 @@ import com.vanatta.helene.supplies.database.data.ItemStatus;
 import com.vanatta.helene.supplies.database.supplies.site.details.NeedsMatchingDao.NeedsMatchingDbResult;
 import com.vanatta.helene.supplies.database.supplies.site.details.NeedsMatchingDao.NeedsMatchingResult.Item;
 import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class NeedsMatchingDaoTest {
+
+  static long site1Id;
+
+  @BeforeAll
+  static void setUp() {
+    TestConfiguration.setupDatabase();
+    site1Id = TestConfiguration.getSiteId("site1");
+  }
 
   /** Very quick test to make sure the needs-query works. */
   @Test
   void needsQueryRuns() {
     var result =
-        NeedsMatchingDao.execute(
-            TestConfiguration.jdbiTest, TestConfiguration.SITE1_AIRTABLE_ID, List.of("NC"));
+        NeedsMatchingDao.executeByInternalId(TestConfiguration.jdbiTest, site1Id, List.of("NC"));
 
     assertThat(result).isNotNull();
 

@@ -7,7 +7,7 @@ import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.TestConfiguration.ItemResult;
 import com.vanatta.helene.supplies.database.data.ItemStatus;
 import com.vanatta.helene.supplies.database.delivery.DeliveryDao;
-import com.vanatta.helene.supplies.database.delivery.DeliveryUpdate;
+import com.vanatta.helene.supplies.database.delivery.DeliveryFixture;
 import com.vanatta.helene.supplies.database.manage.inventory.InventoryDao;
 import com.vanatta.helene.supplies.database.manage.inventory.ItemTagDao;
 import com.vanatta.helene.supplies.database.supplies.site.details.SiteDetailDao;
@@ -83,24 +83,22 @@ class MergeItemsControllerTest {
     long site3WssId = SiteDetailDao.lookupSiteById(jdbiTest, site2Id).getWssId();
 
     InventoryDao.updateSiteItemAudit(jdbiTest, site2Id, itemB.getName(), "old", "new");
-    DeliveryDao.upsert(
-        jdbiTest,
-        DeliveryUpdate.builder()
-            .deliveryId(-3001L)
-            .dispatcherCode("ZAQW")
-            .publicUrlKey("ZAQW")
-            .dropOffSiteWssId(List.of(site2WssId))
-            .itemListWssIds(List.of(itemA.getWssId(), itemB.getWssId()))
-            .build());
-    DeliveryDao.upsert(
-        jdbiTest,
-        DeliveryUpdate.builder()
-            .deliveryId(-3002L)
-            .dispatcherCode("ZAQZ")
-            .publicUrlKey("ZAQZ")
-            .dropOffSiteWssId(List.of(site3WssId))
-            .itemListWssIds(List.of(itemB.getWssId(), itemC.getWssId()))
-            .build());
+    DeliveryFixture.builder()
+        .deliveryId(-3001L)
+        .dispatcherCode("ZAQW")
+        .publicUrlKey("ZAQW")
+        .dropOffSiteWssId(List.of(site2WssId))
+        .itemListWssIds(List.of(itemA.getWssId(), itemB.getWssId()))
+        .build()
+        .store(jdbiTest);
+    DeliveryFixture.builder()
+        .deliveryId(-3002L)
+        .dispatcherCode("ZAQZ")
+        .publicUrlKey("ZAQZ")
+        .dropOffSiteWssId(List.of(site3WssId))
+        .itemListWssIds(List.of(itemB.getWssId(), itemC.getWssId()))
+        .build()
+        .store(jdbiTest);
 
     new MergeItemsController(jdbiTest)
         .doMerge(

@@ -136,21 +136,6 @@ public class NeedsMatchingDao {
     Double distanceMiles;
   }
 
-  public static List<NeedsMatchingResult> execute(
-      Jdbi jdbi, long airtableId, List<String> siteList) {
-    String query = "select id from site where airtable_id = :airtableId";
-    long dbId =
-        jdbi.withHandle(
-                handle ->
-                    handle
-                        .createQuery(query)
-                        .bind("airtableId", airtableId)
-                        .mapTo(Long.class)
-                        .findOne())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid ID: " + airtableId));
-    return executeByInternalId(jdbi, dbId, siteList);
-  }
-
   public static List<NeedsMatchingResult> executeByInternalId(
       Jdbi jdbi, long siteId, List<String> stateList) {
     String query =

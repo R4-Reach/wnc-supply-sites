@@ -18,15 +18,6 @@ class SiteDetailDaoTest {
 
   @Test
   @SuppressWarnings("DataFlowIssue")
-  void lookupIdByAirtableId() {
-    long result =
-        SiteDetailDao.lookupSiteIdByAirtableId(
-            TestConfiguration.jdbiTest, TestConfiguration.SITE1_AIRTABLE_ID);
-    assertThat(result).isEqualTo(site1Id);
-  }
-
-  @Test
-  @SuppressWarnings("DataFlowIssue")
   void lookupIdByWssId() {
     long result =
         SiteDetailDao.lookupSiteIdByWssId(

@@ -1,6 +1,5 @@
 package com.vanatta.helene.supplies.database.delivery;
 
-import com.vanatta.helene.supplies.database.util.SecretCodeGenerator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,171 +11,6 @@ import org.jdbi.v3.core.Jdbi;
 
 @Slf4j
 public class DeliveryDao {
-
-  public static void upsert(Jdbi jdbi, DeliveryUpdate deliveryUpdate) {
-    String upsert =
-        """
-        insert into delivery(
-          from_site_id, to_site_id, delivery_status, target_delivery_date,
-          dispatcher_name, dispatcher_number, driver_name, driver_number,
-          driver_license_plates, airtable_id, dispatcher_notes, public_url_key,
-          dispatch_code, driver_code,
-          pickup_site_name, pickup_contact_name, pickup_contact_phone,
-          pickup_hours, pickup_address, pickup_city, pickup_state,
-          dropoff_site_name, dropoff_contact_name, dropoff_contact_phone,
-          dropoff_hours, dropoff_address, dropoff_city, dropoff_state)
-        values(
-          (select id from site where wss_id = :fromSiteWssId),
-          (select id from site where wss_id = :toSiteWssId),
-          :deliveryStatus,
-          to_date(:targetDeliveryDate, 'YYYY-MM-DD'),
-          :dispatcherName,
-          :dispatcherNumber,
-          :driverName,
-          :driverNumber,
-          :driverLicensePlateNumbers,
-          :airtableId,
-          :dispatcherNotes,
-          :publicUrlKey,
-          :dispatchCode,
-          :driverCode,
-          :pickupSiteName,
-          :pickupContactName,
-          :pickupContactPhone,
-          :pickupHours,
-          :pickupAddress,
-          :pickupCity,
-          :pickupState,
-          :dropoffSiteName,
-          :dropoffContactName,
-          :dropoffContactPhone,
-          :dropoffHours,
-          :dropoffAddress,
-          :dropoffCity,
-          :dropoffState
-        ) on conflict(airtable_id) do update set
-          from_site_id = (select id from site where wss_id = :fromSiteWssId),
-          to_site_id = (select id from site where wss_id = :toSiteWssId),
-          delivery_status = :deliveryStatus,
-          target_delivery_date = to_date(:targetDeliveryDate, 'YYYY-MM-DD'), -- 2024-12-13 SELECT TO_DATE('20170103','YYYYMMDD');
-          dispatcher_name = :dispatcherName,
-          dispatcher_number = :dispatcherNumber,
-          driver_name = :driverName,
-          driver_number = :driverNumber,
-          driver_license_plates = :driverLicensePlateNumbers,
-          dispatcher_notes = :dispatcherNotes,
-          dispatch_code = :dispatchCode,
-          pickup_site_name = :pickupSiteName,
-          pickup_contact_name = :pickupContactName,
-          pickup_contact_phone = :pickupContactPhone,
-          pickup_hours = :pickupHours,
-          pickup_address = :pickupAddress,
-          pickup_city = :pickupCity,
-          pickup_state = :pickupState,
-          dropoff_site_name = :dropoffSiteName,
-          dropoff_contact_name = :dropoffContactName,
-          dropoff_contact_phone = :dropoffContactPhone,
-          dropoff_hours = :dropoffHours,
-          dropoff_address = :dropoffAddress,
-          dropoff_city = :dropoffCity,
-          dropoff_state = :dropoffState
-        """;
-    jdbi.withHandle(
-        handle ->
-            handle
-                .createUpdate(upsert)
-                .bind("fromSiteWssId", firstValue(deliveryUpdate.getPickupSiteWssId()))
-                .bind("toSiteWssId", firstValue(deliveryUpdate.getDropOffSiteWssId()))
-                .bind("deliveryStatus", deliveryUpdate.getDeliveryStatus())
-                .bind("targetDeliveryDate", deliveryUpdate.getTargetDeliveryDate())
-                .bind("dispatcherName", firstValue(deliveryUpdate.getDispatcherName()))
-                .bind("dispatcherNumber", firstValue(deliveryUpdate.getDispatcherNumber()))
-                .bind("driverName", firstValue(deliveryUpdate.getDriverName()))
-                .bind("driverNumber", firstValue(deliveryUpdate.getDriverNumber()))
-                .bind(
-                    "driverLicensePlateNumbers",
-                    firstValue(deliveryUpdate.getLicensePlateNumbers()))
-                .bind("airtableId", deliveryUpdate.getDeliveryId())
-                .bind("dispatcherNotes", deliveryUpdate.getDispatcherNotes())
-                .bind("dispatchCode", deliveryUpdate.getDispatcherCode())
-                .bind("driverCode", SecretCodeGenerator.generateCode())
-                .bind("publicUrlKey", deliveryUpdate.getPublicUrlKey())
-                .bind("pickupSiteName", firstValue(deliveryUpdate.getPickupSiteName()))
-                .bind("pickupContactName", firstValue(deliveryUpdate.getPickupContactName()))
-                .bind("pickupContactPhone", firstValue(deliveryUpdate.getPickupContactPhone()))
-                .bind("pickupHours", firstValue(deliveryUpdate.getPickupHours()))
-                .bind("pickupAddress", firstValue(deliveryUpdate.getPickupAddress()))
-                .bind("pickupCity", firstValue(deliveryUpdate.getPickupCity()))
-                .bind("pickupState", firstValue(deliveryUpdate.getPickupState()))
-                .bind("dropoffSiteName", firstValue(deliveryUpdate.getDropoffSiteName()))
-                .bind("dropoffContactName", firstValue(deliveryUpdate.getDropoffContactName()))
-                .bind("dropoffContactPhone", firstValue(deliveryUpdate.getDropoffContactPhone()))
-                .bind("dropoffHours", firstValue(deliveryUpdate.getDropoffHours()))
-                .bind("dropoffAddress", firstValue(deliveryUpdate.getDropoffAddress()))
-                .bind("dropoffCity", firstValue(deliveryUpdate.getDropoffCity()))
-                .bind("dropoffState", firstValue(deliveryUpdate.getDropoffState()))
-                .execute());
-
-    String deletePreviousItems =
-        """
-      delete from delivery_item where delivery_id =
-        (select id from delivery where airtable_id = :deliveryId)
-    """;
-
-    jdbi.withHandle(
-        handle ->
-            handle
-                .createUpdate(deletePreviousItems)
-                .bind("deliveryId", deliveryUpdate.getDeliveryId())
-                .execute());
-
-    // insert all the latest items
-    String insert =
-        """
-    insert into delivery_item(delivery_id, item_id)
-    values(
-      (select id from delivery where airtable_id = :airtableId),
-      (select id from item where wss_id = :itemWssId)
-    )
-    """;
-    List<Long> itemIds = deliveryUpdate.getItemListWssIds();
-    if (itemIds != null) {
-      for (long itemWssId : itemIds) {
-        jdbi.withHandle(
-            handle ->
-                handle
-                    .createUpdate(insert)
-                    .bind("airtableId", deliveryUpdate.getDeliveryId())
-                    .bind("itemWssId", itemWssId)
-                    .execute());
-      }
-    }
-    // insert items that are provided by name (sometimes items won't have a WSS-ID)
-    String insertByName =
-        """
-    insert into delivery_item(delivery_id, item_name)
-    values(
-      (select id from delivery where airtable_id = :airtableId),
-      :itemName
-    )
-    """;
-    List<String> itemNames = deliveryUpdate.getItemList();
-    if (itemNames != null) {
-      for (String itemName : itemNames) {
-        jdbi.withHandle(
-            handle ->
-                handle
-                    .createUpdate(insertByName)
-                    .bind("airtableId", deliveryUpdate.getDeliveryId())
-                    .bind("itemName", itemName)
-                    .execute());
-      }
-    }
-  }
-
-  private static <T> T firstValue(List<T> input) {
-    return input == null || input.isEmpty() ? null : input.getFirst();
-  }
 
   public static void updateDeliveryStatus(
       Jdbi jdbi, String publicKey, DeliveryStatus deliveryStatus) {
@@ -273,7 +107,7 @@ public class DeliveryDao {
         String.format(
             """
     select
-      d.airtable_id deliveryId,
+      d.wss_id deliveryId,
       d.public_url_key publicUrlKey,
       d.delivery_status deliveryStatus,
       d.target_delivery_date targetDeliveryDate,
@@ -337,12 +171,12 @@ public class DeliveryDao {
         i.name
       from delivery_item di
       join item i on i.id = di.item_id
-      where di.delivery_id = (select id from delivery where airtable_id = :deliveryId)
+      where di.delivery_id = (select id from delivery where wss_id = :deliveryId)
       union
       select
         di.item_name name
       from delivery_item di
-      where di.delivery_id = (select id from delivery where airtable_id = :deliveryId)
+      where di.delivery_id = (select id from delivery where wss_id = :deliveryId)
       ) A
       order by A.name;
       """;

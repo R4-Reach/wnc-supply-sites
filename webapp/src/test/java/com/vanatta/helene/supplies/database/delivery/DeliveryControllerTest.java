@@ -101,7 +101,7 @@ class DeliveryControllerTest {
   @Test
   void showConfirmationButton_forDispatcher() {
     var input = readTestData();
-    DeliveryDao.upsert(jdbiTest, input);
+    input.store(jdbiTest);
     assertThat(
             DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, input.publicUrlKey)
                 .orElseThrow()
@@ -125,7 +125,7 @@ class DeliveryControllerTest {
   @Test
   void showConfirmationButton_forDispatcher_doesNotShowWithIncorrectCode() {
     var input = readTestData();
-    DeliveryDao.upsert(jdbiTest, input);
+    input.store(jdbiTest);
 
     // incorrect dispatchCode
     var response = deliveryController.showDeliveryDetailPage(input.getPublicUrlKey(), "____");
@@ -157,8 +157,8 @@ class DeliveryControllerTest {
   @MethodSource
   @ParameterizedTest
   void doNotShowConfirmationButton_deliveryNotReadyForDispatcherConfirmation(
-      DeliveryUpdate deliveryUpdate) {
-    DeliveryDao.upsert(jdbiTest, deliveryUpdate);
+      DeliveryFixture deliveryUpdate) {
+    deliveryUpdate.store(jdbiTest);
 
     // validate incoming test data is "missing data", indicating we are not ready to start
     // confirmation process.
@@ -219,7 +219,7 @@ class DeliveryControllerTest {
    * Variety of cases where a delivery is not yet "ready"for and a dispatcher (missing data) cannot
    * start the confirmation process yet.
    */
-  static List<DeliveryUpdate>
+  static List<DeliveryFixture>
       doNotShowConfirmationButton_deliveryNotReadyForDispatcherConfirmation() {
     return List.of(
         readTestData().toBuilder().targetDeliveryDate(null).build(),
@@ -230,8 +230,8 @@ class DeliveryControllerTest {
         readTestData().toBuilder().itemList(List.of()).itemListWssIds(List.of()).build());
   }
 
-  private static DeliveryUpdate readTestData() {
-    return DeliveryUpdate.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
+  private static DeliveryFixture readTestData() {
+    return DeliveryFixture.parseJson(TestDataFile.DELIVERY_DATA_JSON.readData());
   }
 
   /**
@@ -241,7 +241,7 @@ class DeliveryControllerTest {
   @Test
   void dispatcherHasConfirmed() {
     var deliveryUpdate = readTestData();
-    DeliveryDao.upsert(jdbiTest, deliveryUpdate);
+    deliveryUpdate.store(jdbiTest);
     ConfirmationDao.dispatcherConfirm(jdbiTest, deliveryUpdate.getPublicUrlKey());
 
     var response =

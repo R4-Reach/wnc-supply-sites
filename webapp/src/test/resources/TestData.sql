@@ -45,7 +45,6 @@ insert into site(
   site_type_id,
   accepting_donations,
   active,
-  airtable_id,
   hours,
   facebook,
   wss_id,
@@ -65,7 +64,6 @@ values (
         (select id from site_type where name = 'Distribution Center'),
         true,
         true ,
-        -200,
         'our hours',
         'fb url',
         -10,
@@ -94,7 +92,7 @@ insert into site(name, address, city, county_id, active, site_type_id, max_suppl
 
 -- create a delivery from site2 to site3
 insert into delivery(
-  airtable_id, from_site_id, to_site_id,
+  wss_id, from_site_id, to_site_id,
   delivery_status, target_delivery_date, dispatcher_name,
   dispatcher_number, driver_name, driver_number,
   driver_license_plates, public_url_key, dispatch_code, driver_code)
@@ -123,7 +121,7 @@ insert into site(name, address, city, county_id, site_type_id, max_supply_load_i
 );
 -- create a delivery from site3 to site4
 insert into delivery(
-  airtable_id, from_site_id, to_site_id,
+  wss_id, from_site_id, to_site_id,
   delivery_status, target_delivery_date, dispatcher_name,
   dispatcher_number, driver_name, driver_number,
   driver_license_plates, public_url_key, dispatch_code, driver_code)
@@ -147,7 +145,7 @@ values(
 -- create a delivery from site4 to site3
 -- this is a  minimal 'data', everything that can be null should be null
 insert into delivery(
-  airtable_id, from_site_id, to_site_id, public_url_key, dispatch_code, driver_code)
+  wss_id, from_site_id, to_site_id, public_url_key, dispatch_code, driver_code)
 values(
         -3,
         (select id from site where name = 'site3'),

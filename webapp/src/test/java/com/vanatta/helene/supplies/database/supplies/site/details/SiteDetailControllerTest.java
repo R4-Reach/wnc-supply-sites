@@ -5,8 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.auth.CookieAuthenticator;
-import com.vanatta.helene.supplies.database.delivery.DeliveryDao;
-import com.vanatta.helene.supplies.database.delivery.DeliveryUpdate;
+import com.vanatta.helene.supplies.database.delivery.DeliveryFixture;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -24,8 +23,7 @@ class SiteDetailControllerTest {
     long site1Id = TestConfiguration.getSiteId("site1");
 
     var model =
-        siteDetailController.siteDetail(
-            List.of(site1Id), List.of("NC", "TN"), site1Id, null, null, true);
+        siteDetailController.siteDetail(List.of(site1Id), List.of("NC", "TN"), site1Id, null, true);
 
     assertThat(model.getModelMap().keySet())
         .containsAll(
@@ -39,15 +37,14 @@ class SiteDetailControllerTest {
     long siteId = TestConfiguration.getSiteId(site);
     long wssId = SiteDetailDao.lookupSiteById(jdbiTest, siteId).getWssId();
 
-    DeliveryDao.upsert(
-        jdbiTest,
-        DeliveryUpdate.builder()
-            .deliveryId(-800L)
-            .dropOffSiteWssId(List.of(wssId))
-            .publicUrlKey("keyA")
-            .dispatcherCode("DZAA")
-            .build());
+    DeliveryFixture.builder()
+        .deliveryId(-800L)
+        .dropOffSiteWssId(List.of(wssId))
+        .publicUrlKey("keyA")
+        .dispatcherCode("DZAA")
+        .build()
+        .store(jdbiTest);
 
-    siteDetailController.siteDetail(List.of(siteId), List.of("NC"), siteId, null, null, true);
+    siteDetailController.siteDetail(List.of(siteId), List.of("NC"), siteId, null, true);
   }
 }
