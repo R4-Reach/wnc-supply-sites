@@ -19,8 +19,9 @@ See the [ops-docs](docs/ops.md)
 - install intellij
 - install Java 21 (`brew install --cask temurin@21` on Mac)
 - install docker
+- install [just](https://just.systems) (`brew install just` on Mac)
 - right click the webapp/build.gradle file & select 'link project'
-- start the database (postgres + migrations, in docker): `make db`
+- start the database (postgres + migrations, in docker): `just db`
 - Run `SuppliesDatabaseApplication.java`
   - in run configuration, set the environment variable: `WEBHOOK_SECRET=secret`
   - in run configuration, set the environment variable: `DEFAULT_DEPLOYMENT_ENABLED=true`
@@ -43,16 +44,17 @@ R-Commons is a volunteer-facing portal integrated into the app as static files s
 ### Quick Start - dockerized
 
 - install docker
+- install [just](https://just.systems) (`brew install just` on Mac)
 - clone the code
 - cd to the project directory
-- run: `make up` (builds the app jar, then launches the database, migrations, and webapp)
+- run: `just up` (builds the app jar, then launches the database, migrations, and webapp)
 - access the webapp at http://localhost:8080
-- stop and clean up with `make down`
-- ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 make up`
+- stop and clean up with `just down`
+- ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 just up`
 
 ### Pre-commit
 
-Run `make setup` to configure pre-commit to run on push.
+Run `just setup` to configure pre-commit to run on push.
 
 ### Branching Strategy & Workflow
 
@@ -66,9 +68,9 @@ Run `make setup` to configure pre-commit to run on push.
 
 The database runs in docker via `docker-compose.yml` — no bare-metal postgres needed.
 
-- `make db` — start postgres + apply migrations (use when running the webapp from your IDE)
-- `make up` — start the full stack (database, migrations, and webapp) in docker
-- `make down` — stop everything and remove the database volume (wipes local data)
+- `just db` — start postgres + apply migrations (use when running the webapp from your IDE)
+- `just up` — start the full stack (database, migrations, and webapp) in docker
+- `just down` — stop everything and remove the database volume (wipes local data)
 
 Database, user, and schema creation are handled automatically:
 - `./.docker-compose/database/01-init.sql` creates the `wnc_helene` database and user on first
@@ -76,7 +78,7 @@ Database, user, and schema creation are handled automatically:
 - the `flyway` compose service applies all `schema/V*.sql` migrations to `wnc_helene`
   (the database the app and unit tests use locally).
 
-To recreate the database from scratch, run `make down` (removes the volume) then `make db`.
+To recreate the database from scratch, run `just down` (removes the volume) then `just db`.
 
 The default ports are `5432` (database) and `8080` (webapp); override with `WSS_DB_PORT` /
 `WSS_APP_PORT`.

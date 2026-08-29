@@ -90,7 +90,7 @@ https://github.com/DanVanAtta/wnc-supply-sites/tree/master/schema
 
 Create a new file in there and put the SQL commands in there.
 
-Then restart the local stack (`make db` or `make up`). The `flyway` compose service applies all
+Then restart the local stack (`just db` or `just up`). The `flyway` compose service applies all
 new migrations to your local database "wnc_helene" on startup.
 
 In production, flyway is automatically run as part of the 'redeploy' scripts.

@@ -122,7 +122,7 @@ dockerCompose {
 //	useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1, default is true. If set to true, `dockerExecutable compose` is used for execution, so executable property is ignored.
 //	dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
 	dockerComposeWorkingDirectory = project.file('../') // /path/where/docker-compose/is/invoked/from')
-	// Local `make up` publishes fixed ports (5432/8080); the test stack must not collide with a
+	// Local `just up` publishes fixed ports (5432/8080); the test stack must not collide with a
 	// running local stack, so publish ephemeral host ports (0 -> OS-assigned) for the tests.
 	environment.put 'WSS_DB_PORT', '0'
 	environment.put 'WSS_APP_PORT', '0'
