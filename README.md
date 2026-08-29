@@ -67,6 +67,16 @@ R-Commons is a volunteer-facing portal integrated into the app as static files s
 - stop and clean up with `just down`
 - ports are overridable, e.g. `WSS_APP_PORT=9090 WSS_DB_PORT=5433 just up`
 
+`just up` runs the webapp under the `local` Spring profile, which seeds a known
+admin login so you can sign in without the SMS password-setup flow:
+
+- phone: `11111111111`
+- password: `wncstrong`
+- role: `DATA_ADMIN` (god mode)
+
+This login only exists under the `local` profile and is never present in deployed
+environments.
+
 ### Pre-commit
 
 Run `just setup` to configure pre-commit to run on push.

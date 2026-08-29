@@ -46,3 +46,5 @@ services:
       - DB_URL=database:5432
       - WEBHOOK_SECRET=secret
       - DB_NAME=wnc_helene
+      # Local-only profile; seeds a known admin login (see README "Quick Start - dockerized").
+      - SPRING_PROFILES_ACTIVE=local
