@@ -53,7 +53,7 @@ function doLogin() {
   if (saved) {
     try {
       var p = JSON.parse(saved);
-      if (p.classes && p.classes.length > 0) { window.location.href = 'dashboard.html'; return; }
+      if (p.classes && p.classes.length > 0) { window.location.href = '/rcommons/dashboard'; return; }
     } catch (e) {}
   }
 
@@ -177,7 +177,7 @@ function finishOnboarding() {
   goToScreen('screen-done');
 }
 
-function goToDashboard() { window.location.href = 'dashboard.html'; }
+function goToDashboard() { window.location.href = '/rcommons/dashboard'; }
 
 // ─── BOOT ───────────────────────────────────────────
 // Redirect to dashboard if already onboarded
@@ -187,7 +187,7 @@ function goToDashboard() { window.location.href = 'dashboard.html'; }
   if (saved) {
     try {
       var p = JSON.parse(saved);
-      if (p.classes && p.classes.length > 0) { window.location.href = 'dashboard.html'; }
+      if (p.classes && p.classes.length > 0) { window.location.href = '/rcommons/dashboard'; }
     } catch (e) {}
   }
 })();

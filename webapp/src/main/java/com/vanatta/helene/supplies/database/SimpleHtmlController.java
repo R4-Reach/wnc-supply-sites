@@ -91,4 +91,20 @@ public class SimpleHtmlController {
     params.put("contactUsLink", CONTACT_US_LINK);
     return new ModelAndView("registration/registration", params);
   }
+
+  /**
+   * R-Commons volunteer portal onboarding page. Content is static; rendered for the shared header.
+   */
+  @GetMapping("/rcommons/onboarding")
+  ModelAndView showVolunteerOnboardingPage() {
+    return new ModelAndView("rcommons/onboarding");
+  }
+
+  /**
+   * R-Commons volunteer portal dashboard page. Content is static; rendered for the shared header.
+   */
+  @GetMapping("/rcommons/dashboard")
+  ModelAndView showVolunteerDashboardPage() {
+    return new ModelAndView("rcommons/dashboard");
+  }
 }

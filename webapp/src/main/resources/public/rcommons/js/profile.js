@@ -208,6 +208,6 @@ function updateItemsContributed() {
 
 function signOut() {
   apiSignOut().then(function() {
-    window.location.href = 'onboarding.html';
+    window.location.href = '/rcommons/onboarding';
   });
 }

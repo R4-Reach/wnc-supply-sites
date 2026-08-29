@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * API endpoints for the R-Commons volunteer portal (served as static files from public/rcommons/).
+ * API endpoints for the R-Commons volunteer portal. The portal's pages are Mustache views rendered
+ * by {@link com.vanatta.helene.supplies.database.SimpleHtmlController}.
  */
 @RestController
 @AllArgsConstructor
