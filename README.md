@@ -8,6 +8,21 @@ This allows supply sites to indicate their needs, urgent & surplus
 items. Ultimately the goal is to allow for supply items to be redistributed
 from sites that have too much, to those that need those items.
 
+## Activating beta features
+
+Some in-development features are hidden behind opt-in browser cookies, so they
+can ship to production while only being visible to people who opt in. To enable
+them, paste the matching one-line command into your browser's address bar and
+press enter — it sets the cookie and reloads the page.
+
+| Feature | Command |
+| --- | --- |
+| Volunteer Portal button (homepage) | `javascript:document.cookie="beta-volunteer=true;path=/";location.reload()` |
+
+To turn a feature back off, clear the cookie in your browser's dev tools, or
+paste the same command with an expired date, e.g.
+`javascript:document.cookie="beta-volunteer=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT";location.reload()`.
+
 ## Ops
 
 See the [ops-docs](docs/ops.md)

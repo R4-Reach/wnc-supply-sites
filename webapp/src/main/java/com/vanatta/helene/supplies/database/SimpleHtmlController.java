@@ -5,6 +5,7 @@ import com.vanatta.helene.supplies.database.auth.UserRole;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,9 @@ public class SimpleHtmlController {
 
   private static final String CONTACT_US_LINK = "https://form.jotform.com/243608573773062";
 
+  /** Cookie that opts a browser in to in-development ("beta") features. */
+  private static final String BETA_VOLUNTEER_COOKIE = "beta-volunteer";
+
   @GetMapping("/")
   public ModelAndView home(
       HttpServletRequest request, @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles) {
@@ -32,9 +36,20 @@ public class SimpleHtmlController {
     params.put("isAuthenticated", roles.contains(UserRole.AUTHORIZED));
     params.put("isDriver", roles.contains(UserRole.DRIVER));
     params.put("canManageSites", UserRole.canManageSites(roles));
+    params.put("betaVolunteer", hasCookie(request, BETA_VOLUNTEER_COOKIE, "true"));
     params.put("siteDescription", "Disaster Relief");
     params.put("contactUsLink", CONTACT_US_LINK);
     return new ModelAndView("home/home", params);
+  }
+
+  /** Returns true if the request carries a cookie with the given name and value. */
+  private static boolean hasCookie(HttpServletRequest request, String name, String value) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies == null) {
+      return false;
+    }
+    return Arrays.stream(cookies)
+        .anyMatch(cookie -> name.equals(cookie.getName()) && value.equals(cookie.getValue()));
   }
 
   @GetMapping("/log-out")
