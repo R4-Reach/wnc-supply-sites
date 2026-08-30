@@ -1,12 +1,23 @@
-<tr class="tag-item-row" data-item-name="{{itemName}}">
-  <td class="tag-item-name">{{itemName}}</td>
+<tr class="tag-item-row{{#untagged}} is-untagged{{/untagged}}" data-item-id="{{itemId}}" data-item-name="{{itemName}}" data-untagged="{{untagged}}">
+  <td class="tag-item-name">
+    {{itemName}}
+    {{#untagged}}<span class="tag-untagged-badge">untagged</span>{{/untagged}}
+  </td>
   <td class="tag-item-tags">
     {{#tags}}
-    <button type="button" class="chicklet {{#assigned}}on{{/assigned}}"
+    <button type="button"
+            id="chick-{{itemId}}-{{tagId}}"
+            class="chicklet {{#assigned}}on{{/assigned}}"
+            aria-pressed="{{#assigned}}true{{/assigned}}{{^assigned}}false{{/assigned}}"
+            aria-label="{{tagName}} — {{itemName}}"
             hx-post="/admin/tag-items/toggle"
             hx-vals='{"itemId": "{{itemId}}", "tagId": "{{tagId}}", "assigned": "{{^assigned}}true{{/assigned}}{{#assigned}}false{{/assigned}}"}'
             hx-target="closest tr"
-            hx-swap="outerHTML">{{tagName}}</button>
+            hx-swap="outerHTML"
+            hx-disabled-elt="this">{{tagName}}</button>
     {{/tags}}
   </td>
 </tr>
+{{#oobTagId}}
+<span id="tag-count-{{oobTagId}}" class="tag-count" hx-swap-oob="true">{{oobCountLabel}}</span>
+{{/oobTagId}}

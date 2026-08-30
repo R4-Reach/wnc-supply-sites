@@ -21,8 +21,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Item-tagging admin UI, gated to {@link UserRole#DATA_ADMIN}. Lets a data admin manage the tag
- * registry (create / rename / delete) and toggle which catalog items each tag is assigned to. This
- * replaces the old Airtable-driven tag import, which had no in-app UI.
+ * registry (create / rename / delete) and toggle which catalog items each tag is assigned to, one
+ * at a time or in bulk across the filtered set. This replaces the old Airtable-driven tag import,
+ * which had no in-app UI.
  */
 @Controller
 @AllArgsConstructor
@@ -48,11 +49,18 @@ public class ItemTagAdminController {
 
     List<Map<String, Object>> itemRows =
         items.stream().map(item -> toItemRow(item, tags, tagsByItem)).toList();
+    long untaggedCount =
+        items.stream()
+            .filter(item -> tagsByItem.getOrDefault(item.getId(), Set.of()).isEmpty())
+            .count();
 
     Map<String, Object> params = new HashMap<>();
     params.put("tags", tags);
     params.put("items", itemRows);
     params.put("hasTags", !tags.isEmpty());
+    params.put("itemTotal", items.size());
+    params.put("untaggedCount", untaggedCount);
+    params.put("allTagged", untaggedCount == 0);
     return params;
   }
 
@@ -78,17 +86,32 @@ public class ItemTagAdminController {
                         "tagName", tag.getName(),
                         "assigned", assigned.contains(tag.getId())))
             .toList();
-    return Map.of("itemId", item.getId(), "itemName", item.getItemName(), "tags", cells);
+    Map<String, Object> row = new HashMap<>();
+    row.put("itemId", item.getId());
+    row.put("itemName", item.getItemName());
+    row.put("tags", cells);
+    row.put("untagged", assigned.isEmpty());
+    return row;
   }
 
-  private ModelAndView itemRowView(long itemId) {
+  /**
+   * The refreshed row after a toggle, plus an out-of-band update of the toggled tag's item count in
+   * the registry list, so Section A's count doesn't silently go stale.
+   */
+  private ModelAndView toggledRowView(long itemId, long tagId) {
     InventoryItem item =
         MergeItemsController.fetchAllItems(jdbi).stream()
             .filter(i -> i.getId() == itemId)
             .findFirst()
             .orElseThrow();
-    return new ModelAndView(
-        "admin/tag-items-item-row", toItemRow(item, TagAdminDao.fetchAllTags(jdbi), tagsByItem()));
+    Map<String, Object> model = toItemRow(item, TagAdminDao.fetchAllTags(jdbi), tagsByItem());
+    TagAdminDao.fetchTag(jdbi, tagId)
+        .ifPresent(
+            tag -> {
+              model.put("oobTagId", tag.getId());
+              model.put("oobCountLabel", tag.getItemCountLabel());
+            });
+    return new ModelAndView("admin/tag-items-item-row", model);
   }
 
   @PostMapping(PATH_TAG_ITEMS + "/create")
@@ -97,8 +120,12 @@ public class ItemTagAdminController {
     if (!UserRole.isDataAdmin(roles)) {
       return htmlBadRequest("Not authorized");
     }
+    String formatError = TagAdminDao.nameError(name).orElse(null);
+    if (formatError != null) {
+      return htmlBadRequest(formatError);
+    }
     if (TagAdminDao.createTag(jdbi, name).isEmpty()) {
-      return htmlBadRequest("Tag name is empty, too long, has a comma, or already exists.");
+      return htmlBadRequest("A tag named “" + name.trim() + "” already exists.");
     }
     return refresh();
   }
@@ -111,8 +138,12 @@ public class ItemTagAdminController {
     if (!UserRole.isDataAdmin(roles)) {
       return htmlBadRequest("Not authorized");
     }
+    String formatError = TagAdminDao.nameError(name).orElse(null);
+    if (formatError != null) {
+      return htmlBadRequest(formatError);
+    }
     if (!TagAdminDao.renameTag(jdbi, tagId, name)) {
-      return htmlBadRequest("Tag name is empty, too long, has a comma, or already exists.");
+      return htmlBadRequest("Another tag is already named “" + name.trim() + "”.");
     }
     return refresh();
   }
@@ -137,7 +168,20 @@ public class ItemTagAdminController {
       return new ModelAndView("redirect:/");
     }
     TagAdminDao.setAssignment(jdbi, itemId, tagId, assigned);
-    return itemRowView(itemId);
+    return toggledRowView(itemId, tagId);
+  }
+
+  @PostMapping(PATH_TAG_ITEMS + "/bulk")
+  ResponseEntity<String> bulkAssign(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @RequestParam(name = "itemIds", required = false) List<Long> itemIds,
+      @RequestParam long tagId,
+      @RequestParam boolean assigned) {
+    if (!UserRole.isDataAdmin(roles)) {
+      return htmlBadRequest("Not authorized");
+    }
+    TagAdminDao.setAssignmentBulk(jdbi, itemIds == null ? List.of() : itemIds, tagId, assigned);
+    return refresh();
   }
 
   /** Tells htmx to reload the page so a new/renamed/removed tag propagates to every item row. */

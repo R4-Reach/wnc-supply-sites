@@ -120,4 +120,72 @@ class TagAdminDaoTest {
         .singleElement()
         .satisfies(t -> assertThat(t.getItemCount()).isZero());
   }
+
+  @Test
+  void nameErrorReportsTheSpecificReason() {
+    assertThat(TagAdminDao.nameError("   ")).get().asString().contains("Enter");
+    assertThat(TagAdminDao.nameError("x".repeat(65))).get().asString().contains("64");
+    assertThat(TagAdminDao.nameError("no,commas")).get().asString().contains("comma");
+    assertThat(TagAdminDao.nameError("Fine")).isEmpty();
+  }
+
+  @Test
+  void createTagRejectsCaseInsensitiveDuplicate() {
+    assertThat(TagAdminDao.createTag(jdbiTest, "Medical")).isPresent();
+    // A different casing of an existing name must not create a second tag.
+    assertThat(TagAdminDao.createTag(jdbiTest, "medical")).isEmpty();
+    assertThat(TagAdminDao.fetchAllTags(jdbiTest))
+        .filteredOn(t -> t.getName().equalsIgnoreCase("medical"))
+        .hasSize(1);
+  }
+
+  @Test
+  void renameRejectsCaseInsensitiveCollisionButAllowsOwnRecasing() {
+    TagAdminDao.createTag(jdbiTest, "Baby");
+    long id = TagAdminDao.createTag(jdbiTest, "Winter").orElseThrow();
+
+    // Colliding with another tag, even by casing only, is rejected.
+    assertThat(TagAdminDao.renameTag(jdbiTest, id, "baby")).isFalse();
+    // Re-casing a tag's own name is allowed.
+    assertThat(TagAdminDao.renameTag(jdbiTest, id, "WINTER")).isTrue();
+    assertThat(TagAdminDao.fetchTag(jdbiTest, id))
+        .get()
+        .extracting(TagAdminDao.TagRow::getName)
+        .isEqualTo("WINTER");
+  }
+
+  @Test
+  void fetchTagReturnsLiveCount() {
+    ItemResult item = TestConfiguration.addItem("Gloves");
+    long tagId = TagAdminDao.createTag(jdbiTest, "Warm").orElseThrow();
+    assertThat(TagAdminDao.fetchTag(jdbiTest, tagId))
+        .get()
+        .satisfies(t -> assertThat(t.getItemCount()).isZero());
+
+    TagAdminDao.setAssignment(jdbiTest, item.getId(), tagId, true);
+    assertThat(TagAdminDao.fetchTag(jdbiTest, tagId))
+        .get()
+        .satisfies(t -> assertThat(t.getItemCount()).isEqualTo(1));
+  }
+
+  @Test
+  void bulkAssignAndRemoveAcrossManyItems() {
+    ItemResult a = TestConfiguration.addItem("Rice");
+    ItemResult b = TestConfiguration.addItem("Beans");
+    ItemResult c = TestConfiguration.addItem("Flour");
+    long tagId = TagAdminDao.createTag(jdbiTest, "Pantry").orElseThrow();
+
+    TagAdminDao.setAssignmentBulk(jdbiTest, List.of(a.getId(), b.getId(), c.getId()), tagId, true);
+    assertThat(TagAdminDao.fetchTag(jdbiTest, tagId))
+        .get()
+        .satisfies(t -> assertThat(t.getItemCount()).isEqualTo(3));
+
+    // Idempotent: re-assigning is a no-op, removing a subset works, empty list is a no-op.
+    TagAdminDao.setAssignmentBulk(jdbiTest, List.of(a.getId(), b.getId()), tagId, true);
+    TagAdminDao.setAssignmentBulk(jdbiTest, List.of(), tagId, false);
+    TagAdminDao.setAssignmentBulk(jdbiTest, List.of(a.getId(), b.getId()), tagId, false);
+    assertThat(TagAdminDao.fetchTag(jdbiTest, tagId))
+        .get()
+        .satisfies(t -> assertThat(t.getItemCount()).isEqualTo(1));
+  }
 }

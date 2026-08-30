@@ -18,20 +18,24 @@
 </div>
 
 <div class="mission-statement">
-  Tags describe what an inventory item is for. Manage the tag list below, then click a tag under an
-  item to assign or remove it. Tags apply to the item catalog, not to any one site.
+  Tags describe what an inventory item is for. Manage the tag list below, then click a tag in an
+  item's row to assign or remove it. Tags apply to the item catalog, not to any one site.
 </div>
 
+<!-- Polite announcements for assistive tech after a tag is toggled. -->
+<div id="tag-live" class="visually-hidden" aria-live="polite" role="status"></div>
+
 <section class="tag-manage">
-  <h3>Tags</h3>
+  <h3>1. Tags</h3>
 
   <form class="horizontal tag-create-form"
         hx-post="/admin/tag-items/create"
         hx-target="#tag-message"
         hx-swap="innerHTML">
+    <label class="visually-hidden" for="new-tag">New tag name</label>
     <input name="name" id="new-tag" type="text" placeholder="New tag name" maxlength="64"
            autocomplete="off" required/>
-    <button type="submit">Add Tag</button>
+    <button type="submit">Create Tag</button>
   </form>
   <div id="tag-message" class="message"></div>
 
@@ -40,42 +44,67 @@
     <li class="tag-list-row">
       <form class="horizontal tag-rename-form"
             hx-post="/admin/tag-items/rename"
-            hx-target="#tag-message"
+            hx-target="#tag-msg-{{id}}"
             hx-swap="innerHTML">
         <input type="hidden" name="tagId" value="{{id}}"/>
-        <input class="tag-name-input" name="name" type="text" value="{{name}}" maxlength="64"
-               autocomplete="off" required/>
+        <label class="visually-hidden" for="rename-{{id}}">Rename tag {{name}}</label>
+        <input class="tag-name-input" id="rename-{{id}}" name="name" type="text" value="{{name}}"
+               maxlength="64" autocomplete="off" required/>
         <button type="submit" class="tag-rename-btn">Rename</button>
       </form>
-      <span class="tag-count">{{itemCountLabel}}</span>
+      <span class="tag-count" id="tag-count-{{id}}">{{itemCountLabel}}</span>
       <button type="button" class="tag-delete-btn"
               hx-post="/admin/tag-items/delete"
               hx-vals='{"tagId": "{{id}}"}'
-              hx-confirm="Delete tag &quot;{{name}}&quot;? It will be removed from every item."
+              hx-confirm="Delete tag &quot;{{name}}&quot;? It will be removed from {{itemCountLabel}}."
               hx-target="#tag-message"
               hx-swap="innerHTML">Delete</button>
+      <div id="tag-msg-{{id}}" class="tag-row-message"></div>
     </li>
     {{/tags}}
     {{^tags}}
-    <li class="tag-empty-note">No tags yet. Add one above to get started.</li>
+    <li class="tag-empty-note">No tags yet. Create one above to get started.</li>
     {{/tags}}
   </ul>
 </section>
 
 <section class="tag-assign">
-  <h3>Assign Tags to Items</h3>
+  <h3>2. Assign Tags to Items</h3>
 
   {{#hasTags}}
-  <div class="tag-item-search-wrap">
-    <input type="text" id="tag-item-search" placeholder="Filter items by name&hellip;"
-           autocomplete="off"/>
+  <p class="tag-assign-cue">Click a tag in an item's row to assign it; click it again to remove it.</p>
+
+  <p class="tag-assign-summary">
+    <strong>{{itemTotal}}</strong> items ·
+    {{#allTagged}}all tagged{{/allTagged}}{{^allTagged}}<strong>{{untaggedCount}}</strong> untagged{{/allTagged}}
+  </p>
+
+  <div class="tag-item-controls">
+    <div class="tag-item-search-wrap">
+      <label class="visually-hidden" for="tag-item-search">Filter items by name</label>
+      <input type="text" id="tag-item-search" placeholder="Filter items by name&hellip;"
+             autocomplete="off"/>
+      <label class="tag-untagged-filter">
+        <input type="checkbox" id="tag-item-untagged-only"/> Untagged only
+      </label>
+    </div>
+
+    <!-- Bulk-apply a tag across every item currently shown by the filter. -->
+    <div class="tag-bulk" id="tag-bulk">
+      <label class="visually-hidden" for="tag-bulk-select">Tag to apply in bulk</label>
+      <select id="tag-bulk-select">
+        {{#tags}}<option value="{{id}}" data-tag-name="{{name}}">{{name}}</option>{{/tags}}
+      </select>
+      <button type="button" class="tag-bulk-btn" data-assigned="true">Assign to shown</button>
+      <button type="button" class="tag-bulk-btn" data-assigned="false">Remove from shown</button>
+    </div>
   </div>
 
   <table class="tag-item-grid">
     <thead>
     <tr>
-      <th class="tag-item-name">Item</th>
-      <th class="tag-item-tags">Tags</th>
+      <th class="tag-item-name" scope="col">Item</th>
+      <th class="tag-item-tags" scope="col">Tags</th>
     </tr>
     </thead>
     <tbody id="tag-item-body">
@@ -88,7 +117,7 @@
   {{/hasTags}}
 
   {{^hasTags}}
-  <p class="tag-empty-note">Add at least one tag above before assigning tags to items.</p>
+  <p class="tag-empty-note">Create at least one tag above before assigning tags to items.</p>
   {{/hasTags}}
 </section>
 

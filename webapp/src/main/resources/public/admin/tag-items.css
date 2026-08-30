@@ -123,9 +123,10 @@ section.tag-assign h3 {
   margin: 0.75em 0;
 }
 
-/* Tag chicklets: off is a plain outline, on is filled. Mirrors the user-management page. */
+/* Tag chicklets: off is an outline, on is filled with a check. The stronger border keeps the
+   off-state edge ≥3:1 on white (WCAG 1.4.11) so it reads as a pressable control, not inert text. */
 .chicklet {
-  border: 1px solid var(--neutral-border);
+  border: 1px solid var(--neutral-border-strong);
   border-radius: 1em;
   background-color: var(--surface);
   color: var(--neutral-muted-text);
@@ -134,8 +135,104 @@ section.tag-assign h3 {
   white-space: nowrap;
 }
 
+.chicklet:hover {
+  border-color: var(--accent);
+}
+
 .chicklet.on {
   background-color: var(--available);
   border-color: var(--available);
   color: var(--surface);
+}
+
+/* Redundant, non-color cue for the assigned state (WCAG 1.4.1). */
+.chicklet.on::before {
+  content: "✓ ";
+}
+
+/* In-flight: hx-disabled-elt sets [disabled] while the toggle request is in flight. */
+.chicklet[disabled] {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.tag-untagged-badge {
+  font-size: 0.8em;
+  color: var(--neutral-muted-text);
+  border: 1px solid var(--neutral-border-strong);
+  border-radius: 0.75em;
+  padding: 0 0.5em;
+  white-space: nowrap;
+}
+
+/* Section B controls: filter + bulk-apply. */
+.tag-assign-cue {
+  margin: 0 0 0.5em;
+  color: var(--neutral-muted-text);
+}
+
+.tag-assign-summary {
+  margin: 0 0 0.75em;
+}
+
+.tag-item-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1em 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.tag-item-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  flex-wrap: wrap;
+}
+
+.tag-untagged-filter {
+  white-space: nowrap;
+}
+
+.tag-bulk {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex-wrap: wrap;
+}
+
+.tag-bulk select {
+  padding: 0.35em;
+  max-width: 14em;
+}
+
+.tag-bulk-btn {
+  border-radius: 0.4em;
+  padding: 0.3em 0.7em;
+  cursor: pointer;
+  border: 1px solid var(--neutral-border);
+  background-color: var(--surface);
+  white-space: nowrap;
+}
+
+.tag-row-message {
+  flex-basis: 100%;
+}
+
+.tag-row-message:empty {
+  display: none;
+}
+
+/* Screen-reader-only helper (labels, live region) with no visual footprint. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
 }
