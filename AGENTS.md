@@ -78,3 +78,33 @@ from the worktree directory and `$USER`, on an ephemeral port — so test suites
 sibling worktrees (and a running `just up`/`just db`) stay isolated and can run
 in parallel without sharing a database. (IDE test runs are the exception: they
 fall back to the single `localhost:5432` from `just db` and do share it.)
+
+## Deployment & infrastructure — `R4-Reach/infrastructure`
+
+This app is deployed and configured by a **separate** repo,
+**`R4-Reach/infrastructure`** (`~/work/r4-reach/infrastructure`; ansible +
+terraform). This repo's own `deploy/ansible/playbook.yml` only triggers
+`deploy-webapp.sh` on the server — the real runtime config lives over there. When
+a change here needs a new or changed **deploy-time env var or secret**, make the
+matching change in that repo too (you have the ansible-vault key,
+`R4_ANSIBLE_VAULT_KEY`, when it's set in the environment):
+
+- **Env vars** the webapp reads are templated into the container by
+  `ansible/roles/webapp/templates/docker-compose.yml.j2` (the `webapp` service
+  `environment:` block). Add/change/remove an env var there.
+- **Secrets** go through ansible-vault: encrypted `vault_*` values in
+  `ansible/group_vars/server/vault.yml`, mapped to plain names in
+  `ansible/group_vars/server/vars.yml`, then referenced from the compose
+  template. Encrypt with
+  `ansible-vault encrypt_string --vault-password-file ./vault-password.sh --name 'vault_<name>' '<value>'`
+  (run from `ansible/`, needs `R4_ANSIBLE_VAULT_KEY` set). Non-secret config can
+  be a plaintext var or a role default.
+- **CI/deploy**: PRs run `make check` (includes gitleaks); **merging to `main`
+  auto-deploys** (terraform apply + ansible apply). So make config changes on a
+  branch / PR — never push straight to `main`.
+
+Example already wired this way: `DB_ENCRYPTION_KEY` (the AES master key for
+encrypting secret `site_config` values) is a vaulted secret set in the
+infrastructure repo; the Google Maps / Twilio credentials that used to be env
+vars here now live in the `site_config` DB table instead (see the Site Config
+admin page).
