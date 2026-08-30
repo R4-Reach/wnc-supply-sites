@@ -30,9 +30,9 @@ repos:
       - id: actionlint
   - repo: local
     hooks:
-      - id: verify
-        name: just verify
-        entry: bash -c 'just verify'
+      - id: gradle-check
+        name: just gradle-check
+        entry: bash -c 'just gradle-check'
         language: system
         pass_filenames: false
         always_run: true

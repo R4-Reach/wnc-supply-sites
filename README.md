@@ -107,7 +107,8 @@ Database, user, and schema creation are handled automatically:
 - `./.docker-compose/database/01-init.sql` creates the `wnc_helene` database and user on first
   startup.
 - the `flyway` compose service applies all `schema/V*.sql` migrations to `wnc_helene`
-  (the database the app and unit tests use locally).
+  (the database the app uses locally; the Gradle `test` task brings up its own throwaway
+  copy on an ephemeral port).
 
 To recreate the database from scratch, run `just down` (removes the volume) then `just db`.
 

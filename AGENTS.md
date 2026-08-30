@@ -8,12 +8,13 @@ agent-facing summary — don't duplicate the README.
 
 `just` is the command interface (see `justfile`):
 
-- `just verify` — full check (`./gradlew check`); must be green before push.
+- `just check` — full validation via pre-commit (which includes `gradle-check`); must be green before push. Aliased as `just test` and `just verify`.
+- `just gradle-check` — Gradle's `./gradlew check` on its own (compile + tests + spotless).
 - `just format` — apply spotless formatting.
 - `just db` — start Postgres + Flyway migrations in docker (needed for tests).
 - `just up` — Postgres + migrations in docker, webapp via `bootRun` with live reload.
 
-A pre-push git hook runs `verify`. Java itself is driven from `webapp/` via
+A pre-push git hook runs `check` (pre-commit). Java itself is driven from `webapp/` via
 `./gradlew` (e.g. `cd webapp && ./gradlew spotlessApply test`).
 
 ## Stack
@@ -31,14 +32,17 @@ one past the current highest (`ls schema/`).
 
 ## Before push
 
-`just verify` green and spotless-clean. Formatting is enforced by spotless, not
+`just check` green and spotless-clean. Formatting is enforced by spotless, not
 optional — run `just format` (or `./gradlew spotlessApply`) before committing.
 
 ## Tests
 
 JUnit 5 + AssertJ under `webapp/src/test`. DAO tests run against a **real
-Postgres**, so bring the database up first (`just db`); see `TestConfiguration`
-and the `*Fixture` classes for shared setup.
+Postgres**. The Gradle `test` task provisions its own throwaway database via
+docker-compose — ephemeral port, migrations applied, torn down afterwards — so
+`just test`/`check` need nothing running first. Only **IDE** test runs need a
+database up beforehand (`just db`); they fall back to `localhost:5432`. See
+`TestConfiguration` and the `*Fixture` classes for shared setup.
 
 ## Worktrees
 
@@ -52,6 +56,8 @@ each other and needs no `.gitignore` entry.
 - Remove: `git worktree remove ../wnc-supply-sites-worktrees/<branch>`
 - List:   `git worktree list`
 
-DAO tests hit the single local Postgres from `just db`, so parallel worktrees
-share one database — don't run test suites in two worktrees at once expecting
-isolated data.
+Each checkout's Gradle `test` task uses a docker-compose project name derived
+from the worktree directory and `$USER`, on an ephemeral port — so test suites in
+sibling worktrees (and a running `just up`/`just db`) stay isolated and can run
+in parallel without sharing a database. (IDE test runs are the exception: they
+fall back to the single `localhost:5432` from `just db` and do share it.)

@@ -6,10 +6,14 @@ export WSS_DB_PORT := env_var_or_default("WSS_DB_PORT", "5432")
 
 ssh_user := env_var_or_default("SSH_USER", env_var_or_default("USER", ""))
 
+alias test := check
+alias verify := check
+
 check:
     pre-commit run --all-files
 
-verify:
+# Gradle's own check task (compile + tests + spotless); named distinctly so pre-commit can invoke it without recursing into `check`.
+gradle-check:
     cd webapp && ./gradlew check
 
 format:

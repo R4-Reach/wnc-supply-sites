@@ -69,10 +69,19 @@ test {
 // afterwards, and exposes each service's dynamically-published host/port to the test JVM.
 dockerCompose.isRequiredBy(test)
 
+// Unique docker-compose project per checkout + user so parallel test runs — e.g. from sibling
+// worktrees, or alongside a manual stack — get isolated container/network namespaces instead of
+// colliding on one shared project. Derived from the worktree directory (the compose working dir)
+// and $USER, sanitised to the charset Docker Compose allows.
+def composeScope = { s -> (s ?: 'x').toLowerCase().replaceAll('[^a-z0-9]+', '_') }
+def testComposeProject = "wss_unit_test_${composeScope(System.getenv('USER'))}_${composeScope(projectDir.parentFile.name)}"
+
 dockerCompose {
 	useComposeFiles = ['docker-compose.yml'] // relative to dockerComposeWorkingDirectory (../ = wnc-supply-sites)
-	// Tests run the app in-process (@SpringBootTest) and only need the database; its depends_on
-	// chain still pulls in the one-shot `flyway` migration container.
+	// Let the plugin manage only `database` — it has a healthcheck, so the plugin waits for it to be
+	// ready. The one-shot `flyway` migration service is run explicitly in test.doFirst so migrations
+	// finish before any test connects; starting it here would let it migrate in parallel with test
+	// startup and intermittently lose the race, leaving an empty schema.
 	startedServices = ['database']
 //	scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
 //	forceRecreate = false // pass '--force-recreate' and '--renew-anon-volumes' when calling 'docker-compose up' when set to 'true`
@@ -110,7 +119,7 @@ dockerCompose {
 //	removeVolumes = true // default is true
 //	removeOrphans = false // removes containers for services not defined in the Compose file; default is false
 
-	projectName = 'wss_unit_test' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project and nested settings name), set to null to Docker Compose default (directory name)
+	projectName = testComposeProject
 //	projectNamePrefix = 'my_prefix_' // allow to set custom prefix of docker-compose project name, the final project name has nested configuration name appended
 //	executable = '/path/to/docker-compose' // allow to set the base Docker Compose command (useful if not present in PATH). Defaults to `docker-compose`. Ignored if useDockerComposeV2 is set to true.
 //	useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1, default is true. If set to true, `dockerExecutable compose` is used for execution, so executable property is ignored.
@@ -124,6 +133,15 @@ dockerCompose {
 }
 
 test.doFirst {
+	// Apply the schema migrations before any test connects. The compose plugin has only started
+	// `database`; run the one-shot `flyway` service to completion here — synchronously, so the
+	// schema is fully migrated by the time the first test opens a connection. `--no-deps` keeps it
+	// from re-creating the already-running database container.
+	exec {
+		workingDir project.file('../')
+		environment 'WSS_DB_PORT', '0'
+		commandLine 'docker', 'compose', '-p', testComposeProject, 'run', '--rm', '--no-deps', 'flyway'
+	}
 	// Inject the database service's host and dynamically-published port into the test JVM.
 	// TestConfiguration reads DATABASE_HOST / DATABASE_TCP_5432 to reach the test database.
 	def dbInfo = dockerCompose.servicesInfos.database.firstContainer
