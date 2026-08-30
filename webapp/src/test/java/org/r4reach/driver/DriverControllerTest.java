@@ -9,6 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
+import org.r4reach.util.PhoneNumberUtil;
 
 class DriverControllerTest {
 
@@ -96,5 +97,96 @@ class DriverControllerTest {
     driverController.changeDriverActiveStatus(driver.getPhone());
     dataResult = DriverDao.lookupByPhone(jdbiTest, driver.getPhone()).orElseThrow();
     assertThat(dataResult.isActive()).isEqualTo(active);
+  }
+
+  /**
+   * A user can hold the DRIVER role before any driver row exists. The portal must render (not
+   * redirect) with an empty, active-by-default form rather than requiring a pre-existing row.
+   */
+  @Test
+  void renderPortalForDriverWithoutRow() {
+    insertUserWithoutDriverRow("555-000-1111");
+
+    var modelAndView = driverController.showDriverPortal("555-000-1111");
+
+    assertThat(modelAndView.getViewName()).isEqualTo("driver/portal");
+    Arrays.stream(DriverController.PageParams.values())
+        .forEach(
+            param -> assertThat(modelAndView.getModelMap().getAttribute(param.name())).isNotNull());
+    assertThat(modelAndView.getModelMap().getAttribute(DriverController.PageParams.location.name()))
+        .isEqualTo("");
+    assertThat(modelAndView.getModelMap().getAttribute(DriverController.PageParams.active.name()))
+        .isEqualTo(true);
+  }
+
+  /** Saving a driver who has no row yet creates it; the new row is active by default. */
+  @Test
+  void updateCreatesDriverRowWhenMissing() {
+    insertUserWithoutDriverRow("555-000-1111");
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "new comments");
+    params.put(DriverController.PageParams.location.name(), "new location");
+    params.put(DriverController.PageParams.licensePlates.name(), "PLATE1");
+    params.put(DriverController.PageParams.availability.name(), "weekends");
+    params.put(DriverController.PageParams.palletCapacity.name(), "2");
+
+    var response = driverController.updateDriver("555-000-1111", params);
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+    var saved = DriverDao.lookupByPhone(jdbiTest, "555-000-1111").orElseThrow();
+    assertThat(saved.getComments()).isEqualTo("new comments");
+    assertThat(saved.getLocation()).isEqualTo("new location");
+    assertThat(saved.getLicensePlates()).isEqualTo("PLATE1");
+    assertThat(saved.getAvailability()).isEqualTo("weekends");
+    assertThat(saved.getPallet_capacity()).isEqualTo(2);
+    assertThat(saved.isActive()).isTrue();
+  }
+
+  /** A portal save must not clobber the active flag, which the driver owns via its own toggle. */
+  @Test
+  void updatePreservesActiveFlagOnExistingRow() {
+    Driver inactive =
+        TestConfiguration.buildDriver(-2000L, "555-222-3333").toBuilder().active(false).build();
+    TestConfiguration.insertDriver(inactive);
+
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "edited comments");
+    params.put(DriverController.PageParams.location.name(), "edited location");
+    params.put(DriverController.PageParams.licensePlates.name(), "EDIT1");
+    params.put(DriverController.PageParams.availability.name(), "edited availability");
+    params.put(DriverController.PageParams.palletCapacity.name(), "0");
+
+    driverController.updateDriver("555-222-3333", params);
+
+    var saved = DriverDao.lookupByPhone(jdbiTest, "555-222-3333").orElseThrow();
+    assertThat(saved.isActive()).isFalse();
+    assertThat(saved.getComments()).isEqualTo("edited comments");
+  }
+
+  /**
+   * Toggling active for a driver with no row creates it as inactive (the portal shows a rowless
+   * driver as active, so the link reads "Go Inactive"); a second toggle flips it back to active.
+   */
+  @Test
+  void toggleCreatesInactiveRowWhenMissing() {
+    insertUserWithoutDriverRow("555-000-1111");
+
+    driverController.changeDriverActiveStatus("555-000-1111");
+    assertThat(DriverDao.lookupByPhone(jdbiTest, "555-000-1111").orElseThrow().isActive())
+        .isFalse();
+
+    driverController.changeDriverActiveStatus("555-000-1111");
+    assertThat(DriverDao.lookupByPhone(jdbiTest, "555-000-1111").orElseThrow().isActive()).isTrue();
+  }
+
+  /** Inserts a wss_user with the given phone but no backing driver row. */
+  private static void insertUserWithoutDriverRow(String phone) {
+    jdbiTest.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "insert into wss_user(phone) values(:phone) on conflict(phone) do nothing")
+                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                .execute());
   }
 }

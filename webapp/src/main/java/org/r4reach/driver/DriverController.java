@@ -39,14 +39,19 @@ public class DriverController {
 
   @GetMapping("/driver/portal")
   ModelAndView showDriverPortal(@ModelAttribute(LoggedInAdvice.USER_PHONE) String userPhone) {
-    Driver driver =
-        Optional.ofNullable(userPhone)
-            .flatMap(phone -> DriverDao.lookupByPhone(jdbi, phone))
-            .orElse(null);
-    if (driver == null) {
-      log.warn("DriverController could not find driver with phone number: {}", userPhone);
+    if (userPhone == null) {
+      log.warn("Driver portal reached without an authenticated phone number");
       return new ModelAndView("redirect:/");
     }
+
+    // A user may hold the DRIVER role before any driver row exists (e.g. a freshly registered
+    // driver who has not saved their profile). Render an empty, active-by-default form in that
+    // case; the row is created on the first save (see DriverDao.upsert). active defaults to true to
+    // match the driver-table column default the row will get, so the pre-save view matches the
+    // saved state.
+    Driver driver =
+        DriverDao.lookupByPhone(jdbi, userPhone)
+            .orElseGet(() -> Driver.builder().phone(userPhone).active(true).build());
 
     List<Delivery> deliveries = DeliveryDao.fetchDeliveriesByDriverPhoneNumber(jdbi, userPhone);
 
@@ -75,13 +80,12 @@ public class DriverController {
   ResponseEntity<String> updateDriver(
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String userPhone,
       @RequestParam Map<String, String> update) {
+    // Build straight from the submitted form -- no need to load an existing row first, since the
+    // upsert creates one when absent. active/black_listed are intentionally omitted: the upsert
+    // leaves them untouched on an existing row and defaults them on insert.
     var updatedDriverData =
-        DriverDao.lookupByPhone(jdbi, userPhone)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Invalid driver, not found in database. Unable to update: " + userPhone))
-            .toBuilder()
+        Driver.builder()
+            .phone(userPhone)
             .location(update.get(PageParams.location.name()).trim())
             .licensePlates(update.get(PageParams.licensePlates.name()).trim())
             .availability(update.get(PageParams.availability.name()).trim())
