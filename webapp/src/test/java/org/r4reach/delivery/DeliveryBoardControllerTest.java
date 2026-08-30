@@ -9,11 +9,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.auth.UserRole;
+import org.r4reach.dispatch.DispatchDao;
 
 class DeliveryBoardControllerTest {
 
   private static final List<UserRole> DISPATCHER = List.of(UserRole.DISPATCHER);
   private static final List<UserRole> NOT_DISPATCHER = List.of(UserRole.DRIVER_ADMIN);
+  private static final String NO_PHONE = null;
 
   private final DeliveryBoardController controller = new DeliveryBoardController(jdbiTest);
 
@@ -110,6 +112,7 @@ class DeliveryBoardControllerTest {
   @Test
   void createPersistsDeliveryAndRedirectsToBoard() {
     long siteId = siteIdByName("site2");
+    long driverId = insertDriver("ControllerTestDriver", "444-333-7022");
 
     var view =
         controller.create(
@@ -118,10 +121,8 @@ class DeliveryBoardControllerTest {
             siteId,
             "DRIVER_VOLUNTEERED",
             "2026-05-15",
-            "Jessi",
-            "919-000-0000",
-            "ControllerTestDriver",
-            "444-333-7022",
+            null,
+            driverId,
             "handle with care",
             "Water\nBlankets");
 
@@ -138,31 +139,39 @@ class DeliveryBoardControllerTest {
   }
 
   @Test
-  void newDeliveryFormSeedsBlankTextFields() {
+  void newDeliveryFormSeedsBlankFieldsAndDropdownOptions() {
     // The template echoes every text field via {{field}} and Mustache is strict, so the initial
-    // GET must supply them all — blank — or rendering 500s.
-    var view = controller.newDelivery(DISPATCHER, "DRIVER_VOLUNTEERED");
+    // GET must supply them all — blank — or rendering 500s. The dispatcher and driver dropdowns
+    // need their option lists too.
+    var view = controller.newDelivery(DISPATCHER, NO_PHONE, "DRIVER_VOLUNTEERED");
 
     assertThat(view.getViewName()).isEqualTo("delivery/delivery-create");
     assertThat(view.getModel())
         .containsEntry("targetDeliveryDate", "")
-        .containsEntry("driverName", "")
-        .containsEntry("driverNumber", "")
-        .containsEntry("dispatcherName", "")
-        .containsEntry("dispatcherNumber", "")
         .containsEntry("dispatcherNotes", "")
-        .containsEntry("items", "");
+        .containsEntry("items", "")
+        .containsKey("dispatchers")
+        .containsKey("drivers");
   }
 
   @Test
   void createWithoutSitesReturnsFormWithError() {
     var view =
         controller.create(
-            DISPATCHER, null, null, "DRIVER_VOLUNTEERED", null, null, null, null, null, null, null);
+            DISPATCHER, null, null, "DRIVER_VOLUNTEERED", null, null, null, null, null);
 
     assertThat(view.getViewName()).isEqualTo("delivery/delivery-create");
     assertThat(view.getModel().get("errorMessage")).isNotNull();
     assertThat(view.getModel().get("sites")).isNotNull();
+  }
+
+  private static long insertDriver(String name, String phone) {
+    DispatchDao.createDriver(jdbiTest, phone, name);
+    return DispatchDao.fetchAll(jdbiTest).stream()
+        .filter(row -> name.equals(row.getFullName()))
+        .findFirst()
+        .orElseThrow()
+        .getWssUserId();
   }
 
   private static long siteIdByName(String name) {

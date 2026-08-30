@@ -58,7 +58,85 @@ public class DeliveryDao {
                 .list());
   }
 
-  /** The dispatcher-entered fields for a brand-new delivery. */
+  /** A dispatcher or driver a delivery can be assigned to, for a create-form dropdown. */
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class PersonOption {
+    long id;
+    String name;
+    boolean selected;
+  }
+
+  /**
+   * Everyone holding the DISPATCHER role, as dropdown options. {@code selectedUserId} (nullable)
+   * marks the option to preselect — typically the current user, who is always a dispatcher on the
+   * create page.
+   */
+  public static List<PersonOption> fetchDispatcherOptions(Jdbi jdbi, Long selectedUserId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    select distinct
+                      u.id,
+                      coalesce(nullif(u.name, ''), u.phone) name,
+                      coalesce(u.id = cast(:selectedUserId as bigint), false) selected
+                    from wss_user u
+                    join wss_user_roles wur on wur.wss_user_id = u.id
+                    join wss_user_role role on role.id = wur.wss_user_role_id
+                    where role.name = 'DISPATCHER' and u.removed = false
+                    order by name
+                    """)
+                .bind("selectedUserId", selectedUserId)
+                .mapToBean(PersonOption.class)
+                .list());
+  }
+
+  /**
+   * Every driver (excluding blacklisted ones) as dropdown options, identified by their wss_user id.
+   * {@code selectedUserId} (nullable) marks the option to preselect.
+   */
+  public static List<PersonOption> fetchDriverOptions(Jdbi jdbi, Long selectedUserId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    select
+                      u.id,
+                      coalesce(nullif(u.name, ''), u.phone) name,
+                      coalesce(u.id = cast(:selectedUserId as bigint), false) selected
+                    from driver d
+                    join wss_user u on u.id = d.wss_user_id
+                    where d.black_listed = false and u.removed = false
+                    order by name
+                    """)
+                .bind("selectedUserId", selectedUserId)
+                .mapToBean(PersonOption.class)
+                .list());
+  }
+
+  /** The wss_user id for a phone number, used to preselect the current user in a dropdown. */
+  public static Optional<Long> fetchUserIdByPhone(Jdbi jdbi, String phone) {
+    if (phone == null || phone.isBlank()) {
+      return Optional.empty();
+    }
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery("select id from wss_user where phone = :phone and removed = false")
+                .bind("phone", phone)
+                .mapTo(Long.class)
+                .findOne());
+  }
+
+  /**
+   * The dispatcher-entered fields for a brand-new delivery. The dispatcher and driver are chosen
+   * from dropdowns, so they arrive as wss_user references; their name and phone are derived from
+   * that record at read time rather than stored here.
+   */
   @Value
   @Builder
   public static class CreateDeliveryRequest {
@@ -66,10 +144,8 @@ public class DeliveryDao {
     Long toSiteId;
     DeliveryStatus deliveryStatus;
     String targetDeliveryDate;
-    String dispatcherName;
-    String dispatcherNumber;
-    String driverName;
-    String driverNumber;
+    Long dispatcherWssUserId;
+    Long driverWssUserId;
     String dispatcherNotes;
     @Builder.Default List<String> items = List.of();
   }
@@ -85,12 +161,12 @@ public class DeliveryDao {
         """
         insert into delivery(
           from_site_id, to_site_id, delivery_status, target_delivery_date,
-          dispatcher_name, dispatcher_number, driver_name, driver_number,
+          dispatcher_wss_user_id, driver_wss_user_id,
           dispatcher_notes, public_url_key, dispatch_code, driver_code)
         values(
           :fromSiteId, :toSiteId, :deliveryStatus,
           to_date(:targetDeliveryDate, 'YYYY-MM-DD'),
-          :dispatcherName, :dispatcherNumber, :driverName, :driverNumber,
+          :dispatcherWssUserId, :driverWssUserId,
           :dispatcherNotes, :publicUrlKey, :dispatchCode, :driverCode)
         """;
     jdbi.withHandle(
@@ -101,10 +177,8 @@ public class DeliveryDao {
                 .bind("toSiteId", request.getToSiteId())
                 .bind("deliveryStatus", request.getDeliveryStatus().getAirtableName())
                 .bind("targetDeliveryDate", blankToNull(request.getTargetDeliveryDate()))
-                .bind("dispatcherName", blankToNull(request.getDispatcherName()))
-                .bind("dispatcherNumber", blankToNull(request.getDispatcherNumber()))
-                .bind("driverName", blankToNull(request.getDriverName()))
-                .bind("driverNumber", blankToNull(request.getDriverNumber()))
+                .bind("dispatcherWssUserId", request.getDispatcherWssUserId())
+                .bind("driverWssUserId", request.getDriverWssUserId())
                 .bind("dispatcherNotes", blankToNull(request.getDispatcherNotes()))
                 .bind("publicUrlKey", publicUrlKey)
                 .bind("dispatchCode", SecretCodeGenerator.generateCode())
@@ -201,14 +275,18 @@ public class DeliveryDao {
   }
 
   public static List<Delivery> fetchDeliveriesByDriverPhoneNumber(Jdbi jdbi, String driverPhone) {
-    // driver_number is synced from Airtable and not stored in canonical form, so canonicalize both
-    // sides of the comparison: strip non-digits and prefix the country code onto 10-digit numbers.
+    // The driver phone is either the referenced wss_user's canonical phone (new deliveries) or the
+    // legacy driver_number, which was synced from Airtable and not stored canonically. Canonicalize
+    // both sides: strip non-digits and prefix the country code onto 10-digit numbers.
     String whereClause =
         """
               case
-                when length(regexp_replace(d.driver_number, '[^0-9]+', '', 'g')) = 10
-                  then '1' || regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
-                else regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
+                when length(
+                  regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g'))
+                  = 10
+                  then '1'
+                    || regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g')
+                else regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g')
               end = :id
             """;
     return fetchDeliveries(jdbi, whereClause, PhoneNumberUtil.toCanonical(driverPhone));
@@ -223,11 +301,11 @@ public class DeliveryDao {
       d.public_url_key publicUrlKey,
       d.delivery_status deliveryStatus,
       d.target_delivery_date targetDeliveryDate,
-      d.dispatcher_name dispatcherName,
-      d.dispatcher_number dispatcherNumber,
+      coalesce(dispatcher.name, d.dispatcher_name) dispatcherName,
+      coalesce(dispatcher.phone, d.dispatcher_number) dispatcherNumber,
       d.dispatcher_notes dispatcherNotes,
-      d.driver_name driverName,
-      d.driver_number driverNumber,
+      coalesce(driverUser.name, d.driver_name) driverName,
+      coalesce(driverUser.phone, d.driver_number) driverNumber,
       d.driver_license_plates licensePlateNumbers,
       d.cancel_reason cancelReason,
 
@@ -253,6 +331,8 @@ public class DeliveryDao {
       d.driver_status,
       d.driver_code driverCode
     from delivery d
+    left join wss_user dispatcher on dispatcher.id = d.dispatcher_wss_user_id
+    left join wss_user driverUser on driverUser.id = d.driver_wss_user_id
     left join site fromSite on fromSite.id = d.from_site_id
     left join county fromCounty on fromCounty.id = fromSite.county_id
     left join wss_user fromPc on fromPc.id = fromSite.primary_contact_wss_user_id

@@ -95,12 +95,16 @@ public class DeliveryBoardController {
   @GetMapping(PATH_NEW)
   ModelAndView newDelivery(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @ModelAttribute(LoggedInAdvice.USER_PHONE) String userPhone,
       @RequestParam(required = false) String status) {
     if (!UserRole.canManageDeliveries(roles)) {
       return new ModelAndView("redirect:/");
     }
     DeliveryStatus startStatus = parseBoardStatus(status).orElse(DeliveryStatus.DRIVER_VOLUNTEERED);
-    return createForm(startStatus, new HashMap<>(), null);
+    // The create page is dispatcher-only, so the current user is always a dispatcher: preselect
+    // them in the dispatcher dropdown.
+    Long currentDispatcherId = DeliveryDao.fetchUserIdByPhone(jdbi, userPhone).orElse(null);
+    return createForm(startStatus, new HashMap<>(), currentDispatcherId, null, null);
   }
 
   @PostMapping(PATH_CREATE)
@@ -110,10 +114,8 @@ public class DeliveryBoardController {
       @RequestParam(required = false) Long toSiteId,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String targetDeliveryDate,
-      @RequestParam(required = false) String dispatcherName,
-      @RequestParam(required = false) String dispatcherNumber,
-      @RequestParam(required = false) String driverName,
-      @RequestParam(required = false) String driverNumber,
+      @RequestParam(required = false) Long dispatcherUserId,
+      @RequestParam(required = false) Long driverUserId,
       @RequestParam(required = false) String dispatcherNotes,
       @RequestParam(required = false) String items) {
     if (!UserRole.canManageDeliveries(roles)) {
@@ -124,13 +126,14 @@ public class DeliveryBoardController {
     if (fromSiteId == null || toSiteId == null) {
       Map<String, Object> entered = new HashMap<>();
       entered.put("targetDeliveryDate", targetDeliveryDate);
-      entered.put("dispatcherName", dispatcherName);
-      entered.put("dispatcherNumber", dispatcherNumber);
-      entered.put("driverName", driverName);
-      entered.put("driverNumber", driverNumber);
       entered.put("dispatcherNotes", dispatcherNotes);
       entered.put("items", items);
-      return createForm(startStatus, entered, "Pickup and drop-off sites are both required.");
+      return createForm(
+          startStatus,
+          entered,
+          dispatcherUserId,
+          driverUserId,
+          "Pickup and drop-off sites are both required.");
     }
 
     DeliveryDao.createDelivery(
@@ -140,10 +143,8 @@ public class DeliveryBoardController {
             .toSiteId(toSiteId)
             .deliveryStatus(startStatus)
             .targetDeliveryDate(targetDeliveryDate)
-            .dispatcherName(dispatcherName)
-            .dispatcherNumber(dispatcherNumber)
-            .driverName(driverName)
-            .driverNumber(driverNumber)
+            .dispatcherWssUserId(dispatcherUserId)
+            .driverWssUserId(driverUserId)
             .dispatcherNotes(dispatcherNotes)
             .items(splitItems(items))
             .build());
@@ -157,21 +158,24 @@ public class DeliveryBoardController {
    * submission.
    */
   private static final List<String> FORM_TEXT_FIELDS =
-      List.of(
-          "targetDeliveryDate",
-          "driverName",
-          "driverNumber",
-          "dispatcherName",
-          "dispatcherNumber",
-          "dispatcherNotes",
-          "items");
+      List.of("targetDeliveryDate", "dispatcherNotes", "items");
 
-  /** Builds the create-delivery form, re-populating text fields from a rejected submission. */
+  /**
+   * Builds the create-delivery form, re-populating text fields from a rejected submission. The
+   * dispatcher and driver are dropdowns; {@code selectedDispatcherUserId} / {@code
+   * selectedDriverUserId} (either nullable) mark the option to preselect.
+   */
   private ModelAndView createForm(
-      DeliveryStatus startStatus, Map<String, Object> enteredValues, String errorMessage) {
+      DeliveryStatus startStatus,
+      Map<String, Object> enteredValues,
+      Long selectedDispatcherUserId,
+      Long selectedDriverUserId,
+      String errorMessage) {
     Map<String, Object> params = new HashMap<>(enteredValues);
     FORM_TEXT_FIELDS.forEach(field -> params.putIfAbsent(field, ""));
     params.put("sites", DeliveryDao.fetchSiteOptions(jdbi));
+    params.put("dispatchers", DeliveryDao.fetchDispatcherOptions(jdbi, selectedDispatcherUserId));
+    params.put("drivers", DeliveryDao.fetchDriverOptions(jdbi, selectedDriverUserId));
     params.put("statusName", startStatus.name());
     params.put("statusLabel", startStatus.getAirtableName());
     if (errorMessage != null) {

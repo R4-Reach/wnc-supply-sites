@@ -52,23 +52,23 @@
   </label>
 
   <label>
-    Driver Name
-    <input type="text" name="driverName" maxlength="64" value="{{driverName}}"/>
+    Driver
+    <select name="driverUserId">
+      <option value="">&mdash; select a driver &mdash;</option>
+      {{#drivers}}
+      <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+      {{/drivers}}
+    </select>
   </label>
 
   <label>
-    Driver Phone
-    <input type="text" name="driverNumber" maxlength="24" value="{{driverNumber}}"/>
-  </label>
-
-  <label>
-    Dispatcher Name
-    <input type="text" name="dispatcherName" maxlength="64" value="{{dispatcherName}}"/>
-  </label>
-
-  <label>
-    Dispatcher Phone
-    <input type="text" name="dispatcherNumber" maxlength="24" value="{{dispatcherNumber}}"/>
+    Dispatcher
+    <select name="dispatcherUserId">
+      <option value="">&mdash; select a dispatcher &mdash;</option>
+      {{#dispatchers}}
+      <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+      {{/dispatchers}}
+    </select>
   </label>
 
   <label>

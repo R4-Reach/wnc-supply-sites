@@ -369,6 +369,7 @@ public class LocalDevUserSeeder implements ApplicationRunner {
         SITES.stream().collect(Collectors.toMap(SeedSite::name, this::seedSite));
     SITES.forEach(site -> seedStock(site, siteIds.get(site.name())));
     DRIVERS.forEach(this::seedDriver);
+    seedDispatcher();
     DELIVERIES.forEach(delivery -> seedDelivery(delivery, siteIds));
 
     log.warn(
@@ -459,7 +460,51 @@ public class LocalDevUserSeeder implements ApplicationRunner {
                 .execute());
   }
 
+  /**
+   * Creates the "Dispatch Desk" dispatcher identity that seeded deliveries are assigned from. A
+   * delivery references its dispatcher by wss_user, so this user must exist before the deliveries
+   * are seeded.
+   */
+  private void seedDispatcher() {
+    String canonicalPhone = PhoneNumberUtil.toCanonical(DISPATCHER_NUMBER);
+    jdbi.useTransaction(
+        handle -> {
+          handle
+              .createUpdate(
+                  """
+                  insert into wss_user(phone, name) values (:phone, :name)
+                  on conflict(phone) do update set name = excluded.name, removed = false
+                  """)
+              .bind("phone", canonicalPhone)
+              .bind("name", DISPATCHER_NAME)
+              .execute();
+          handle
+              .createUpdate(
+                  """
+                  insert into wss_user_roles(wss_user_id, wss_user_role_id)
+                  values(
+                    (select id from wss_user where phone = :phone),
+                    (select id from wss_user_role where name = 'DISPATCHER')
+                  )
+                  on conflict(wss_user_id, wss_user_role_id) do nothing
+                  """)
+              .bind("phone", canonicalPhone)
+              .execute();
+        });
+  }
+
   private void seedDelivery(SeedDelivery delivery, Map<String, Long> siteIds) {
+    // Dispatcher and driver are referenced by their wss_user identity; name and phone are derived
+    // from that record. The dispatcher and the seeded drivers all exist by this point.
+    Long dispatcherId =
+        DeliveryDao.fetchUserIdByPhone(jdbi, PhoneNumberUtil.toCanonical(DISPATCHER_NUMBER))
+            .orElse(null);
+    Long driverId =
+        delivery.driverPhone() == null
+            ? null
+            : DeliveryDao.fetchUserIdByPhone(
+                    jdbi, PhoneNumberUtil.toCanonical(delivery.driverPhone()))
+                .orElse(null);
     DeliveryDao.createDelivery(
         jdbi,
         DeliveryDao.CreateDeliveryRequest.builder()
@@ -467,10 +512,8 @@ public class LocalDevUserSeeder implements ApplicationRunner {
             .toSiteId(siteIds.get(delivery.toSite()))
             .deliveryStatus(delivery.status())
             .targetDeliveryDate(delivery.targetDate())
-            .dispatcherName(DISPATCHER_NAME)
-            .dispatcherNumber(DISPATCHER_NUMBER)
-            .driverName(delivery.driverName())
-            .driverNumber(delivery.driverPhone())
+            .dispatcherWssUserId(dispatcherId)
+            .driverWssUserId(driverId)
             .dispatcherNotes(
                 delivery.licensePlate() == null
                     ? null

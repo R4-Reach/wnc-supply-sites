@@ -14,6 +14,7 @@ public class SetupPasswordHelper {
         delete from sms_passcode;
         delete from wss_user_roles;
         update site set primary_contact_wss_user_id = null, og_contact_wss_user_id = null;
+        update delivery set dispatcher_wss_user_id = null, driver_wss_user_id = null;
         delete from wss_user_sites;
         delete from driver;
         delete from wss_user;
