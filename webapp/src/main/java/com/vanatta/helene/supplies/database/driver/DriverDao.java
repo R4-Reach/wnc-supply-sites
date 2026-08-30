@@ -12,48 +12,33 @@ public class DriverDao {
             h.createQuery(
                     """
                     select
-                      wss_id,
-                      name fullName,
-                      phone,
-                      active,
-                      black_listed,
-                      location,
-                      license_plates,
-                      availability,
-                      comments,
-                      can_lift_50lbs,
-                      pallet_capacity
-                    from driver where regexp_replace(phone, '[^0-9]+', '', 'g') = :phone
+                      d.wss_id,
+                      u.name fullName,
+                      u.phone,
+                      d.active,
+                      d.black_listed,
+                      d.location,
+                      d.license_plates,
+                      d.availability,
+                      d.comments,
+                      d.can_lift_50lbs,
+                      d.pallet_capacity
+                    from driver d
+                    join wss_user u on u.id = d.wss_user_id
+                    where u.phone = :phone
                     """)
                 .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
                 .mapToBean(Driver.class)
                 .findOne());
   }
 
+  /** Updates the editable driver-portal fields. Identity (name/phone) lives on wss_user. */
   public static void upsert(Jdbi jdbi, Driver driver) {
     jdbi.withHandle(
         h ->
             h.createUpdate(
                     """
-            insert into driver(
-                  wss_id, name, phone, location,
-                  active, black_listed, license_plates,
-                  comments, availability, can_lift_50lbs, pallet_capacity)
-            values(
-               :wssId,
-               :name,
-               :phone,
-               :location,
-               :active,
-               :blacklisted,
-               :licensePlates,
-               :comments,
-               :availability,
-               :can_lift_50lbs,
-               :pallet_capacity
-            ) on conflict(wss_id) do update set
-               name = :name,
-               phone = :phone,
+            update driver set
                location = :location,
                active = :active,
                black_listed = :blacklisted,
@@ -62,10 +47,9 @@ public class DriverDao {
                availability = :availability,
                can_lift_50lbs = :can_lift_50lbs,
                pallet_capacity = :pallet_capacity
+            where wss_id = :wssId
             """)
                 .bind("wssId", driver.getWssId())
-                .bind("name", driver.getFullName())
-                .bind("phone", PhoneNumberUtil.toCanonical(driver.getPhone()))
                 .bind("location", driver.getLocation())
                 .bind("active", driver.isActive())
                 .bind("blacklisted", driver.isBlacklisted())
@@ -84,13 +68,9 @@ public class DriverDao {
                 .createUpdate(
                     """
                         update driver set
-                          active = (
-                            select not active
-                            from driver
-                            where regexp_replace(phone, '[^0-9]+', '', 'g') = :phone
-                          ),
+                          active = not active,
                           last_updated = now()
-                        where phone = :phone
+                        where wss_user_id = (select id from wss_user where phone = :phone)
                         """)
                 .bind("phone", PhoneNumberUtil.toCanonical(phone))
                 .execute());

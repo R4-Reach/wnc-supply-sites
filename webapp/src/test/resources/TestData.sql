@@ -2,7 +2,7 @@ delete from wss_user_auth_key;
 delete from wss_user_pass_change_history;
 delete from sms_passcode;
 delete from wss_user_roles;
-delete from wss_user;
+delete from wss_user_sites;
 delete from driver;
 
 delete from volunteer_delivery_item;
@@ -17,8 +17,8 @@ delete from site_item;
 delete from item_tag;
 delete from item;
 delete from site_audit_trail;
-delete from additional_site_manager;
 delete from site;
+delete from wss_user;
 delete from county;
 
 insert into county(name, state) values('Ashe', 'NC');
@@ -33,11 +33,13 @@ insert into county(name) values('dummy') on conflict do nothing;
 insert into max_supply_load(id, sort_order, name, default_selection)
 values( -100, 25, 'test-value', false) on conflict do nothing;
 
+-- Primary contact for site1 (asserted by SiteDetailDaoTest). Identity lives on wss_user now.
+insert into wss_user(phone, name) values('18280000001', 'contact me');
+
 insert into site(
   name,
-  contact_name,
-  contact_number,
-  og_contact_number,
+  primary_contact_wss_user_id,
+  og_contact_wss_user_id,
   address,
   city,
   county_id,
@@ -54,9 +56,8 @@ insert into site(
   inactive_reason)
 values (
         'site1',
-        'contact me',
-        '111',
-        '111',
+        (select id from wss_user where phone = '18280000001'),
+        (select id from wss_user where phone = '18280000001'),
         'address1',
         'city1',
         (select id from county where name = 'Watauga' and state = 'NC'),
@@ -73,22 +74,25 @@ values (
         'inactive reason text'
        );
 
+insert into wss_user_sites(wss_user_id, site_id)
+  select (select id from wss_user where phone = '18280000001'),
+         (select id from site where name = 'site1');
+
 
 -- site2, in Buncombe county, not accepting donations
-insert into site(name, address, city, county_id, accepting_donations, site_type_id, wss_id, max_supply_load_id,
-                 contact_number, og_contact_number)
+insert into site(name, address, city, county_id, accepting_donations, site_type_id, wss_id, max_supply_load_id)
 values ('site2', 'address2', 'city2', (select id from county where name = 'Buncombe'), false,
-        (select id from site_type where name = 'Distribution Center'), -20, -100, '123', '123');
+        (select id from site_type where name = 'Distribution Center'), -20, -100);
 
 -- siteCA, in CA
-insert into site(name, address, city, county_id, accepting_donations, site_type_id, wss_id, max_supply_load_id, contact_number, og_contact_number) values(
+insert into site(name, address, city, county_id, accepting_donations, site_type_id, wss_id, max_supply_load_id) values(
   'siteCA', 'address2', 'city2', (select id from county where name = 'Los Angeles'), false,
-  (select id from site_type where name = 'Distribution Center'), -201, -100, '123', '123');
+  (select id from site_type where name = 'Distribution Center'), -201, -100);
 
 -- site3, in Buncombe county, not active
-insert into site(name, address, city, county_id, active, site_type_id, max_supply_load_id, contact_number, og_contact_number) values(
+insert into site(name, address, city, county_id, active, site_type_id, max_supply_load_id) values(
 'site3', 'address3', 'city2', (select id from county where name = 'Buncombe'), false,
-(select id from site_type where name = 'Distribution Center'), -100, '222', '222');
+(select id from site_type where name = 'Distribution Center'), -100);
 
 -- create a delivery from site2 to site3
 insert into delivery(
@@ -115,9 +119,9 @@ values(
 
 
 -- site4, in Buncombe county, no items (but active), supply hub
-insert into site(name, address, city, county_id, site_type_id, max_supply_load_id, contact_number, og_contact_number) values(
+insert into site(name, address, city, county_id, site_type_id, max_supply_load_id) values(
    'site4', 'address3', 'city2', (select id from county where name = 'Buncombe'),
-   (select id from site_type where name = 'Supply Hub'), -100, '333', '333'
+   (select id from site_type where name = 'Supply Hub'), -100
 );
 -- create a delivery from site3 to site4
 insert into delivery(
@@ -157,14 +161,14 @@ values(
 
 -- site5, (no items & not active), name, address & details may be modified by tests,
 -- data will not be stable.
-insert into site(name, address, city, county_id, site_type_id, max_supply_load_id, contact_number, og_contact_number) values(
+insert into site(name, address, city, county_id, site_type_id, max_supply_load_id) values(
    'site5', 'address5', 'city5', (select id from county where name = 'Buncombe'),
-   (select id from site_type where name = 'Distribution Center'), -100, 444, 444
+   (select id from site_type where name = 'Distribution Center'), -100
 );
 
-insert into site(name, address, city, county_id, website, site_type_id, max_supply_load_id, contact_number, og_contact_number) values(
+insert into site(name, address, city, county_id, website, site_type_id, max_supply_load_id) values(
    'site6', 'address6', 'city6', (select id from county where name = 'Watauga'), 'site6website',
-   (select id from site_type where name = 'Distribution Center'), -100, 555, 555
+   (select id from site_type where name = 'Distribution Center'), -100
 );
 
 

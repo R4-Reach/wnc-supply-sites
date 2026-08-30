@@ -56,8 +56,8 @@ public class SiteDetailDao {
                             select
                               s.name siteName,
                               st.name siteType,
-                              s.contact_name,
-                              s.contact_number,
+                              pc.name contactName,
+                              pc.phone contactNumber,
                               s.additional_contacts,
                               s.address,
                               s.city,
@@ -79,6 +79,7 @@ public class SiteDetailDao {
                             join county c on c.id = s.county_id
                             join site_type st on st.id = s.site_type_id
                             join max_supply_load msl on msl.id = s.max_supply_load_id
+                            left join wss_user pc on pc.id = s.primary_contact_wss_user_id
                             where s.id = :siteId
                             """)
                 .bind("siteId", idToLookup)
@@ -95,6 +96,10 @@ public class SiteDetailDao {
     String phone;
   }
 
+  /**
+   * The site's additional contacts: its managers in wss_user_sites other than the displayed primary
+   * contact and the (hidden) permanent original contact.
+   */
   public static List<SiteContact> lookupAdditionalSiteContacts(Jdbi jdbi, long siteId) {
 
     return jdbi.withHandle(
@@ -102,10 +107,14 @@ public class SiteDetailDao {
             handle
                 .createQuery(
                     """
-                    select
-                      name, phone
-                    from additional_site_manager
-                    where site_id = :siteId
+                    select u.name, u.phone
+                    from wss_user_sites ws
+                    join wss_user u on u.id = ws.wss_user_id
+                    join site s on s.id = ws.site_id
+                    where ws.site_id = :siteId
+                      and ws.wss_user_id is distinct from s.primary_contact_wss_user_id
+                      and ws.wss_user_id is distinct from s.og_contact_wss_user_id
+                    order by u.name
                     """)
                 .bind("siteId", siteId)
                 .mapToBean(SiteContact.class)

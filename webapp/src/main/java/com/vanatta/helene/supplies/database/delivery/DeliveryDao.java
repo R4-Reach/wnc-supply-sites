@@ -131,8 +131,8 @@ public class DeliveryDao {
       coalesce(fromSite.address, d.pickup_address) fromAddress,
       coalesce(fromSite.city, d.pickup_city) fromCity,
       coalesce(fromCounty.state, d.pickup_state) fromState,
-      coalesce(fromSite.contact_name, d.pickup_contact_name) fromContactName,
-      coalesce(fromSite.contact_number, d.pickup_contact_phone) fromContactPhone,
+      coalesce(fromPc.name, d.pickup_contact_name) fromContactName,
+      coalesce(fromPc.phone, d.pickup_contact_phone) fromContactPhone,
       coalesce(fromSite.hours, d.pickup_hours) fromHours,
 
       coalesce(toSite.name, d.dropoff_site_name) toSiteName,
@@ -140,8 +140,8 @@ public class DeliveryDao {
       coalesce(toSite.address, d.dropoff_address) toAddress,
       coalesce(toSite.city, d.dropoff_city) toCity,
       coalesce(toCounty.state, d.dropoff_state) toState,
-      coalesce(toSite.contact_name, d.dropoff_contact_name) toContactName,
-      coalesce(toSite.contact_number, d.dropoff_contact_phone) toContactPhone,
+      coalesce(toPc.name, d.dropoff_contact_name) toContactName,
+      coalesce(toPc.phone, d.dropoff_contact_phone) toContactPhone,
       coalesce(toSite.hours, d.dropoff_hours) toHours,
 
       d.dispatch_code,
@@ -150,8 +150,10 @@ public class DeliveryDao {
     from delivery d
     left join site fromSite on fromSite.id = d.from_site_id
     left join county fromCounty on fromCounty.id = fromSite.county_id
+    left join wss_user fromPc on fromPc.id = fromSite.primary_contact_wss_user_id
     left join site toSite on toSite.id = d.to_site_id
     left join county toCounty on toCounty.id = toSite.county_id
+    left join wss_user toPc on toPc.id = toSite.primary_contact_wss_user_id
     where (%s)
     order by d.target_delivery_date desc
     """,

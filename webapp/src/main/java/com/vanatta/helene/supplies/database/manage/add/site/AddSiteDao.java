@@ -2,6 +2,7 @@ package com.vanatta.helene.supplies.database.manage.add.site;
 
 import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -34,9 +35,6 @@ public class AddSiteDao {
           facebook,
           site_type_id,
           hours,
-          contact_name,
-          contact_number,
-          og_contact_number,
           max_supply_load_id,
           receiving_notes
         ) values(
@@ -48,9 +46,6 @@ public class AddSiteDao {
           :facebook,
           (select id from site_type where name = :siteType),
           :hours,
-          :contactName,
-          :contactNumber,
-          :contactNumber,
           (select id from max_supply_load where name = :maxSupplyLoadName),
           :receivingNotes
          )
@@ -71,10 +66,6 @@ public class AddSiteDao {
                       .bind("facebook", siteData.getFacebook())
                       .bind("siteType", siteData.getSiteType().getText())
                       .bind("hours", siteData.getSiteHours())
-                      .bind("contactName", siteData.getContactName())
-                      .bind(
-                          "contactNumber", PhoneNumberUtil.toCanonical(siteData.getContactNumber()))
-                      .bind("maxSupplyLoadName", siteData.getMaxSupplyLoad())
                       .bind("maxSupplyLoadName", siteData.getMaxSupplyLoad())
                       .bind("receivingNotes", siteData.getReceivingNotes())
                       .executeAndReturnGeneratedKeys("id")
@@ -91,8 +82,7 @@ public class AddSiteDao {
 
       jdbi.withHandle(handle -> handle.createUpdate(addToDimensionMatrix).execute());
 
-      // The primary contact becomes a site manager and needs portal access.
-      UserRoleService.grantSiteManager(jdbi, siteData.getContactNumber());
+      linkPrimaryContact(jdbi, siteId, siteData.getContactName(), siteData.getContactNumber());
 
       return siteId;
     } catch (UnableToExecuteStatementException e) {
@@ -106,5 +96,65 @@ public class AddSiteDao {
         throw e;
       }
     }
+  }
+
+  /**
+   * Links the new site's primary and original contact to the user for the given phone: ensures that
+   * user exists with SITE_MANAGER access, records their name, points both site contact foreign keys
+   * at them, and adds the site membership. The original-contact link is a permanent record of the
+   * creator and is never changed afterward. A blank phone leaves the site with no contact.
+   */
+  private static void linkPrimaryContact(
+      Jdbi jdbi, long siteId, String contactName, String contactNumber) {
+    if (contactNumber == null || contactNumber.isBlank()) {
+      return;
+    }
+    // grantSiteManager only creates a user for a valid phone; an invalid one leaves the site with
+    // no contact rather than crashing.
+    UserRoleService.grantSiteManager(jdbi, contactNumber);
+    Optional<Long> userIdOpt =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("select id from wss_user where phone = :phone")
+                    .bind("phone", PhoneNumberUtil.toCanonical(contactNumber))
+                    .mapTo(Long.class)
+                    .findOne());
+    if (userIdOpt.isEmpty()) {
+      return;
+    }
+    long userId = userIdOpt.get();
+    String trimmedName = contactName == null || contactName.isBlank() ? null : contactName.trim();
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate("update wss_user set name = coalesce(:name, name) where id = :id")
+                .bind("name", trimmedName)
+                .bind("id", userId)
+                .execute());
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    update site
+                      set primary_contact_wss_user_id = :userId,
+                          og_contact_wss_user_id = :userId
+                      where id = :siteId
+                    """)
+                .bind("userId", userId)
+                .bind("siteId", siteId)
+                .execute());
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    insert into wss_user_sites(wss_user_id, site_id) values(:userId, :siteId)
+                    on conflict (wss_user_id, site_id) do nothing
+                    """)
+                .bind("userId", userId)
+                .bind("siteId", siteId)
+                .execute());
   }
 }

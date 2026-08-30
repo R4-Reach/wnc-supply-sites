@@ -12,20 +12,13 @@ class ContactDaoTest {
 
   @BeforeEach
   void setUp() {
-    jdbiTest.withHandle(
-        handle ->
-            handle
-                .createScript(
-                    """
-      delete from additional_site_manager;
-      """)
-                .execute());
+    TestConfiguration.setupDatabase();
   }
 
   final ContactDao.SiteManager manager =
       ContactDao.SiteManager.builder()
           .name("my new name") //
-          .phone("12345")
+          .phone("11234567890")
           .build();
 
   @Test
@@ -49,7 +42,7 @@ class ContactDaoTest {
 
     long newId = ContactDao.getManagers(jdbiTest, siteId).getFirst().getId();
 
-    var update = manager.toBuilder().id(newId).name("update name").phone("0000").build();
+    var update = manager.toBuilder().id(newId).name("update name").phone("10000000000").build();
 
     ContactDao.updateAdditionalSiteManager(jdbiTest, siteId, update);
 

@@ -62,23 +62,17 @@ public class LoggedInAdvice {
             .sorted()
             .toList();
       } else {
-        // get list of sites that user is primary or secondary
+        // wss_user_sites is the source of truth for which sites a user manages (primary contact,
+        // original contact, and additional managers all live there).
         return jdbi
             .withHandle(
                 h ->
                     h.createQuery(
                             """
-                                select id siteId
-                                from site
-                                where regexp_replace(contact_number, '[^0-9]+', '', 'g') = :number
-                                union
-                                select id siteId
-                                from site
-                                where regexp_replace(og_contact_number, '[^0-9]+', '', 'g') = :number
-                                union
-                                select site_id siteId
-                                from additional_site_manager
-                                where regexp_replace(phone, '[^0-9]+', '', 'g') = :number;
+                                select ws.site_id
+                                from wss_user_sites ws
+                                join wss_user u on u.id = ws.wss_user_id
+                                where u.phone = :number
                                 """)
                         .bind("number", number)
                         .mapTo(Long.class)

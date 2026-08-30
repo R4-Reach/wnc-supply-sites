@@ -6,6 +6,7 @@ import com.vanatta.helene.supplies.database.driver.Driver;
 import com.vanatta.helene.supplies.database.manage.add.site.AddSiteDao;
 import com.vanatta.helene.supplies.database.manage.add.site.AddSiteData;
 import com.vanatta.helene.supplies.database.test.util.TestDataFile;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.util.Optional;
@@ -174,5 +175,47 @@ public class TestConfiguration {
         .availability("availability test driver")
         .comments("comments test driver")
         .build();
+  }
+
+  /**
+   * Inserts a driver, creating the backing wss_user for its phone/name (identity now lives on
+   * wss_user; the driver row only holds the portal fields and a foreign key).
+   */
+  public static void insertDriver(Driver driver) {
+    String canonicalPhone = PhoneNumberUtil.toCanonical(driver.getPhone());
+    jdbiTest.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "insert into wss_user(phone, name) values(:phone, :name)"
+                        + " on conflict(phone) do nothing")
+                .bind("phone", canonicalPhone)
+                .bind("name", driver.getFullName())
+                .execute());
+    jdbiTest.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    insert into driver(
+                      wss_id, wss_user_id, location, active, black_listed,
+                      license_plates, comments, availability, can_lift_50lbs, pallet_capacity)
+                    values(
+                      :wssId,
+                      (select id from wss_user where phone = :phone),
+                      :location, :active, :blacklisted,
+                      :licensePlates, :comments, :availability, :canLift, :pallet)
+                    """)
+                .bind("wssId", driver.getWssId())
+                .bind("phone", canonicalPhone)
+                .bind("location", driver.getLocation())
+                .bind("active", driver.isActive())
+                .bind("blacklisted", driver.isBlacklisted())
+                .bind("licensePlates", driver.getLicensePlates())
+                .bind("comments", driver.getComments())
+                .bind("availability", driver.getAvailability())
+                .bind("canLift", driver.isCan_lift_50lbs())
+                .bind("pallet", driver.getPallet_capacity())
+                .execute());
   }
 }

@@ -74,10 +74,12 @@ class ManageSiteDaoTest {
         TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.FACEBOOK, "new facebook");
     ManageSiteDao.updateSiteField(
         TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.SITE_HOURS, "M-F 9-5pm");
-    ManageSiteDao.updateSiteField(
-        TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NAME, "Smith Williams");
+    // A site's primary-contact user is created when the contact number is set; the contact name is
+    // then recorded on that user, so the number must be set first.
     ManageSiteDao.updateSiteField(
         TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NUMBER, "999-596-1112");
+    ManageSiteDao.updateSiteField(
+        TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NAME, "Smith Williams");
     ManageSiteDao.updateSiteField(
         TestConfiguration.jdbiTest,
         siteId,

@@ -30,7 +30,7 @@ public class AddSiteDaoTest {
           .county("Ashe")
           .state("NC")
           .maxSupplyLoad("Car")
-          .contactNumber("111")
+          .contactNumber("555-555-5555")
           .build();
 
   private static final AddSiteData siteData2 =
@@ -42,7 +42,7 @@ public class AddSiteDaoTest {
           .county("Ashe")
           .state("NC")
           .maxSupplyLoad("Car")
-          .contactNumber("000")
+          .contactNumber("5550000000")
           .build();
 
   @Test
@@ -52,7 +52,7 @@ public class AddSiteDaoTest {
     long id = TestConfiguration.getSiteId(siteData1.getSiteName());
     SiteDetailData details = SiteDetailDao.lookupSiteById(TestConfiguration.jdbiTest, id);
 
-    assertThat(details.getContactNumber()).isEqualTo(siteData1.getContactNumber());
+    assertThat(details.getContactNumber()).isEqualTo("15555555555");
     assertThat(details.getWebsite()).isEqualTo(siteData1.getWebsite());
     assertThat(details.getSiteType()).isEqualTo(siteData1.getSiteType().getText());
     assertThat(details.getSiteName()).isEqualTo(siteData1.getSiteName());
@@ -68,7 +68,7 @@ public class AddSiteDaoTest {
     long id = TestConfiguration.getSiteId(siteData2.getSiteName());
     SiteDetailData details = SiteDetailDao.lookupSiteById(TestConfiguration.jdbiTest, id);
 
-    assertThat(details.getContactNumber()).isEqualTo("000");
+    assertThat(details.getContactNumber()).isEqualTo("15550000000");
     assertThat(details.getWebsite()).isNull();
     assertThat(details.getSiteType()).isEqualTo(siteData2.getSiteType().getText());
     assertThat(details.getSiteName()).isEqualTo(siteData2.getSiteName());

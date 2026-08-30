@@ -116,16 +116,15 @@ public class ManageSiteDao {
       oldValue = updateCounty(jdbi, siteId, county, state);
     } else if (field == SiteField.MAX_SUPPLY_LOAD) {
       oldValue = updateMaxSupply(jdbi, siteId, newValue);
+    } else if (field == SiteField.CONTACT_NUMBER) {
+      oldValue = updatePrimaryContactNumber(jdbi, siteId, newValue);
+    } else if (field == SiteField.CONTACT_NAME) {
+      oldValue = updatePrimaryContactName(jdbi, siteId, newValue);
     } else {
       oldValue = updateSiteColumn(jdbi, siteId, field, newValue);
     }
     addToAuditTrail(
         jdbi, siteId, field, oldValue, newValue == null || newValue.isBlank() ? "-" : newValue);
-
-    // Changing the primary contact makes that phone a site manager needing portal access.
-    if (field == SiteField.CONTACT_NUMBER) {
-      UserRoleService.grantSiteManager(jdbi, newValue);
-    }
 
     // if location as changed, then we need to delete previous distances and re-calculate
     if (field.isLocationField()) {
@@ -138,6 +137,109 @@ public class ManageSiteDao {
       jdbi.withHandle(
           handle -> handle.createUpdate(deleteDistances).bind("siteId", siteId).execute());
     }
+  }
+
+  /**
+   * Points the site's primary contact at the user for this (canonical) phone: ensures that user
+   * exists with SITE_MANAGER portal access, sets site.primary_contact_wss_user_id, and records the
+   * site membership in wss_user_sites. A blank value clears the primary contact. Returns the
+   * previous primary contact's phone for the audit trail.
+   */
+  static String updatePrimaryContactNumber(Jdbi jdbi, long siteId, String newValue) {
+    String oldValue =
+        jdbi.withHandle(
+                handle ->
+                    handle
+                        .createQuery(
+                            """
+                            select pc.phone
+                            from site s
+                            left join wss_user pc on pc.id = s.primary_contact_wss_user_id
+                            where s.id = :siteId
+                            """)
+                        .bind("siteId", siteId)
+                        .mapTo(String.class)
+                        .findOne())
+            .orElse(null);
+
+    if (newValue == null || newValue.isBlank()) {
+      jdbi.withHandle(
+          handle ->
+              handle
+                  .createUpdate(
+                      "update site set primary_contact_wss_user_id = null where id = :siteId")
+                  .bind("siteId", siteId)
+                  .execute());
+      return oldValue;
+    }
+
+    // grantSiteManager only creates a user for a valid phone; for an invalid one leave the current
+    // primary contact untouched.
+    UserRoleService.grantSiteManager(jdbi, newValue);
+    Optional<Long> userIdOpt =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("select id from wss_user where phone = :phone")
+                    .bind("phone", PhoneNumberUtil.toCanonical(newValue))
+                    .mapTo(Long.class)
+                    .findOne());
+    if (userIdOpt.isEmpty()) {
+      return oldValue;
+    }
+    long userId = userIdOpt.get();
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "update site set primary_contact_wss_user_id = :userId where id = :siteId")
+                .bind("userId", userId)
+                .bind("siteId", siteId)
+                .execute());
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    insert into wss_user_sites(wss_user_id, site_id) values(:userId, :siteId)
+                    on conflict (wss_user_id, site_id) do nothing
+                    """)
+                .bind("userId", userId)
+                .bind("siteId", siteId)
+                .execute());
+    return oldValue;
+  }
+
+  /** Sets the display name of the site's primary contact user. Returns the previous name. */
+  static String updatePrimaryContactName(Jdbi jdbi, long siteId, String newValue) {
+    String oldValue =
+        jdbi.withHandle(
+                handle ->
+                    handle
+                        .createQuery(
+                            """
+                            select pc.name
+                            from site s
+                            left join wss_user pc on pc.id = s.primary_contact_wss_user_id
+                            where s.id = :siteId
+                            """)
+                        .bind("siteId", siteId)
+                        .mapTo(String.class)
+                        .findOne())
+            .orElse(null);
+    String trimmed = newValue == null || newValue.isBlank() ? null : newValue.trim();
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    update wss_user set name = :name
+                    where id = (select primary_contact_wss_user_id from site where id = :siteId)
+                    """)
+                .bind("name", trimmed)
+                .bind("siteId", siteId)
+                .execute());
+    return oldValue;
   }
 
   /**

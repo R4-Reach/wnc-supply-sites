@@ -179,11 +179,13 @@ public class VolunteerDao {
           site.name as site_name,
           site.address,
           site.city,
-          site.contact_number as site_contact_number,
-          site.contact_name as site_contact_name
+          pc.phone as site_contact_number,
+          pc.name as site_contact_name
         FROM volunteer_delivery vd
         LEFT JOIN site
         ON vd.site_id = site.id
+        LEFT JOIN wss_user pc
+        ON pc.id = site.primary_contact_wss_user_id
         WHERE vd.url_key = :urlKey
         """;
 

@@ -39,7 +39,7 @@ class SiteDetailDaoTest {
 
     assertThat(result.getSiteName()).isEqualTo("site1");
     assertThat(result.getContactName()).isEqualTo("contact me");
-    assertThat(result.getContactNumber()).isEqualTo("111");
+    assertThat(result.getContactNumber()).isEqualTo("18280000001");
     assertThat(result.getAddress()).isEqualTo("address1");
     assertThat(result.getCity()).isEqualTo("city1");
     assertThat(result.getState()).isEqualTo("NC");

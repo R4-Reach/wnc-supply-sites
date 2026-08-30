@@ -18,7 +18,7 @@ class DriverControllerTest {
   @BeforeEach
   void setup() {
     TestConfiguration.setupDatabase();
-    DriverDao.upsert(jdbiTest, driver);
+    TestConfiguration.insertDriver(driver);
   }
 
   @Test
@@ -47,7 +47,8 @@ class DriverControllerTest {
 
   @Test
   void driverLookupWorksWithAnyFormatting() {
-    DriverDao.upsert(jdbiTest, driver.toBuilder().wssId(-10_000L).phone("(111) 111-1111").build());
+    TestConfiguration.insertDriver(
+        driver.toBuilder().wssId(-10_000L).phone("(111) 111-1111").build());
     var modelAndView = driverController.showDriverPortal("(111) 111-1111");
     assertThat(modelAndView.getViewName()).isEqualTo("driver/portal");
 
