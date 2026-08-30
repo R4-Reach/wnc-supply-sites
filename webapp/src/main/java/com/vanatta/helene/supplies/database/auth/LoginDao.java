@@ -30,7 +30,7 @@ public class LoginDao {
   }
 
   public static String generateAuthToken(Jdbi jdbi, String user) {
-    final String phone = PhoneNumberUtil.removeNonNumeric(user);
+    final String phone = PhoneNumberUtil.toCanonical(user);
     String token = UUID.randomUUID().toString();
 
     String insert =

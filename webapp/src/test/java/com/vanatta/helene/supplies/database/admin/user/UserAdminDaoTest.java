@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 class UserAdminDaoTest {
 
-  private static final String PHONE = "5550001234";
+  // Stored in canonical 11-digit form (see PhoneNumberUtil.toCanonical).
+  private static final String PHONE = "15550001234";
 
   @BeforeEach
   void cleanDb() {

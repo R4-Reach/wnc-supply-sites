@@ -28,7 +28,7 @@ public class UserRoleService {
     if (!PhoneNumberUtil.isValid(phoneInput)) {
       return;
     }
-    String phone = PhoneNumberUtil.removeNonNumeric(phoneInput);
+    String phone = PhoneNumberUtil.toCanonical(phoneInput);
 
     jdbi.withHandle(
         handle ->

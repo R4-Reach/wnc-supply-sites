@@ -3,6 +3,7 @@ package com.vanatta.helene.supplies.database.manage;
 import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import com.vanatta.helene.supplies.database.data.SiteType;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController.SiteSelection;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import jakarta.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
@@ -96,6 +97,11 @@ public class ManageSiteDao {
 
     if (field.isRequired() && (newValue == null || newValue.isEmpty())) {
       throw new RequiredFieldException(field.frontEndName);
+    }
+
+    // The contact number is stored (and mirrored into wss_user) in canonical 11-digit form.
+    if (field == SiteField.CONTACT_NUMBER && newValue != null && !newValue.isBlank()) {
+      newValue = PhoneNumberUtil.toCanonical(newValue);
     }
 
     @Nullable final String oldValue;

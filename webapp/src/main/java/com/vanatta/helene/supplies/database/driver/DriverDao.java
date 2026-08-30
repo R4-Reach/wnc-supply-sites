@@ -25,7 +25,7 @@ public class DriverDao {
                       pallet_capacity
                     from driver where regexp_replace(phone, '[^0-9]+', '', 'g') = :phone
                     """)
-                .bind("phone", PhoneNumberUtil.removeNonNumeric(phoneNumber))
+                .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
                 .mapToBean(Driver.class)
                 .findOne());
   }
@@ -65,7 +65,7 @@ public class DriverDao {
             """)
                 .bind("wssId", driver.getWssId())
                 .bind("name", driver.getFullName())
-                .bind("phone", PhoneNumberUtil.removeNonNumeric(driver.getPhone()))
+                .bind("phone", PhoneNumberUtil.toCanonical(driver.getPhone()))
                 .bind("location", driver.getLocation())
                 .bind("active", driver.isActive())
                 .bind("blacklisted", driver.isBlacklisted())
@@ -92,7 +92,7 @@ public class DriverDao {
                           last_updated = now()
                         where phone = :phone
                         """)
-                .bind("phone", PhoneNumberUtil.removeNonNumeric(phone))
+                .bind("phone", PhoneNumberUtil.toCanonical(phone))
                 .execute());
   }
 }

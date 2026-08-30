@@ -77,7 +77,7 @@ class ManageSiteDaoTest {
     ManageSiteDao.updateSiteField(
         TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NAME, "Smith Williams");
     ManageSiteDao.updateSiteField(
-        TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NUMBER, "999-596-111");
+        TestConfiguration.jdbiTest, siteId, ManageSiteDao.SiteField.CONTACT_NUMBER, "999-596-1112");
     ManageSiteDao.updateSiteField(
         TestConfiguration.jdbiTest,
         siteId,
@@ -97,7 +97,7 @@ class ManageSiteDaoTest {
     assertThat(dataLookup.getFacebook()).isEqualTo("new facebook");
     assertThat(dataLookup.getHours()).isEqualTo("M-F 9-5pm");
     assertThat(dataLookup.getContactName()).isEqualTo("Smith Williams");
-    assertThat(dataLookup.getContactNumber()).isEqualTo("999-596-111");
+    assertThat(dataLookup.getContactNumber()).isEqualTo("19995961112");
     assertThat(dataLookup.getMaxSupply()).isEqualTo("Car");
   }
 

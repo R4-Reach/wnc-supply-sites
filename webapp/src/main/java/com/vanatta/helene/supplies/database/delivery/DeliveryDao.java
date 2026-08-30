@@ -1,5 +1,6 @@
 package com.vanatta.helene.supplies.database.delivery;
 
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -95,11 +96,17 @@ public class DeliveryDao {
   }
 
   public static List<Delivery> fetchDeliveriesByDriverPhoneNumber(Jdbi jdbi, String driverPhone) {
+    // driver_number is synced from Airtable and not stored in canonical form, so canonicalize both
+    // sides of the comparison: strip non-digits and prefix the country code onto 10-digit numbers.
     String whereClause =
         """
-              regexp_replace(d.driver_number, '[^0-9]+', '', 'g') = :id
+              case
+                when length(regexp_replace(d.driver_number, '[^0-9]+', '', 'g')) = 10
+                  then '1' || regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
+                else regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
+              end = :id
             """;
-    return fetchDeliveries(jdbi, whereClause, driverPhone);
+    return fetchDeliveries(jdbi, whereClause, PhoneNumberUtil.toCanonical(driverPhone));
   }
 
   private static List<Delivery> fetchDeliveries(Jdbi jdbi, String whereClause, Object idValue) {

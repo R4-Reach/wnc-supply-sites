@@ -82,7 +82,7 @@ class ConfirmAccessCodeControllerTest {
                 "557603", "1a24abcd-029f-49fe-8d76-af1c4b93bc28", "validation token"))
         .isFalse();
 
-    String number = "123___4444";
+    String number = "1234444444";
     SetupPasswordHelper.withRegisteredNumber(number);
     SendAccessTokenDao.insertSmsPasscode(
         TestConfiguration.jdbiTest,
@@ -104,7 +104,7 @@ class ConfirmAccessCodeControllerTest {
 
   @Test
   void confirmAccessBadAccessToken() {
-    String number = "123___4444";
+    String number = "1234444444";
     SetupPasswordHelper.withRegisteredNumber(number);
     SendAccessTokenDao.insertSmsPasscode(
         TestConfiguration.jdbiTest,
@@ -126,7 +126,7 @@ class ConfirmAccessCodeControllerTest {
       String.format("{\"confirmCode\":\"000000\",\"csrf\":\"%s\"}", csrf);
 
   private void insertRealCode() {
-    String number = "123___4444";
+    String number = "1234444444";
     SetupPasswordHelper.withRegisteredNumber(number);
     SendAccessTokenDao.insertSmsPasscode(
         TestConfiguration.jdbiTest,
@@ -188,7 +188,7 @@ class ConfirmAccessCodeControllerTest {
 
   @Test
   void confirmAccessBadCsrfToken() {
-    String number = "123___4444";
+    String number = "1234444444";
     SetupPasswordHelper.withRegisteredNumber(number);
     SendAccessTokenDao.insertSmsPasscode(
         TestConfiguration.jdbiTest,

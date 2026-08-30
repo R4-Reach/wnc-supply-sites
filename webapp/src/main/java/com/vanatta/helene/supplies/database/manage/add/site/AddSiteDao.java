@@ -1,6 +1,7 @@
 package com.vanatta.helene.supplies.database.manage.add.site;
 
 import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -71,7 +72,8 @@ public class AddSiteDao {
                       .bind("siteType", siteData.getSiteType().getText())
                       .bind("hours", siteData.getSiteHours())
                       .bind("contactName", siteData.getContactName())
-                      .bind("contactNumber", siteData.getContactNumber())
+                      .bind(
+                          "contactNumber", PhoneNumberUtil.toCanonical(siteData.getContactNumber()))
                       .bind("maxSupplyLoadName", siteData.getMaxSupplyLoad())
                       .bind("maxSupplyLoadName", siteData.getMaxSupplyLoad())
                       .bind("receivingNotes", siteData.getReceivingNotes())

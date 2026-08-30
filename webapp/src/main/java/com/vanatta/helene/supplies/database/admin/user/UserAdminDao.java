@@ -68,7 +68,7 @@ public class UserAdminDao {
     if (!PhoneNumberUtil.isValid(phoneInput)) {
       return false;
     }
-    String phone = PhoneNumberUtil.removeNonNumeric(phoneInput);
+    String phone = PhoneNumberUtil.toCanonical(phoneInput);
     String trimmedName = name == null || name.isBlank() ? null : name.trim();
     jdbi.withHandle(
         handle ->

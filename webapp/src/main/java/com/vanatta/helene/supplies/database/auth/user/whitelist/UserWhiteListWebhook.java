@@ -36,7 +36,7 @@ public class UserWhiteListWebhook {
     Boolean removed;
 
     public String getPhoneNumber() {
-      return PhoneNumberUtil.removeNonNumeric(phoneNumber);
+      return PhoneNumberUtil.toCanonical(phoneNumber);
     }
 
     static UserWhiteListRequest parse(String input) {

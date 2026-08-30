@@ -4,6 +4,7 @@ import static com.vanatta.helene.supplies.database.TestConfiguration.jdbiTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.auth.UserRole;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class UserWhiteListWebhookTest {
   @Test
   void canParse() {
     var request = UserWhiteListWebhook.UserWhiteListRequest.parse(input);
-    assertThat(request.getPhoneNumber()).isEqualTo("9995554444");
+    assertThat(request.getPhoneNumber()).isEqualTo("19995554444");
     assertThat(request.getRoles()).contains("SITE_MANAGER", "DATA_ADMIN");
   }
 
@@ -104,7 +105,12 @@ class UserWhiteListWebhookTest {
             """;
 
     return jdbiTest.withHandle(
-        handle -> handle.createQuery(query).bind("phone", phone).mapTo(String.class).list());
+        handle ->
+            handle
+                .createQuery(query)
+                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                .mapTo(String.class)
+                .list());
   }
 
   /**

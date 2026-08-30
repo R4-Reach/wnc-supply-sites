@@ -11,10 +11,10 @@ public class PasswordDao {
     if (phoneNumber == null || password == null || password.length() < 5) {
       return false;
     }
-    final String cleanedPhoneNumber = PhoneNumberUtil.removeNonNumeric(phoneNumber);
-    if (cleanedPhoneNumber.length() != 10 && cleanedPhoneNumber.length() != 11) {
+    if (!PhoneNumberUtil.isValid(phoneNumber)) {
       return false;
     }
+    final String cleanedPhoneNumber = PhoneNumberUtil.toCanonical(phoneNumber);
 
     String select =
         """
@@ -48,7 +48,7 @@ public class PasswordDao {
             handle ->
                 handle
                     .createQuery(select)
-                    .bind("phoneNumber", PhoneNumberUtil.removeNonNumeric(phoneNumber))
+                    .bind("phoneNumber", PhoneNumberUtil.toCanonical(phoneNumber))
                     .mapTo(Long.class)
                     .findOne())
         .isPresent();
@@ -70,7 +70,7 @@ public class PasswordDao {
             handle ->
                 handle
                     .createQuery(select)
-                    .bind("phoneNumber", PhoneNumberUtil.removeNonNumeric(phoneNumber))
+                    .bind("phoneNumber", PhoneNumberUtil.toCanonical(phoneNumber))
                     .mapTo(Long.class)
                     .findOne())
         .isPresent();

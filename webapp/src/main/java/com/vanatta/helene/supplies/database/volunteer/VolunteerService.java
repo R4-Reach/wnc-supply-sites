@@ -3,6 +3,7 @@ package com.vanatta.helene.supplies.database.volunteer;
 import static com.vanatta.helene.supplies.database.util.URLKeyGenerator.generateUrlKey;
 import static com.vanatta.helene.supplies.database.volunteer.VolunteerDao.*;
 
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -138,11 +139,11 @@ public class VolunteerService {
     }
 
     public String getCleanedSitePhoneNumber() {
-      return this.siteContactNumber.replaceAll("[^0-9]", "");
+      return PhoneNumberUtil.toCanonical(this.siteContactNumber);
     }
 
     public String getCleanedVolunteerPhoneNumber() {
-      return this.volunteerPhone.replaceAll("[^0-9]", "");
+      return PhoneNumberUtil.toCanonical(this.volunteerPhone);
     }
 
     public String getPortalURL() {
@@ -260,7 +261,7 @@ public class VolunteerService {
    */
   private static Access verifyDeliveryPortalAccess(
       String userPhoneNumber, VolunteerDeliveryRequest deliveryRequest) {
-    String cleanedUserPhoneNumber = userPhoneNumber.replaceAll("[^0-9]", "");
+    String cleanedUserPhoneNumber = PhoneNumberUtil.toCanonical(userPhoneNumber);
 
     Boolean hasVolunteerAccess =
         Objects.equals(deliveryRequest.getCleanedVolunteerPhoneNumber(), cleanedUserPhoneNumber);

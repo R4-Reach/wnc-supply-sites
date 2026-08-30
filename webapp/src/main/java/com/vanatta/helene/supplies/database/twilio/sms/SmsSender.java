@@ -5,6 +5,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import com.vanatta.helene.supplies.database.siteconfig.SiteConfigKey;
 import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import com.vanatta.helene.supplies.database.util.TruncateString;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -74,10 +75,13 @@ public class SmsSender {
           siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_AUTH_TOKEN));
 
       try {
+        // toCanonical yields 11 digits with the leading country code (1XXXXXXXXXX); Twilio wants
+        // E.164, so prefix a '+'. This is correct whether the caller passed 10 digits, 11 digits,
+        // or an already-"+1"-prefixed value.
+        String e164 = "+" + PhoneNumberUtil.toCanonical(phoneNumber);
         Message smsMessage =
             Message.creator(
-                    new PhoneNumber(
-                        phoneNumber.startsWith("+1") ? phoneNumber : "+1" + phoneNumber),
+                    new PhoneNumber(e164),
                     new PhoneNumber(twilioFromNumber),
                     TruncateString.truncate(message, 1500))
                 .create();

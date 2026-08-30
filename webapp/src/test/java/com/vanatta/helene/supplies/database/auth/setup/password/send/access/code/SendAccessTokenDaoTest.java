@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class SendAccessTokenDaoTest {
-  String number = "123___1234";
+  String number = "1231231234";
 
   @BeforeEach
   void cleanDb() {

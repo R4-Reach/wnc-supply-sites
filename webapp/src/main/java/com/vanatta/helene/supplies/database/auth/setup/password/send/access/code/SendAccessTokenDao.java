@@ -33,7 +33,7 @@ public class SendAccessTokenDao {
             handle ->
                 handle
                     .createQuery(query)
-                    .bind("phone", phoneNumber)
+                    .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
                     .bind("minutes", THROTTLE_MINUTES)
                     .mapTo(Integer.class)
                     .one());
@@ -44,7 +44,7 @@ public class SendAccessTokenDao {
     if (inputPhoneNumber == null || inputPhoneNumber.isBlank()) {
       return false;
     }
-    final String phoneNumber = PhoneNumberUtil.removeNonNumeric(inputPhoneNumber);
+    final String phoneNumber = PhoneNumberUtil.toCanonical(inputPhoneNumber);
 
     // wss_user is the single source of truth for who may log in. Site contacts and drivers are
     // mirrored into wss_user (see the role-unification migration and UserRoleService), so there is
@@ -71,7 +71,12 @@ public class SendAccessTokenDao {
         """
         insert into wss_user(phone) values(:phone)
         """;
-    jdbi.withHandle(handle -> handle.createUpdate(insert).bind("phone", number).execute());
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(insert)
+                .bind("phone", PhoneNumberUtil.toCanonical(number))
+                .execute());
   }
 
   static boolean userAccountExists(Jdbi jdbi, String phoneNumber) {
@@ -81,7 +86,11 @@ public class SendAccessTokenDao {
         """;
     return jdbi.withHandle(
             handle ->
-                handle.createQuery(query).bind("phone", phoneNumber).mapTo(Integer.class).findOne())
+                handle
+                    .createQuery(query)
+                    .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
+                    .mapTo(Integer.class)
+                    .findOne())
         .isPresent();
   }
 
@@ -116,7 +125,7 @@ public class SendAccessTokenDao {
         handle ->
             handle
                 .createUpdate(insert)
-                .bind("phoneNumber", params.getPhoneNumber())
+                .bind("phoneNumber", PhoneNumberUtil.toCanonical(params.getPhoneNumber()))
                 .bind("passcode", params.getAccessCode())
                 .bind("csrf", params.getCsrfToken())
                 .execute());

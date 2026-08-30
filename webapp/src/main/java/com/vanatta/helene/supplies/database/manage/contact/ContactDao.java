@@ -1,6 +1,7 @@
 package com.vanatta.helene.supplies.database.manage.contact;
 
 import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
+import com.vanatta.helene.supplies.database.util.PhoneNumberUtil;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +31,7 @@ public class ContactDao {
                     .createUpdate(insert)
                     .bind("siteId", siteId)
                     .bind("name", name)
-                    .bind("phone", phone)
+                    .bind("phone", PhoneNumberUtil.toCanonical(phone))
                     .executeAndReturnGeneratedKeys("id")
                     .mapTo(Long.class)
                     .one());
@@ -52,7 +53,7 @@ public class ContactDao {
             handle
                 .createUpdate(update)
                 .bind("name", siteManager.getName())
-                .bind("phone", siteManager.getPhone())
+                .bind("phone", PhoneNumberUtil.toCanonical(siteManager.getPhone()))
                 .bind("siteId", siteId)
                 .bind("id", siteManager.getId())
                 .execute());

@@ -68,6 +68,6 @@ public class SiteDetailTest {
 
     List<SiteDetailDao.SiteContact> contacts =
         SiteDetailDao.lookupAdditionalSiteContacts(jdbiTest, siteId);
-    assertThat(contacts).containsExactly(new SiteDetailDao.SiteContact("name", "123-333-4444"));
+    assertThat(contacts).containsExactly(new SiteDetailDao.SiteContact("name", "11233334444"));
   }
 }
