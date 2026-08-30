@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.UserRole;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -77,15 +78,20 @@ public class UserWhiteListWebhook {
 
   /** Adds a user to wss_user table, does *not* update roles. */
   public static void upsertUser(Jdbi jdbi, UserWhiteListRequest request) {
+    String phone = request.getPhoneNumber();
     String script =
         """
-        insert into wss_user(phone) values (:phone) on conflict(phone) do update set removed = :removed
+        insert into wss_user(phone, phone_enc, phone_hmac)
+        values (:phone, :phoneEnc, :phoneHmac)
+        on conflict(phone) do update set removed = :removed
         """;
     jdbi.withHandle(
         handle ->
             handle
                 .createUpdate(script)
-                .bind("phone", request.getPhoneNumber())
+                .bind("phone", phone)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("removed", request.getRemoved())
                 .execute());
   }

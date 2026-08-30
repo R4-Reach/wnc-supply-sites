@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.user.UserRoleService;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class ContactDao {
 
@@ -113,8 +114,15 @@ public class ContactDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set name = coalesce(:name, name) where id = :id")
+                .createUpdate(
+                    """
+                    update wss_user
+                    set name = coalesce(:name, name),
+                        name_enc = coalesce(:nameEnc, name_enc)
+                    where id = :id
+                    """)
                 .bind("name", trimmed)
+                .bind("nameEnc", PiiCrypto.encrypt(trimmed))
                 .bind("id", userId)
                 .execute());
   }

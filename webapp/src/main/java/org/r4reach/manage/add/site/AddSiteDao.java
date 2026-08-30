@@ -6,6 +6,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.r4reach.auth.user.UserRoleService;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 @Slf4j
 public class AddSiteDao {
@@ -128,8 +129,15 @@ public class AddSiteDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set name = coalesce(:name, name) where id = :id")
+                .createUpdate(
+                    """
+                    update wss_user
+                    set name = coalesce(:name, name),
+                        name_enc = coalesce(:nameEnc, name_enc)
+                    where id = :id
+                    """)
                 .bind("name", trimmedName)
+                .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", userId)
                 .execute());
     jdbi.withHandle(

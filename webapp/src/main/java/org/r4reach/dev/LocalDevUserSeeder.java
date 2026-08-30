@@ -17,6 +17,7 @@ import org.r4reach.manage.add.site.AddSiteData;
 import org.r4reach.manage.inventory.InventoryDao;
 import org.r4reach.util.HashingUtil;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -316,9 +317,12 @@ public class LocalDevUserSeeder implements ApplicationRunner {
           // insert a seed admin user
           handle
               .createUpdate(
-                  "insert into wss_user(phone) values(:phone)"
+                  "insert into wss_user(phone, phone_enc, phone_hmac)"
+                      + " values(:phone, :phoneEnc, :phoneHmac)"
                       + " on conflict(phone) do update set removed = false")
               .bind("phone", PHONE)
+              .bind("phoneEnc", PiiCrypto.encrypt(PHONE))
+              .bind("phoneHmac", PiiCrypto.blindIndex(PHONE))
               .execute();
           handle
               .createUpdate("update wss_user set password_bcrypt = :hash where phone = :phone")
@@ -431,8 +435,10 @@ public class LocalDevUserSeeder implements ApplicationRunner {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set name = :name where phone = :phone")
+                .createUpdate(
+                    "update wss_user set name = :name, name_enc = :nameEnc where phone = :phone")
                 .bind("name", driver.fullName())
+                .bind("nameEnc", PiiCrypto.encrypt(driver.fullName()))
                 .bind("phone", canonicalPhone)
                 .execute());
     DriverDao.upsert(
@@ -472,11 +478,16 @@ public class LocalDevUserSeeder implements ApplicationRunner {
           handle
               .createUpdate(
                   """
-                  insert into wss_user(phone, name) values (:phone, :name)
-                  on conflict(phone) do update set name = excluded.name, removed = false
+                  insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
+                  values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
+                  on conflict(phone) do update
+                    set name = excluded.name, name_enc = excluded.name_enc, removed = false
                   """)
               .bind("phone", canonicalPhone)
               .bind("name", DISPATCHER_NAME)
+              .bind("phoneEnc", PiiCrypto.encrypt(canonicalPhone))
+              .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
+              .bind("nameEnc", PiiCrypto.encrypt(DISPATCHER_NAME))
               .execute();
           handle
               .createUpdate(

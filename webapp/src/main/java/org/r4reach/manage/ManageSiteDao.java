@@ -15,6 +15,7 @@ import org.r4reach.auth.user.UserRoleService;
 import org.r4reach.data.SiteType;
 import org.r4reach.manage.SelectSiteController.SiteSelection;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 @Slf4j
 public class ManageSiteDao {
@@ -233,10 +234,11 @@ public class ManageSiteDao {
             handle
                 .createUpdate(
                     """
-                    update wss_user set name = :name
+                    update wss_user set name = :name, name_enc = :nameEnc
                     where id = (select primary_contact_wss_user_id from site where id = :siteId)
                     """)
                 .bind("name", trimmed)
+                .bind("nameEnc", PiiCrypto.encrypt(trimmed))
                 .bind("siteId", siteId)
                 .execute());
     return oldValue;

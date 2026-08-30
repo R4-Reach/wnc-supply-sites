@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.UserRole;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 /**
  * Keeps wss_user / wss_user_roles as the single source of truth for user roles. Site-management
@@ -34,8 +35,14 @@ public class UserRoleService {
         handle ->
             handle
                 .createUpdate(
-                    "insert into wss_user(phone) values (:phone) on conflict(phone) do nothing")
+                    """
+                    insert into wss_user(phone, phone_enc, phone_hmac)
+                    values (:phone, :phoneEnc, :phoneHmac)
+                    on conflict(phone) do nothing
+                    """)
                 .bind("phone", phone)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .execute());
 
     jdbi.withHandle(

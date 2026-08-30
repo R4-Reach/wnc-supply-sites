@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.UserRole;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 /** CRUD over wss_user and its roles, backing the user-management UI. */
 public class UserAdminDao {
@@ -75,13 +76,18 @@ public class UserAdminDao {
             handle
                 .createUpdate(
                     """
-                    insert into wss_user(phone, name) values (:phone, :name)
+                    insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
+                    values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
                     on conflict(phone) do update
                       set removed = false,
-                          name = coalesce(:name, wss_user.name)
+                          name = coalesce(:name, wss_user.name),
+                          name_enc = coalesce(:nameEnc, wss_user.name_enc)
                     """)
                 .bind("phone", phone)
                 .bind("name", trimmedName)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
+                .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .execute());
     return true;
   }
@@ -91,8 +97,10 @@ public class UserAdminDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set name = :name where id = :id")
+                .createUpdate(
+                    "update wss_user set name = :name, name_enc = :nameEnc where id = :id")
                 .bind("name", trimmedName)
+                .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", userId)
                 .execute());
   }

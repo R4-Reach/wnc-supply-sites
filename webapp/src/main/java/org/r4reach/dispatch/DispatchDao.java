@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 /**
  * Backs the dispatch drivers grid. A driver's identity (name, phone) lives on wss_user; the rest
@@ -94,14 +95,19 @@ public class DispatchDao {
               handle
                   .createQuery(
                       """
-                      insert into wss_user(phone, name) values (:phone, :name)
+                      insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
+                      values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
                       on conflict(phone) do update
                         set removed = false,
-                            name = coalesce(:name, wss_user.name)
+                            name = coalesce(:name, wss_user.name),
+                            name_enc = coalesce(:nameEnc, wss_user.name_enc)
                       returning id
                       """)
                   .bind("phone", phone)
                   .bind("name", trimmedName)
+                  .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                  .bind("phoneHmac", PiiCrypto.blindIndex(phone))
+                  .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                   .mapTo(Long.class)
                   .one();
           handle
@@ -121,8 +127,10 @@ public class DispatchDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set name = :name where id = :id")
+                .createUpdate(
+                    "update wss_user set name = :name, name_enc = :nameEnc where id = :id")
                 .bind("name", trimmedName)
+                .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", wssUserId)
                 .execute());
   }
@@ -153,8 +161,15 @@ public class DispatchDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate("update wss_user set phone = :phone where id = :id")
+                .createUpdate(
+                    """
+                    update wss_user
+                    set phone = :phone, phone_enc = :phoneEnc, phone_hmac = :phoneHmac
+                    where id = :id
+                    """)
                 .bind("phone", phone)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("id", wssUserId)
                 .execute());
     return true;

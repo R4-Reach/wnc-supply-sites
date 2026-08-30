@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.HashingUtil;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class SendAccessTokenDao {
 
@@ -67,15 +68,19 @@ public class SendAccessTokenDao {
   }
 
   public static void createUser(Jdbi jdbi, String number) {
+    String phone = PhoneNumberUtil.toCanonical(number);
     String insert =
         """
-        insert into wss_user(phone) values(:phone)
+        insert into wss_user(phone, phone_enc, phone_hmac)
+        values(:phone, :phoneEnc, :phoneHmac)
         """;
     jdbi.withHandle(
         handle ->
             handle
                 .createUpdate(insert)
-                .bind("phone", PhoneNumberUtil.toCanonical(number))
+                .bind("phone", phone)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .execute());
   }
 

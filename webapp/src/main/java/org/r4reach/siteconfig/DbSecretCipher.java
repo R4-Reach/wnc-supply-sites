@@ -31,7 +31,7 @@ public class DbSecretCipher {
   private final SecretKey key;
   private final SecureRandom random = new SecureRandom();
 
-  DbSecretCipher(@Value("${db.encryption.key}") String base64Key) {
+  public DbSecretCipher(@Value("${db.encryption.key}") String base64Key) {
     byte[] keyBytes = Base64.getDecoder().decode(base64Key);
     if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
       throw new IllegalStateException(
