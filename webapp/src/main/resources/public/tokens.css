@@ -1,0 +1,42 @@
+/* ─────────────────────────────────────────────────
+   tokens.css — Site-wide design tokens.
+
+   Semantic color roles used across the server-rendered pages, in the R-Commons
+   brand palette.
+
+   "Chrome" roles (page background, surfaces, borders, accent, nav buttons) carry
+   the brand. Status colors (urgent, danger, success, …) carry meaning, not
+   brand, and are deliberately independent of it.
+   ───────────────────────────────────────────────── */
+
+:root {
+  /* ── Chrome ─────────────────────────────────────
+     The R-Commons "negative space" treatment: a cool tinted canvas with WHITE
+     surfaces floating on it. Elevation comes from the white-on-tint contrast and
+     soft light-blue borders, not from blue fills or drop shadows. Blue is
+     reserved for accents (links, active states, oversupply), not button faces. */
+  --bg:            #f0f4fa;   /* cool tinted canvas */
+  --text:          #0a0e2a;   /* body text */
+  --surface:       #ffffff;   /* buttons, floating controls */
+  --surface-alt:   #ffffff;   /* content containers, mission box — white cards on the tint */
+  --well:          #ffffff;   /* inset panels — white cards on the tint */
+  --border-strong: #d4dcf0;   /* soft light-blue container borders */
+  --shadow-inset:  #d4dcf0;   /* inset edge on raised buttons */
+  --accent:        #162df0;   /* primary accent / oversupply emphasis */
+  --nav-btn-bg:    #ffffff;   /* nav button face */
+  --nav-btn-text:  #0a0e2a;   /* nav button label */
+
+  /* ── Results table (chrome) ────────────────────── */
+  --table-head-bg:   #dbe4f5;   /* light cool header, dark text */
+  --table-head-text: #0a0e2a;
+  --row-odd:         #f0f4fa;   /* faint tint / white zebra on white cards */
+  --row-even:        #ffffff;
+
+  /* ── Status (brand-independent) ────────────────── */
+  --urgent:        #ff1111;   /* urgent items */
+  --danger:        #b60808;   /* errors, required-field markers */
+  --needed:        #880055;   /* needed items */
+  --available:     #006400;   /* available / in-stock */
+  --success:       #008000;   /* confirmations */
+  --warning:       #a07000;   /* privately-visible notices */
+}

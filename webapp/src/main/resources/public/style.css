@@ -1,4 +1,6 @@
 /* Style sheet common to all pages. */
+@import url("tokens.css");
+
 *{
   box-sizing: border-box;
 }
@@ -11,7 +13,7 @@ dialog {
     width: 50%;
     border-radius: 4px;
     border: 0px;
-    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, var(--shadow-inset) 0 -3px 0 inset;
 }
 
 dialog a:focus {
@@ -24,8 +26,8 @@ dialog::backdrop {
 }
 
 html, table {
-    background-color: #F5F5F5;
-    color: #333;
+    background-color: var(--bg);
+    color: var(--text);
 }
 
 .page-title {
@@ -36,7 +38,7 @@ html, table {
   position: fixed;
   bottom: 3rem;
   right: 1rem;
-  background-color: white;
+  background-color: var(--surface);
   height: 3rem;
   width: 3rem;
   z-index: 100;
@@ -52,7 +54,7 @@ html, table {
 }
 
 button {
-    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, var(--shadow-inset) 0 -3px 0 inset;
     border-radius: 7px;
     margin-left: 3px;
     margin-right: 3px;
@@ -119,21 +121,21 @@ button {
 
 .urgent {
     font-weight: bold;
-    color: #F11;
+    color: var(--urgent);
 }
 
 .needed {
-    color: #805
+    color: var(--needed)
 }
 
 .available {
-    color: darkgreen;
+    color: var(--available);
 }
 
 .oversupply {
     font-weight: bold;
     font-style: italic;
-    color: #0808b6;
+    color: var(--accent);
 }
 
 .larger {
@@ -161,12 +163,12 @@ button {
 .nav-button {
     align-items: center;
     appearance: none;
-    background-color: #FCFCFD;
+    background-color: var(--nav-btn-bg);
     border-radius: 4px;
     border-width: 0;
-    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, var(--shadow-inset) 0 -3px 0 inset;
     box-sizing: border-box;
-    color: #36395A;
+    color: var(--nav-btn-text);
     cursor: pointer;
     display: inline-flex;
     font-family: "JetBrains Mono", monospace;
@@ -190,7 +192,7 @@ button {
 }
 
 .green-check {
-    color: green;
+    color: var(--success);
     /*font-size: 1.3em;*/
     font-weight: bold;
     padding-left: 5px;
@@ -214,18 +216,18 @@ button {
 }
 
 .errorMessage {
-    color: #b60808;
+    color: var(--danger);
     font-style: italic;
 }
 
 .required {
-    color: #b60808;
+    color: var(--danger);
     font-style: italic;
     font-size: 0.8em;
 }
 
 .privately-visible {
-    color: #A07000;
+    color: var(--warning);
     font-style: italic;
     font-size: 0.9em;
 }
@@ -240,8 +242,8 @@ button {
 .mission-statement {
     padding: 10px;
     margin: 30px;
-    background-color: #E0E0E0;
-    border: solid #111;
+    background-color: var(--surface-alt);
+    border: solid var(--border-strong);
     border-radius: 20px;
     font-size: 1.1em;
     width: 500px;
@@ -251,9 +253,9 @@ button {
 }
 
 .content-container {
-    background-color: #E0E0E0;
+    background-color: var(--surface-alt);
     padding: 10px;
-    border: solid #111;
+    border: solid var(--border-strong);
     border-radius: 20px;
     font-size: 1.1em;
     width: 500px;
@@ -261,15 +263,15 @@ button {
 }
 
 .red {
-    color: red;
+    color: var(--danger);
 }
 
 .green {
-    color: green;
+    color: var(--success);
 }
 
 .danger-fields {
-    border: 1px solid red;
+    border: 1px solid var(--danger);
 }
 
 .text-center {
@@ -402,7 +404,7 @@ h1, h2, h3, h4 {
 .confirm-message {
     font-style: italic;
     font-size: 0.95em;
-    color: green;
+    color: var(--success);
 }
 
 .missingData {
