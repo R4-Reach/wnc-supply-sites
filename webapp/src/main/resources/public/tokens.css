@@ -35,10 +35,11 @@
   --row-even:        #ffffff;
 
   /* ── Status (brand-independent) ────────────────── */
-  --urgent:        #ff1111;   /* urgent items */
+  --urgent:        #b3330c;   /* urgent items — vermilion, ≥4.5:1 on white/tint/zebra; hue-separated from --danger so the two dark reds stay distinct */
   --danger:        #b60808;   /* errors, required-field markers */
   --needed:        #880055;   /* needed items */
   --available:     #006400;   /* available / in-stock */
+  --oversupply:    #162df0;   /* oversupply emphasis — same blue as --accent, named for its status role */
   --success:       #008000;   /* confirmations */
   --warning:       #805800;   /* privately-visible notices — darkened to clear AA 4.5:1 on white and the tint */
 }

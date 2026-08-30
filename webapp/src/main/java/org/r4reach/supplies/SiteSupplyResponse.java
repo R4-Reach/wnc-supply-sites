@@ -35,6 +35,8 @@ public class SiteSupplyResponse {
   static class SiteItem {
     String name;
     String displayClass;
+    String statusGlyph;
+    String statusLabel;
     List<String> tags;
 
     public String getDisplayClass() {

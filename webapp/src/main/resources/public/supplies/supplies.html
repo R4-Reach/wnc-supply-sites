@@ -237,22 +237,22 @@
 
         <div>
           <input type="checkbox" id="urgent-items" name="itemStatus" value="Urgently Needed" {{#urgentChecked}}checked{{/urgentChecked}}/>
-          <label for="urgent-items" class="urgent">Urgently Needed</label>
+          <label for="urgent-items" class="urgent"><span class="status-glyph" aria-hidden="true">▲</span> Urgently Needed</label>
         </div>
 
         <div>
           <input type="checkbox" id="needed-items" name="itemStatus" value="Needed" {{#neededChecked}}checked{{/neededChecked}}/>
-          <label for="needed-items" class="needed">Needed</label>
+          <label for="needed-items" class="needed"><span class="status-glyph" aria-hidden="true">◆</span> Needed</label>
         </div>
 
         <div>
           <input type="checkbox" id="available-items" name="itemStatus" value="Available" {{#availableChecked}}checked{{/availableChecked}}/>
-          <label for="available-items" class="available">Available</label>
+          <label for="available-items" class="available"><span class="status-glyph" aria-hidden="true">●</span> Available</label>
         </div>
 
         <div>
           <input type="checkbox" id="oversupply-items" name="itemStatus" value="Oversupply" {{#oversupplyChecked}}checked{{/oversupplyChecked}}/>
-          <label for="oversupply-items" class="oversupply">Oversupply<br>(too many)</label>
+          <label for="oversupply-items" class="oversupply"><span class="status-glyph" aria-hidden="true">▽</span> Oversupply<br>(too many)</label>
         </div>
       </fieldset>
     </div>

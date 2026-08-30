@@ -33,7 +33,7 @@
                  hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Urgently Needed"}'
                  hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{urgentChecked}}/>
           <label for="{{itemName}}Urgent" class="urgent {{itemStatusDisabled}}" id="{{itemName}}UrgentLabel">
-            Urgently Needed
+            <span class="status-glyph" aria-hidden="true">▲</span> Urgently Needed
           </label>
         </div>
 
@@ -43,7 +43,7 @@
                  hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Needed"}'
                  hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{neededChecked}}/>
           <label for="{{itemName}}Needed" class="needed {{itemStatusDisabled}}" id="{{itemName}}NeededLabel">
-            Needed</label>
+            <span class="status-glyph" aria-hidden="true">◆</span> Needed</label>
         </div>
 
         <!-- Available -->
@@ -52,7 +52,7 @@
                  hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Available"}'
                  hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{availableChecked}}/>
           <label for="{{itemName}}Available" class="available {{itemStatusDisabled}}" id="{{itemName}}AvailableLabel">
-            Available</label>
+            <span class="status-glyph" aria-hidden="true">●</span> Available</label>
         </div>
 
         <!-- Oversupply -->
@@ -61,7 +61,7 @@
                  hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Oversupply"}'
                  hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{oversupplyChecked}}/>
           <label for="{{itemName}}Oversupply" class="oversupply {{itemStatusDisabled}}" id="{{itemName}}OversupplyLabel">
-            Oversupply (too much)
+            <span class="status-glyph" aria-hidden="true">▽</span> Oversupply (too much)
           </label>
         </div>
       </fieldset>

@@ -139,7 +139,27 @@ button {
 .oversupply {
     font-weight: bold;
     font-style: italic;
-    color: var(--accent);
+    color: var(--oversupply);
+}
+
+/* Redundant, non-color status cues paired with the .urgent/.needed/.available/.oversupply
+   colors above. The glyph is an ordinal shape (decorative — aria-hidden in the markup) and
+   the label is the readable text token; together they keep supply state legible under
+   colorblindness, greyscale, and print, where the color alone is lost. Both inherit the
+   status color from the parent, so no separate color rule is needed. */
+.status-glyph {
+    font-style: normal;
+    /* hold shape width steady across the differently-sized glyphs so labels line up */
+    display: inline-block;
+    width: 1.1em;
+    text-align: center;
+}
+
+.status-label {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.82em;
+    letter-spacing: 0.02em;
 }
 
 .larger {

@@ -24,7 +24,7 @@
       {{#neededColumns}}
       <ul>
         {{#items}}
-        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}">{{name}}</div></li>
+        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}"><span class="status-glyph" aria-hidden="true">{{statusGlyph}}</span> <span class="status-label">{{statusLabel}}</span> {{name}}</div></li>
         {{/items}}
       </ul>
       {{/neededColumns}}
@@ -35,7 +35,7 @@
       {{#availableColumns}}
       <ul>
         {{#items}}
-        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}">{{name}}</div></li>
+        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}"><span class="status-glyph" aria-hidden="true">{{statusGlyph}}</span> <span class="status-label">{{statusLabel}}</span> {{name}}</div></li>
         {{/items}}
       </ul>
       {{/availableColumns}}

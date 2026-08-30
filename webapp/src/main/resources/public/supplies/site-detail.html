@@ -216,7 +216,7 @@
                 <ul>
                     {{#needsList}}
                     <li class="{{displayClass}}" data-value="{{name}}">
-                    {{name}}
+                    <span class="status-glyph" aria-hidden="true">{{statusGlyph}}</span> <span class="status-label">{{statusLabel}}</span> {{name}}
                     </li>
                     {{/needsList}}
                 </ul>
@@ -226,7 +226,7 @@
                 <ul>
                     {{#availableList}}
                     <li class="{{displayClass}}" data-value="{{name}}">
-                        {{name}}
+                        <span class="status-glyph" aria-hidden="true">{{statusGlyph}}</span> <span class="status-label">{{statusLabel}}</span> {{name}}
                     </li>
                     {{/availableList}}
                 </ul>

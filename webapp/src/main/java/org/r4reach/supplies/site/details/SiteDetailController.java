@@ -290,10 +290,15 @@ public class SiteDetailController {
   static class InventoryItem {
     private final String name;
     private final String displayClass;
+    private final String statusGlyph;
+    private final String statusLabel;
 
     InventoryItem(SuppliesDao.SuppliesQueryResult result) {
+      ItemStatus status = ItemStatus.fromTextValue(result.getItemStatus());
       name = result.getItem();
-      displayClass = ItemStatus.fromTextValue(result.getItemStatus()).getCssClass();
+      displayClass = status.getCssClass();
+      statusGlyph = status.getGlyph();
+      statusLabel = status.getShortLabel();
     }
   }
 

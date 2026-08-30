@@ -208,6 +208,8 @@ public class SuppliesController {
                 SiteItem.builder()
                     .name(result.getItem())
                     .displayClass(itemStatus.getCssClass())
+                    .statusGlyph(itemStatus.getGlyph())
+                    .statusLabel(itemStatus.getShortLabel())
                     .tags(
                         result.getItemTags() == null
                             ? List.of()
@@ -323,11 +325,15 @@ public class SuppliesController {
   public static class ItemView {
     String name;
     String displayClass;
+    String statusGlyph;
+    String statusLabel;
     String tags;
 
     ItemView(SiteItem item) {
       this.name = item.getName();
       this.displayClass = item.getDisplayClass();
+      this.statusGlyph = item.getStatusGlyph();
+      this.statusLabel = item.getStatusLabel();
       this.tags = String.join(",", item.getTags());
     }
   }
