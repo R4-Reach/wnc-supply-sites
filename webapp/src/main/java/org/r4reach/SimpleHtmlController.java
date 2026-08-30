@@ -27,7 +27,7 @@ public class SimpleHtmlController {
   private final Jdbi jdbi;
   private final Environment environment;
 
-  private static final String CONTACT_US_LINK = "https://form.jotform.com/243608573773062";
+  public static final String CONTACT_US_LINK = "https://form.jotform.com/243608573773062";
 
   /** Cookie that opts a browser in to in-development ("beta") features. */
   private static final String BETA_VOLUNTEER_COOKIE = "beta-volunteer";

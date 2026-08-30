@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>WNC Supply Sites - Error</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="error.css"/>
+  {{> header-include }}
+</head>
+<body>
+<!-- Simplified header: logo + name only. Unlike the shared {{> header}} partial it carries no
+     log-in/log-out link, because the error dispatch doesn't populate the auth model — a wrong
+     login state would be worse than none. -->
+<div class="horizontal">
+  <h1>
+    <a href="/"><img alt="site-logo" src="/logo/WSS-logo-40x40.png" class="logo-image"/></a>
+    <span id="header-title"> WNC Supply Sites </span>
+  </h1>
+</div>
+
+<main class="content-container error-card">
+  <p class="error-code" aria-hidden="true">{{status}}</p>
+  <h2 class="error-headline">{{headline}}</h2>
+  <p class="error-detail">{{detail}}</p>
+
+  <div class="error-actions">
+    {{#showLogin}}
+    <a href="/login"><button type="button" class="nav-button">Log in</button></a>
+    {{/showLogin}}
+    {{^showLogin}}
+    <a href="/"><button type="button" class="nav-button">Back to home</button></a>
+    {{/showLogin}}
+  </div>
+
+  <p class="error-links">
+    {{#showLogin}}<a href="/">Back to home</a> &middot; {{/showLogin}}<a href="{{contactUsLink}}">Contact us</a>
+  </p>
+
+  {{#requestId}}
+  <p class="error-reference">
+    Reference <code>{{requestId}}</code> &middot; quote this if you contact us.
+  </p>
+  {{/requestId}}
+
+  {{! Present only under the local profile, where WssErrorAttributes includes the stack trace. }}
+  {{#trace}}
+  <details class="error-trace" open>
+    <summary>Stack trace (local profile only)</summary>
+    <pre>{{trace}}</pre>
+  </details>
+  {{/trace}}
+</main>
+
+<p class="error-status">Error {{status}}{{#error}} &middot; {{error}}{{/error}}</p>
+</body>
+</html>

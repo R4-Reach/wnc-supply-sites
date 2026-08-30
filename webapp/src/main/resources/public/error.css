@@ -1,0 +1,79 @@
+/* Styles for the branded error page (error.html). Centers the shared .content-container card and
+   styles its status number, actions, reference id, and (local-profile) stack trace. Loaded after
+   style.css, so the overrides below win over .content-container's defaults. */
+
+.error-card {
+  width: auto;
+  max-width: 640px;
+  margin: 40px auto;
+  padding: 40px 36px;
+  text-align: center;
+  box-shadow: rgba(var(--shadow-rgb), 0.15) 0 4px 16px;
+}
+
+.error-code {
+  font-size: 4.5em;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: var(--neutral-muted-text);
+  opacity: 0.5;
+  margin: 0 0 8px;
+}
+
+.error-headline {
+  font-size: 1.6em;
+  margin: 0 0 12px;
+}
+
+.error-detail {
+  font-size: 1.05em;
+  max-width: 42ch;
+  margin: 0 auto 28px;
+}
+
+.error-actions {
+  margin-bottom: 16px;
+}
+
+.error-links {
+  font-size: 0.95em;
+  margin: 0 0 24px;
+}
+
+.error-reference {
+  color: var(--neutral-muted-text);
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.error-reference code {
+  background-color: var(--well);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--text);
+}
+
+/* Left-aligned inside the centered card, and allowed to scroll horizontally, so a wide trace
+   doesn't force the whole card wider. */
+.error-trace {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.error-trace pre {
+  background-color: var(--well);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 10px;
+  overflow-x: auto;
+  font-size: 0.8em;
+}
+
+.error-status {
+  text-align: center;
+  color: var(--neutral-muted-text);
+  font-size: 0.8em;
+  margin-top: 16px;
+}

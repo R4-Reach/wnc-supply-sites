@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
+import org.r4reach.WssErrorAttributes;
 import org.r4reach.util.CookieUtil;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Controller;
@@ -23,7 +24,11 @@ public class UserMdcLoggingInterceptor extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     CookieUtil.readUserCookie(request).ifPresent(user -> MDC.put("user", user));
-    MDC.put("requestId", UUID.randomUUID().toString().substring(0, 5));
+    String requestId = UUID.randomUUID().toString().substring(0, 5);
+    MDC.put("requestId", requestId);
+    // Also stash it as a request attribute so it survives into the error dispatch, where the
+    // branded error page reads it — the MDC copy is gone by then (cleared in the finally below).
+    request.setAttribute(WssErrorAttributes.REQUEST_ID_ATTRIBUTE, requestId);
     MDC.put("domain", request.getHeader("host"));
 
     try {
