@@ -1,0 +1,12 @@
+/* Sizes the inline-edit inputs of the drivers grid; grid framing is reused from admin/users.css. */
+.driver-grid td input,
+.driver-grid td select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3em;
+}
+
+.driver-grid .driver-notes,
+.driver-grid .driver-availability {
+  min-width: 12em;
+}

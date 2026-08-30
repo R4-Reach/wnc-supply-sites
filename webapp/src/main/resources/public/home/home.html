@@ -60,6 +60,14 @@
   </div>
   {{/isDriver}}
 
+  {{#canViewDrivers}}
+  <div class="nav-button-container margin-left-50">
+    <a href="/dispatch">
+      <button type="button" class="nav-button wide-button button-30">Dispatch</button>
+    </a>
+  </div>
+  {{/canViewDrivers}}
+
   {{#canManageSites}}
   <div class="nav-button-container margin-left-50">
     <a href="/manage/select-site">

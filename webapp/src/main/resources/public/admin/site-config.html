@@ -58,5 +58,38 @@
 
 </form>
 
+<fieldset class="site-config-section vehicle-types">
+  <legend>Drivers &mdash; Vehicle Types</legend>
+  <p class="vehicle-types-hint">
+    The pick-one list shown on the drivers page. A type that a driver is still assigned to can't be
+    removed until those drivers are reassigned.
+  </p>
+
+  {{#vehicleTypeInUse}}
+  <div class="errorMessage">
+    Can't remove &ldquo;{{vehicleTypeInUse}}&rdquo; &mdash; it's still assigned to a driver.
+  </div>
+  {{/vehicleTypeInUse}}
+
+  <ul class="vehicle-type-list">
+    {{#vehicleTypes}}
+    <li>
+      <span class="vehicle-type-name">{{name}}</span>
+      <form method="post" action="/admin/site-config/vehicle-type/remove">
+        <input type="hidden" name="id" value="{{id}}"/>
+        <input type="hidden" name="name" value="{{name}}"/>
+        <button type="submit">Remove</button>
+      </form>
+    </li>
+    {{/vehicleTypes}}
+  </ul>
+
+  <form class="horizontal add-vehicle-type" method="post"
+        action="/admin/site-config/vehicle-type/add">
+    <input type="text" name="name" placeholder="New vehicle type" maxlength="64" required/>
+    <button type="submit">Add</button>
+  </form>
+</fieldset>
+
 </body>
 </html>

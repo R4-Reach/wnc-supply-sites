@@ -1,0 +1,61 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - Drivers</title>
+  <link rel="stylesheet" href="../manage/manage.css"/>
+  <link rel="stylesheet" href="../style.css"/>
+  <link rel="stylesheet" href="../mobile.css"/>
+  <link rel="stylesheet" href="../admin/users.css"/>
+  <link rel="stylesheet" href="drivers.css"/>
+  {{> header-include }}
+</head>
+
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/dispatch">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">Drivers</span>
+</div>
+
+{{#canAddDriver}}
+<div class="whitelist-new">
+  <h3>Add a driver</h3>
+  <form class="horizontal whitelist-fields"
+        hx-post="/dispatch/drivers/add"
+        hx-target="#add-driver-message"
+        hx-swap="innerHTML">
+    <input name="name" id="new-driver-name" type="text" placeholder="Full name" maxlength="128"/>
+    <input name="phone" id="new-driver-phone" type="text" placeholder="555-555-5555" maxlength="16"/>
+    <button type="submit">Add Driver</button>
+    <div id="add-driver-message" class="message"></div>
+  </form>
+</div>
+{{/canAddDriver}}
+
+<table class="user-grid driver-grid">
+  <thead>
+  <tr>
+    <th>Full Name</th>
+    <th>Location</th>
+    <th>Vehicle Type</th>
+    <th>License Plate</th>
+    <th>Phone</th>
+    <th>Availability</th>
+    <th>Can Lift 50lbs</th>
+    <th>Pallet Capacity</th>
+    <th>Notes</th>
+    {{#showStatus}}<th>Status</th>{{/showStatus}}
+    {{#showBlacklist}}<th>Blacklist</th>{{/showBlacklist}}
+  </tr>
+  </thead>
+  <tbody>
+  {{#drivers}}
+  {{> dispatch/driver-row }}
+  {{/drivers}}
+  </tbody>
+</table>
+
+</body>
+</html>

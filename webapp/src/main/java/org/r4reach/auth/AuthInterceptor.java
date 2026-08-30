@@ -40,6 +40,7 @@ public class AuthInterceptor implements WebMvcConfigurer {
       String requestUri = request.getRequestURI();
       if (requestUri.startsWith("/manage/")
           || requestUri.startsWith("/admin")
+          || requestUri.startsWith("/dispatch")
           || requestUri.startsWith("/driver")) {
         String queryString = request.getQueryString();
         if (queryString != null) {

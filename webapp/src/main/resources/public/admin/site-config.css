@@ -47,3 +47,40 @@
   border-radius: 6px;
   text-align: center;
 }
+
+/* The vehicle-types editor sits outside the main config form, so it centers itself. */
+.vehicle-types {
+  max-width: 640px;
+  margin: 1.5rem auto;
+}
+
+.vehicle-types-hint {
+  margin: 0 0 1rem;
+  color: #555;
+}
+
+.vehicle-type-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.vehicle-type-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.add-vehicle-type {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.add-vehicle-type input {
+  padding: 0.4rem;
+  flex: 1;
+}

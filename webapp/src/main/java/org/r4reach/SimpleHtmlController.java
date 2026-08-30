@@ -45,6 +45,7 @@ public class SimpleHtmlController {
     Map<String, Object> params = new HashMap<>();
     params.put("isAuthenticated", roles.contains(UserRole.AUTHORIZED));
     params.put("isDriver", roles.contains(UserRole.DRIVER));
+    params.put("canViewDrivers", UserRole.canViewDrivers(roles));
     params.put("canManageSites", UserRole.canManageSites(roles));
     params.put("canAccessAdminArea", UserRole.canAccessAdminArea(roles));
     params.put("betaVolunteer", hasCookie(request, BETA_VOLUNTEER_COOKIE, "true"));

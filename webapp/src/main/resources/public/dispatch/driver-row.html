@@ -1,0 +1,156 @@
+<tr class="{{^active}}user-removed{{/active}}">
+  {{#name}}
+  <td>
+    {{#rw}}
+    <input class="driver-name" type="text" name="name" value="{{value}}" maxlength="128"
+           hx-post="/dispatch/drivers/set-name"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}", "wssUserId": "{{wssUserId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/name}}
+  {{#location}}
+  <td>
+    {{#rw}}
+    <input class="driver-location" type="text" name="location" value="{{value}}" maxlength="128"
+           hx-post="/dispatch/drivers/set-location"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/location}}
+  {{#vehicleType}}
+  <td>
+    {{#rw}}
+    <select class="driver-vehicle-type" name="vehicleTypeId"
+            hx-post="/dispatch/drivers/set-vehicle-type"
+            hx-trigger="change"
+            hx-vals='{"wssId": "{{wssId}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">
+      <option value="">&mdash;</option>
+      {{#options}}
+      <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+      {{/options}}
+    </select>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/vehicleType}}
+  {{#licensePlates}}
+  <td>
+    {{#rw}}
+    <input class="driver-license-plates" type="text" name="licensePlates" value="{{value}}"
+           maxlength="256"
+           hx-post="/dispatch/drivers/set-license-plates"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/licensePlates}}
+  {{#phone}}
+  <td class="user-phone">
+    {{#rw}}
+    <input class="driver-phone" type="text" name="phone" value="{{value}}" maxlength="16"
+           hx-post="/dispatch/drivers/set-phone"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}", "wssUserId": "{{wssUserId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/phone}}
+  {{#availability}}
+  <td>
+    {{#rw}}
+    <input class="driver-availability" type="text" name="availability" value="{{value}}"
+           maxlength="1024"
+           hx-post="/dispatch/drivers/set-availability"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/availability}}
+  {{#canLift}}
+  <td>
+    {{#rw}}
+    <button class="status-toggle {{#on}}active{{/on}}{{^on}}inactive{{/on}}"
+            hx-post="/dispatch/drivers/set-can-lift"
+            hx-vals='{"wssId": "{{wssId}}", "canLift": "{{^on}}true{{/on}}{{#on}}false{{/on}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">
+      {{#on}}Yes{{/on}}{{^on}}No{{/on}}
+    </button>
+    {{/rw}}
+    {{^rw}}{{#on}}Yes{{/on}}{{^on}}No{{/on}}{{/rw}}
+  </td>
+  {{/canLift}}
+  {{#palletCapacity}}
+  <td>
+    {{#rw}}
+    <input class="driver-pallet-capacity" type="number" min="0" name="palletCapacity"
+           value="{{value}}"
+           hx-post="/dispatch/drivers/set-pallet-capacity"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/palletCapacity}}
+  {{#notes}}
+  <td>
+    {{#rw}}
+    <input class="driver-notes" type="text" name="notes" value="{{value}}" maxlength="1024"
+           hx-post="/dispatch/drivers/set-notes"
+           hx-trigger="change"
+           hx-vals='{"wssId": "{{wssId}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+    {{/rw}}
+    {{^rw}}{{value}}{{/rw}}
+  </td>
+  {{/notes}}
+  {{#status}}
+  <td>
+    {{#rw}}
+    <button class="status-toggle {{#active}}active{{/active}}{{^active}}inactive{{/active}}"
+            hx-post="/dispatch/drivers/set-active"
+            hx-vals='{"wssId": "{{wssId}}", "active": "{{^active}}true{{/active}}{{#active}}false{{/active}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">
+      {{#active}}Active{{/active}}{{^active}}Inactive{{/active}}
+    </button>
+    {{/rw}}
+    {{^rw}}{{#active}}Active{{/active}}{{^active}}Inactive{{/active}}{{/rw}}
+  </td>
+  {{/status}}
+  {{#blacklist}}
+  <td>
+    {{#rw}}
+    <button class="status-toggle {{#blacklisted}}inactive{{/blacklisted}}{{^blacklisted}}active{{/blacklisted}}"
+            hx-post="/dispatch/drivers/set-blacklisted"
+            hx-vals='{"wssId": "{{wssId}}", "blacklisted": "{{^blacklisted}}true{{/blacklisted}}{{#blacklisted}}false{{/blacklisted}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">
+      {{#blacklisted}}Blacklisted{{/blacklisted}}{{^blacklisted}}Allowed{{/blacklisted}}
+    </button>
+    {{/rw}}
+    {{^rw}}{{#blacklisted}}Blacklisted{{/blacklisted}}{{^blacklisted}}Allowed{{/blacklisted}}{{/rw}}
+  </td>
+  {{/blacklist}}
+</tr>

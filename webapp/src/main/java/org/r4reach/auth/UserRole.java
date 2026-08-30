@@ -8,6 +8,7 @@ public enum UserRole {
   AUTHORIZED,
   DRIVER,
   DISPATCHER,
+  DRIVER_ADMIN,
   SITE_MANAGER,
   DATA_ADMIN,
   USER_ADMIN,
@@ -29,6 +30,19 @@ public enum UserRole {
   /** Grants access to the site-wide DB configuration (API keys, Twilio settings) UI. */
   public static boolean isSiteAdmin(List<UserRole> roles) {
     return roles.contains(SITE_ADMIN);
+  }
+
+  /**
+   * Whether the user may open the dispatch drivers page. Both roles see it; {@link #DISPATCHER} is
+   * read-only there (except the notes field) while {@link #DRIVER_ADMIN} may edit every field.
+   */
+  public static boolean canViewDrivers(List<UserRole> roles) {
+    return roles.contains(DISPATCHER) || roles.contains(DRIVER_ADMIN);
+  }
+
+  /** Whether the user may edit driver records (create, and edit all fields) on the drivers page. */
+  public static boolean canManageDrivers(List<UserRole> roles) {
+    return roles.contains(DRIVER_ADMIN);
   }
 
   /**

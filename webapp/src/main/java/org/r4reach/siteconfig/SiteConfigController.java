@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.LoggedInAdvice;
 import org.r4reach.auth.UserRole;
+import org.r4reach.vehicletype.VehicleTypeDao;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -26,11 +28,13 @@ public class SiteConfigController {
   public static final String PATH_SITE_CONFIG = "/admin/site-config";
 
   private final SiteConfigService siteConfigService;
+  private final Jdbi jdbi;
 
   @GetMapping(PATH_SITE_CONFIG)
   ModelAndView siteConfigPage(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
-      @RequestParam(value = "saved", required = false) boolean saved) {
+      @RequestParam(value = "saved", required = false) boolean saved,
+      @RequestParam(value = "vehicleTypeInUse", required = false) String vehicleTypeInUse) {
     if (!UserRole.isSiteAdmin(roles)) {
       return new ModelAndView("redirect:/");
     }
@@ -40,7 +44,41 @@ public class SiteConfigController {
     params.put("twilioAccountSid", siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_ACCOUNT_SID));
     params.put("twilioAuthTokenSet", siteConfigService.isSet(SiteConfigKey.TWILIO_AUTH_TOKEN));
     params.put("twilioFromNumber", siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_FROM_NUMBER));
+    params.put("vehicleTypes", VehicleTypeDao.fetchAll(jdbi));
+    params.put("vehicleTypeInUse", vehicleTypeInUse);
     return new ModelAndView("admin/site-config", params);
+  }
+
+  @PostMapping(PATH_SITE_CONFIG + "/vehicle-type/add")
+  ModelAndView addVehicleType(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @RequestParam("name") String name) {
+    if (!UserRole.isSiteAdmin(roles)) {
+      return new ModelAndView("redirect:/");
+    }
+    VehicleTypeDao.add(jdbi, name);
+    return new ModelAndView("redirect:" + PATH_SITE_CONFIG);
+  }
+
+  @PostMapping(PATH_SITE_CONFIG + "/vehicle-type/remove")
+  ModelAndView removeVehicleType(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @RequestParam("id") long id,
+      @RequestParam(value = "name", required = false) String name) {
+    if (!UserRole.isSiteAdmin(roles)) {
+      return new ModelAndView("redirect:/");
+    }
+    boolean removed = VehicleTypeDao.remove(jdbi, id);
+    if (!removed) {
+      // Blocked because a driver still uses this type; report which one via a redirect flag.
+      return new ModelAndView("redirect:" + PATH_SITE_CONFIG + "?vehicleTypeInUse=" + encode(name));
+    }
+    return new ModelAndView("redirect:" + PATH_SITE_CONFIG);
+  }
+
+  private static String encode(String value) {
+    return java.net.URLEncoder.encode(
+        value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
   }
 
   @PostMapping(PATH_SITE_CONFIG)
