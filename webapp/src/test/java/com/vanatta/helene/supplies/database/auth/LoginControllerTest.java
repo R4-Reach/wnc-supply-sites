@@ -4,7 +4,7 @@ import static com.vanatta.helene.supplies.database.TestConfiguration.jdbiTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
-import com.vanatta.helene.supplies.database.driver.DriverDao;
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -22,7 +22,7 @@ class LoginControllerTest {
   void registeredPhoneNumbersAreRedirectedToCreatePassword() {
     LoginController loginController = new LoginController(TestConfiguration.jdbiTest);
 
-    DriverDao.upsert(jdbiTest, TestConfiguration.buildDriver(-555999L, "987 345 6789"));
+    UserRoleService.grantRole(jdbiTest, "987 345 6789", UserRole.DRIVER);
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.put("user", List.of("987 345 6789"));

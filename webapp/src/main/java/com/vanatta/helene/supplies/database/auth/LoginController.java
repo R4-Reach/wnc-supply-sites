@@ -62,8 +62,9 @@ public class LoginController {
       CookieUtil.setCookie(response, "auth", authToken);
       CookieUtil.setCookie(response, "user", user);
       return new ModelAndView("redirect:" + redirectUri);
-    } else if (!PasswordDao.hasPassword(jdbi, user)
+    } else if (!PasswordDao.passwordIsSet(jdbi, user)
         && SendAccessTokenDao.isPhoneNumberRegistered(jdbi, user)) {
+      // Registered (whitelisted / a site contact / a driver) but hasn't set a password yet.
       return new ModelAndView("redirect:/login/setup-password");
     } else {
       LoginDao.recordLoginFailure(jdbi, user);

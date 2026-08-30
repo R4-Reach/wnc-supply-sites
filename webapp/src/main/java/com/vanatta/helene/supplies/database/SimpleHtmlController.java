@@ -46,6 +46,7 @@ public class SimpleHtmlController {
     params.put("isAuthenticated", roles.contains(UserRole.AUTHORIZED));
     params.put("isDriver", roles.contains(UserRole.DRIVER));
     params.put("canManageSites", UserRole.canManageSites(roles));
+    params.put("isUserAdmin", UserRole.isUserAdmin(roles));
     params.put("betaVolunteer", hasCookie(request, BETA_VOLUNTEER_COOKIE, "true"));
     params.put("siteDescription", "Disaster Relief");
     params.put("contactUsLink", CONTACT_US_LINK);

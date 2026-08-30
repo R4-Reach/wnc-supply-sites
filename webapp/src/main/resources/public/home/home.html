@@ -68,6 +68,14 @@
   </div>
   {{/canManageSites}}
 
+  {{#isUserAdmin}}
+  <div class="nav-button-container margin-left-50">
+    <a href="/admin">
+      <button type="button" class="nav-button wide-button button-30">Admin</button>
+    </a>
+  </div>
+  {{/isUserAdmin}}
+
   <div class="nav-button-container margin-left-50">
     <a href="{{contactUsLink}}">
       <button type="button" class="nav-button wide-button button-30">Contact Us</button>

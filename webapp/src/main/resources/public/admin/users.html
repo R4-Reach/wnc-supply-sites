@@ -1,0 +1,74 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - User Management</title>
+  <script type="text/javascript" src="users.js"></script>
+  <link rel="stylesheet" href="../manage/manage.css"/>
+  <link rel="stylesheet" href="../style.css"/>
+  <link rel="stylesheet" href="../mobile.css"/>
+  <link rel="stylesheet" href="users.css"/>
+  {{> header-include }}
+</head>
+
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/admin">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">User Management</span>
+</div>
+
+<div class="whitelist-new">
+  <h3>Whitelist a new phone number</h3>
+  <div class="horizontal whitelist-fields">
+    <input id="new-phone" type="text" placeholder="555-555-5555" maxlength="16"/>
+    <input id="new-name" type="text" placeholder="Name (optional)" maxlength="128"/>
+    <button onclick="whitelistUser()">Add User</button>
+    <div id="whitelist-message" class="message"></div>
+  </div>
+</div>
+
+<div class="mission-statement">
+  Only whitelisted phone numbers can register and log in. Toggle a role chicklet to grant or revoke
+  it. Deactivating a user blocks them from logging in without deleting their record.
+</div>
+
+<table class="user-grid">
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Phone</th>
+    <th>Status</th>
+    {{#roleHeaders}}
+    <th>{{.}}</th>
+    {{/roleHeaders}}
+  </tr>
+  </thead>
+  <tbody>
+  {{#users}}
+  <tr class="{{#removed}}user-removed{{/removed}}">
+    <td>
+      <input class="user-name" type="text" value="{{name}}" maxlength="128"
+             onchange="updateName({{id}}, this)"/>
+    </td>
+    <td class="user-phone">{{phone}}</td>
+    <td>
+      <button class="status-toggle {{#active}}active{{/active}}{{^active}}inactive{{/active}}"
+              onclick="toggleRemoved(this, {{id}})">
+        {{#active}}Active{{/active}}{{^active}}Inactive{{/active}}
+      </button>
+    </td>
+    {{#roles}}
+    <td>
+      <button class="chicklet {{#active}}on{{/active}}"
+              onclick="toggleRole(this, {{id}}, '{{role}}')">{{role}}</button>
+    </td>
+    {{/roles}}
+  </tr>
+  {{/users}}
+  </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+.whitelist-new {
+  margin: 1em 2em;
+}
+
+.whitelist-fields {
+  align-items: center;
+  gap: 0.5em;
+}
+
+.whitelist-fields input {
+  padding: 0.4em;
+}
+
+.user-grid {
+  border-collapse: collapse;
+  margin: 1em 2em;
+  width: calc(100% - 4em);
+}
+
+.user-grid th,
+.user-grid td {
+  border: 1px solid #ccc;
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+
+.user-grid thead th {
+  background-color: #f0f0f0;
+  white-space: nowrap;
+}
+
+.user-grid tr.user-removed {
+  background-color: #f7f7f7;
+  color: #999;
+}
+
+.user-name {
+  width: 12em;
+  padding: 0.3em;
+}
+
+.user-name.saved {
+  border-color: #2e7d32;
+}
+
+.user-name.missingData,
+.save-error {
+  border-color: #c62828;
+}
+
+.user-phone {
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+/* Role chicklets: off is a plain outline, on is filled. */
+.chicklet {
+  border: 1px solid #999;
+  border-radius: 1em;
+  background-color: #fff;
+  color: #555;
+  padding: 0.25em 0.75em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chicklet.on {
+  background-color: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+.status-toggle {
+  border-radius: 0.4em;
+  padding: 0.3em 0.7em;
+  cursor: pointer;
+  border: 1px solid #999;
+}
+
+.status-toggle.active {
+  background-color: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+.status-toggle.inactive {
+  background-color: #eee;
+  color: #777;
+}

@@ -1,5 +1,6 @@
 package com.vanatta.helene.supplies.database.manage.add.site;
 
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -87,6 +88,9 @@ public class AddSiteDao {
               siteId, siteId);
 
       jdbi.withHandle(handle -> handle.createUpdate(addToDimensionMatrix).execute());
+
+      // The primary contact becomes a site manager and needs portal access.
+      UserRoleService.grantSiteManager(jdbi, siteData.getContactNumber());
 
       return siteId;
     } catch (UnableToExecuteStatementException e) {

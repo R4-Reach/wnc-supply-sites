@@ -1,5 +1,6 @@
 package com.vanatta.helene.supplies.database.manage;
 
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import com.vanatta.helene.supplies.database.data.SiteType;
 import com.vanatta.helene.supplies.database.manage.SelectSiteController.SiteSelection;
 import jakarta.annotation.Nullable;
@@ -114,6 +115,11 @@ public class ManageSiteDao {
     }
     addToAuditTrail(
         jdbi, siteId, field, oldValue, newValue == null || newValue.isBlank() ? "-" : newValue);
+
+    // Changing the primary contact makes that phone a site manager needing portal access.
+    if (field == SiteField.CONTACT_NUMBER) {
+      UserRoleService.grantSiteManager(jdbi, newValue);
+    }
 
     // if location as changed, then we need to delete previous distances and re-calculate
     if (field.isLocationField()) {

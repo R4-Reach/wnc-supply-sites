@@ -46,23 +46,15 @@ public class SendAccessTokenDao {
     }
     final String phoneNumber = PhoneNumberUtil.removeNonNumeric(inputPhoneNumber);
 
+    // wss_user is the single source of truth for who may log in. Site contacts and drivers are
+    // mirrored into wss_user (see the role-unification migration and UserRoleService), so there is
+    // no longer any need to union against those tables here.
     String query =
         """
         select 1
         from wss_user
-        where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
-        union
-        select 1
-        from site
-        where regexp_replace(contact_number, '[^0-9]+', '', 'g') = :phoneNumber
-        union
-        select 1
-        from additional_site_manager
-        where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
-        union
-        select 1
-        from driver
-        where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
+        where removed = false
+          and regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
         """;
     return jdbi.withHandle(
         handle ->

@@ -1,5 +1,6 @@
 package com.vanatta.helene.supplies.database.manage.contact;
 
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,16 +23,20 @@ public class ContactDao {
     )
     """;
 
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createUpdate(insert)
-                .bind("siteId", siteId)
-                .bind("name", name)
-                .bind("phone", phone)
-                .executeAndReturnGeneratedKeys("id")
-                .mapTo(Long.class)
-                .one());
+    long id =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createUpdate(insert)
+                    .bind("siteId", siteId)
+                    .bind("name", name)
+                    .bind("phone", phone)
+                    .executeAndReturnGeneratedKeys("id")
+                    .mapTo(Long.class)
+                    .one());
+    // An additional site manager needs portal access under their phone number.
+    UserRoleService.grantSiteManager(jdbi, phone);
+    return id;
   }
 
   static void updateAdditionalSiteManager(Jdbi jdbi, long siteId, SiteManager siteManager) {
@@ -51,6 +56,7 @@ public class ContactDao {
                 .bind("siteId", siteId)
                 .bind("id", siteManager.getId())
                 .execute());
+    UserRoleService.grantSiteManager(jdbi, siteManager.getPhone());
   }
 
   static List<SiteManager> getManagers(Jdbi jdbi, long siteId) {

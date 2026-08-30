@@ -4,8 +4,9 @@ import static com.vanatta.helene.supplies.database.TestConfiguration.jdbiTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
+import com.vanatta.helene.supplies.database.auth.UserRole;
 import com.vanatta.helene.supplies.database.auth.setup.password.SetupPasswordHelper;
-import com.vanatta.helene.supplies.database.driver.DriverDao;
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.contact.ContactDao;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,10 +71,10 @@ class SendAccessTokenDaoTest {
     assertThat(result).isTrue();
   }
 
+  /** A user granted the driver role (e.g. through the admin UI) is registered for login. */
   @Test
   void phoneNumberIsRegistered_caseDriver() {
-    var driver = TestConfiguration.buildDriver(-8973L, "(333) 999 6666");
-    DriverDao.upsert(jdbiTest, driver);
+    UserRoleService.grantRole(jdbiTest, "(333) 999 6666", UserRole.DRIVER);
 
     boolean result = SendAccessTokenDao.isPhoneNumberRegistered(jdbiTest, "333 999 6666");
 

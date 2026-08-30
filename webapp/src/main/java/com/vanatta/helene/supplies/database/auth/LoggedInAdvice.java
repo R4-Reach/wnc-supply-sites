@@ -107,16 +107,16 @@ public class LoggedInAdvice {
       return List.of();
     }
 
+    // wss_user_roles is the single source of truth for roles; AUTHORIZED is implicit for anyone
+    // who can authenticate and is never stored there.
     List<UserRole> userRoles = new ArrayList<>();
     userRoles.add(UserRole.AUTHORIZED);
 
-    // check if they have dispatcher or data admin from wss_user_role
-    List<UserRole> whiteListedRoles =
-        jdbi
-            .withHandle(
-                h ->
-                    h.createQuery(
-                            """
+    jdbi
+        .withHandle(
+            h ->
+                h.createQuery(
+                        """
       select
         role.name
       from wss_user wu
@@ -124,58 +124,14 @@ public class LoggedInAdvice {
       join wss_user_role role on role.id = wur.wss_user_role_id
       where wu.phone = :phone
       """)
-                        .bind("phone", userPhone)
-                        .mapTo(String.class)
-                        .list())
-            .stream()
-            .map(UserRole::valueOf)
-            .toList();
-
-    if (whiteListedRoles.contains(UserRole.DISPATCHER)) {
-      userRoles.add(UserRole.DISPATCHER);
-    }
-    if (whiteListedRoles.contains(UserRole.DATA_ADMIN)) {
-      userRoles.add(UserRole.DATA_ADMIN);
-    }
-    if (whiteListedRoles.contains(UserRole.SITE_MANAGER)) {
-      userRoles.add(UserRole.SITE_MANAGER);
-    }
-
-    // check if they are a driver (exist in the driver table)
-    boolean isDriver =
-        jdbi.withHandle(
-                h ->
-                    h.createQuery(
-                            """
-                            select 1 from driver where regexp_replace(phone, '[^0-9]+', '', 'g') = :phone
-                          """)
-                        .bind("phone", userPhone)
-                        .mapTo(Long.class)
-                        .findOne())
-            .isPresent();
-    if (isDriver) {
-      userRoles.add(UserRole.DRIVER);
-    }
-
-    // check if they are a site manager (secondary or primary)
-    boolean isSiteAdmin =
-        jdbi.withHandle(
-                h ->
-                    h.createQuery(
-                            """
-                          select 1 from site where regexp_replace(contact_number, '[^0-9]+', '', 'g')  = :phone
-                          union
-                          select 1 from site where regexp_replace(og_contact_number, '[^0-9]+', '', 'g')  = :phone
-                          union
-                          select 1 from additional_site_manager where regexp_replace(phone, '[^0-9]+', '', 'g') = :phone
-                        """)
-                        .bind("phone", userPhone)
-                        .mapTo(Long.class)
-                        .findFirst())
-            .isPresent();
-    if (isSiteAdmin) {
-      userRoles.add(UserRole.SITE_MANAGER);
-    }
+                    .bind("phone", userPhone)
+                    .mapTo(String.class)
+                    .list())
+        .stream()
+        .map(UserRole::valueOf)
+        .filter(role -> role != UserRole.AUTHORIZED)
+        .distinct()
+        .forEach(userRoles::add);
 
     return userRoles;
   }

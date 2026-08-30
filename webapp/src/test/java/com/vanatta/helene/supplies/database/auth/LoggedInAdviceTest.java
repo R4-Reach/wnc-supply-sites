@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.auth.setup.password.SetupPasswordHelper;
+import com.vanatta.helene.supplies.database.auth.user.UserRoleService;
 import com.vanatta.helene.supplies.database.auth.user.whitelist.UserWhiteListWebhook;
-import com.vanatta.helene.supplies.database.driver.DriverDao;
 import com.vanatta.helene.supplies.database.manage.ManageSiteDao;
 import com.vanatta.helene.supplies.database.manage.contact.ContactDao;
 import java.util.List;
@@ -38,10 +38,10 @@ class LoggedInAdviceTest {
         .containsExactly(UserRole.AUTHORIZED);
   }
 
-  /** Drivers get their role by being in the driver table. */
+  /** Roles are read from wss_user_roles; the driver role is one of them. */
   @Test
   void driverUserRole() {
-    DriverDao.upsert(jdbiTest, TestConfiguration.buildDriver(-604L, number));
+    UserRoleService.grantRole(jdbiTest, number, UserRole.DRIVER);
 
     assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
         .containsExactly(UserRole.AUTHORIZED, UserRole.DRIVER);
@@ -91,6 +91,19 @@ class LoggedInAdviceTest {
             .build());
     assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
         .containsExactly(UserRole.AUTHORIZED, UserRole.DATA_ADMIN);
+  }
+
+  /** User-admin role is granted through the wss_user_roles table. */
+  @Test
+  void userAdminRole() {
+    UserWhiteListWebhook.updateUserAndRoles(
+        jdbiTest,
+        UserWhiteListWebhook.UserWhiteListRequest.builder()
+            .roles(List.of(UserRole.USER_ADMIN.name()))
+            .phoneNumber(number)
+            .build());
+    assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
+        .containsExactly(UserRole.AUTHORIZED, UserRole.USER_ADMIN);
   }
 
   /** By default, no sites for a user. */
