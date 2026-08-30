@@ -1,0 +1,97 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - Tag Items</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <link rel="stylesheet" href="../mobile.css"/>
+  <link rel="stylesheet" href="tag-items.css"/>
+  {{> header-include }}
+</head>
+
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/admin/inventory">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">Tag Items</span>
+</div>
+
+<div class="mission-statement">
+  Tags describe what an inventory item is for. Manage the tag list below, then click a tag under an
+  item to assign or remove it. Tags apply to the item catalog, not to any one site.
+</div>
+
+<section class="tag-manage">
+  <h3>Tags</h3>
+
+  <form class="horizontal tag-create-form"
+        hx-post="/admin/tag-items/create"
+        hx-target="#tag-message"
+        hx-swap="innerHTML">
+    <input name="name" id="new-tag" type="text" placeholder="New tag name" maxlength="64"
+           autocomplete="off" required/>
+    <button type="submit">Add Tag</button>
+  </form>
+  <div id="tag-message" class="message"></div>
+
+  <ul class="tag-list">
+    {{#tags}}
+    <li class="tag-list-row">
+      <form class="horizontal tag-rename-form"
+            hx-post="/admin/tag-items/rename"
+            hx-target="#tag-message"
+            hx-swap="innerHTML">
+        <input type="hidden" name="tagId" value="{{id}}"/>
+        <input class="tag-name-input" name="name" type="text" value="{{name}}" maxlength="64"
+               autocomplete="off" required/>
+        <button type="submit" class="tag-rename-btn">Rename</button>
+      </form>
+      <span class="tag-count">{{itemCountLabel}}</span>
+      <button type="button" class="tag-delete-btn"
+              hx-post="/admin/tag-items/delete"
+              hx-vals='{"tagId": "{{id}}"}'
+              hx-confirm="Delete tag &quot;{{name}}&quot;? It will be removed from every item."
+              hx-target="#tag-message"
+              hx-swap="innerHTML">Delete</button>
+    </li>
+    {{/tags}}
+    {{^tags}}
+    <li class="tag-empty-note">No tags yet. Add one above to get started.</li>
+    {{/tags}}
+  </ul>
+</section>
+
+<section class="tag-assign">
+  <h3>Assign Tags to Items</h3>
+
+  {{#hasTags}}
+  <div class="tag-item-search-wrap">
+    <input type="text" id="tag-item-search" placeholder="Filter items by name&hellip;"
+           autocomplete="off"/>
+  </div>
+
+  <table class="tag-item-grid">
+    <thead>
+    <tr>
+      <th class="tag-item-name">Item</th>
+      <th class="tag-item-tags">Tags</th>
+    </tr>
+    </thead>
+    <tbody id="tag-item-body">
+    {{#items}}
+    {{> admin/tag-items-item-row }}
+    {{/items}}
+    </tbody>
+  </table>
+  <p class="tag-item-no-match" id="tag-item-no-match" hidden>No items match that filter.</p>
+  {{/hasTags}}
+
+  {{^hasTags}}
+  <p class="tag-empty-note">Add at least one tag above before assigning tags to items.</p>
+  {{/hasTags}}
+</section>
+
+<script type="text/javascript" src="tag-items.js"></script>
+</body>
+</html>

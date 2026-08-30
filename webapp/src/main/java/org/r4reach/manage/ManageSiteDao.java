@@ -529,10 +529,11 @@ public class ManageSiteDao {
             i.name item_name,
             case when inv.site_id is null then false else true end active,
             inv.status_name item_status,
-            string_agg(it.tag_name, ',') itemTags
+            string_agg(t.name, ',') itemTags
         from item i
         left join inventory inv on inv.item_id = i.id
         left join item_tag it on it.item_id = i.id
+        left join tag t on t.id = it.tag_id
         group by i.id, i.name, inv.site_id, inv.status_name
     """;
 

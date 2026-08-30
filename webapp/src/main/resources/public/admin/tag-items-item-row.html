@@ -1,0 +1,12 @@
+<tr class="tag-item-row" data-item-name="{{itemName}}">
+  <td class="tag-item-name">{{itemName}}</td>
+  <td class="tag-item-tags">
+    {{#tags}}
+    <button type="button" class="chicklet {{#assigned}}on{{/assigned}}"
+            hx-post="/admin/tag-items/toggle"
+            hx-vals='{"itemId": "{{itemId}}", "tagId": "{{tagId}}", "assigned": "{{^assigned}}true{{/assigned}}{{#assigned}}false{{/assigned}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">{{tagName}}</button>
+    {{/tags}}
+  </td>
+</tr>

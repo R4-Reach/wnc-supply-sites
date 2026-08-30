@@ -46,7 +46,7 @@ public class SuppliesDao {
         i.name item,
         ist.name itemStatus,
         s.inventory_last_updated inventoryLastUpdated,
-        string_agg(it.tag_name, ',') itemTags,
+        string_agg(t.name, ',') itemTags,
         max(d.target_delivery_date) filter (where d.delivery_status = 'Delivery Completed') lastDeliveryDate
       from site s
       join site_type st on st.id = s.site_type_id
@@ -54,6 +54,7 @@ public class SuppliesDao {
       left join site_item si on si.site_id = s.id
       left join item i on i.id = si.item_id
       left join item_tag it on it.item_id = i.id
+      left join tag t on t.id = it.tag_id
       left join item_status ist on ist.id = si.item_status_id
       left join delivery d on d.to_site_id = s.id
       where s.active = true

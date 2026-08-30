@@ -24,7 +24,9 @@
       </button>
     </a>
   </div>
+  {{/isUserAdmin}}
 
+  {{#showInventory}}
   <div class="nav-button-container">
     <a href="/admin/inventory">
       <button type="button" class="nav-button wide-button">
@@ -32,7 +34,7 @@
       </button>
     </a>
   </div>
-  {{/isUserAdmin}}
+  {{/showInventory}}
 
   {{#isSiteAdmin}}
   <div class="nav-button-container">

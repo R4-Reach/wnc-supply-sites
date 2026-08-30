@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
- * Admin landing page. Any admin ({@link UserRole#USER_ADMIN} or {@link UserRole#SITE_ADMIN}) may
- * see it; each button is gated on its own role so an admin only sees the sections they can use.
+ * Admin landing page. Any admin ({@link UserRole#USER_ADMIN}, {@link UserRole#SITE_ADMIN}, or
+ * {@link UserRole#DATA_ADMIN}) may see it; each button is gated on its own role so an admin only
+ * sees the sections they can use.
  */
 @Controller
 @AllArgsConstructor
@@ -29,6 +30,10 @@ public class AdminController {
         "admin/admin",
         Map.of(
             "isUserAdmin", UserRole.isUserAdmin(roles),
-            "isSiteAdmin", UserRole.isSiteAdmin(roles)));
+            "isSiteAdmin", UserRole.isSiteAdmin(roles),
+            "isDataAdmin", UserRole.isDataAdmin(roles),
+            // The inventory sub-portal is reachable by user admins (item merge) and data admins
+            // (item tagging); each button inside it self-gates further.
+            "showInventory", UserRole.isUserAdmin(roles) || UserRole.isDataAdmin(roles)));
   }
 }

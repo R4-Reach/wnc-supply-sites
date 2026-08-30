@@ -16,6 +16,7 @@
 </div>
 
 <div class="nav-buttons-container">
+  {{#isUserAdmin}}
   <div class="nav-button-container">
     <a href="/admin/merge-items">
       <button type="button" class="nav-button wide-button">
@@ -23,6 +24,17 @@
       </button>
     </a>
   </div>
+  {{/isUserAdmin}}
+
+  {{#isDataAdmin}}
+  <div class="nav-button-container">
+    <a href="/admin/tag-items">
+      <button type="button" class="nav-button wide-button">
+        Tag Items
+      </button>
+    </a>
+  </div>
+  {{/isDataAdmin}}
 </div>
 
 </body>

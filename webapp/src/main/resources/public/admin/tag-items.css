@@ -1,0 +1,141 @@
+.mission-statement {
+  margin: 1em 2em;
+}
+
+section.tag-manage,
+section.tag-assign {
+  margin: 1.5em 2em;
+}
+
+section.tag-manage h3,
+section.tag-assign h3 {
+  margin-bottom: 0.5em;
+}
+
+/* ── Manage tags ─────────────────────────────────────────────── */
+.tag-create-form {
+  align-items: center;
+  gap: 0.5em;
+}
+
+.tag-create-form input,
+.tag-rename-form input {
+  padding: 0.4em;
+}
+
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75em 0 0;
+  max-width: 40em;
+}
+
+.tag-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.4em 0;
+  border-bottom: 1px solid var(--neutral-border);
+}
+
+.tag-rename-form {
+  align-items: center;
+  gap: 0.4em;
+  flex: 1 1 auto;
+}
+
+.tag-name-input {
+  flex: 1 1 auto;
+  min-width: 8em;
+  max-width: 20em;
+}
+
+.tag-count {
+  color: var(--neutral-muted-text);
+  white-space: nowrap;
+}
+
+.tag-rename-btn,
+.tag-delete-btn {
+  border-radius: 0.4em;
+  padding: 0.3em 0.7em;
+  cursor: pointer;
+  border: 1px solid var(--neutral-border);
+  background-color: var(--surface);
+  white-space: nowrap;
+}
+
+.tag-delete-btn {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.tag-empty-note {
+  color: var(--neutral-muted-text);
+  font-style: italic;
+  list-style: none;
+  padding: 0.4em 0;
+}
+
+/* ── Assign tags to items ────────────────────────────────────── */
+.tag-item-search-wrap {
+  margin-bottom: 0.75em;
+}
+
+#tag-item-search {
+  padding: 0.4em;
+  width: 100%;
+  max-width: 24em;
+}
+
+.tag-item-grid {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tag-item-grid th,
+.tag-item-grid td {
+  border: 1px solid var(--neutral-border);
+  padding: 0.5em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tag-item-grid thead th {
+  background-color: var(--neutral-fill);
+  white-space: nowrap;
+}
+
+.tag-item-name {
+  width: 16em;
+  font-weight: 600;
+}
+
+.tag-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+}
+
+.tag-item-no-match {
+  color: var(--neutral-muted-text);
+  font-style: italic;
+  margin: 0.75em 0;
+}
+
+/* Tag chicklets: off is a plain outline, on is filled. Mirrors the user-management page. */
+.chicklet {
+  border: 1px solid var(--neutral-border);
+  border-radius: 1em;
+  background-color: var(--surface);
+  color: var(--neutral-muted-text);
+  padding: 0.25em 0.75em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chicklet.on {
+  background-color: var(--available);
+  border-color: var(--available);
+  color: var(--surface);
+}

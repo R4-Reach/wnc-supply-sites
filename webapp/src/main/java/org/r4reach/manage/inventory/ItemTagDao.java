@@ -22,15 +22,21 @@ public class ItemTagDao {
       if (tagToInsert.isBlank() || tagToInsert.contains(",")) {
         continue;
       }
+      // Tags are now first-class registry rows; register the name (if new) before assigning it.
+      jdbi.withHandle(
+          h ->
+              h.createUpdate("insert into tag(name) values(:tagName) on conflict(name) do nothing")
+                  .bind("tagName", tagToInsert)
+                  .execute());
       jdbi.withHandle(
           h ->
               h.createUpdate(
                       """
-                   insert into item_tag(item_id, tag_name)
+                   insert into item_tag(item_id, tag_id)
                    values(
                      (select id from item where wss_id = :wssId),
-                      :tagName
-                   ) on conflict(item_id, tag_name) do nothing
+                     (select id from tag where name = :tagName)
+                   ) on conflict(item_id, tag_id) do nothing
                    """)
                   .bind("wssId", wssId)
                   .bind("tagName", tagToInsert)
@@ -38,12 +44,18 @@ public class ItemTagDao {
     }
   }
 
+  /**
+   * The tags actually assigned to at least one item (registered-but-unassigned tags are omitted).
+   */
   public static List<String> fetchAllDescriptionTags(Jdbi jdbi) {
     return jdbi.withHandle(
         h ->
             h.createQuery(
                     """
-                    select distinct tag_name from item_tag order by tag_name
+                    select distinct t.name
+                    from item_tag it
+                    join tag t on t.id = it.tag_id
+                    order by t.name
                     """)
                 .mapTo(String.class)
                 .list());
