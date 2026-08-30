@@ -10,9 +10,9 @@ main {
 
 #verification-container {
     padding: 1rem 1.5rem 1rem 1.5rem;
-    border: solid black;
+    border: solid var(--border-strong);
     border-radius: 20px;
-    background-color: #dddddd;
+    background-color: var(--neutral-fill-alt);
 }
 
 #verification-form {
@@ -28,9 +28,9 @@ main {
 #request-status {
     display: flex;
     flex-direction: row;
-    border: solid black;
+    border: solid var(--border-strong);
     border-radius: 5px;
-    background-color: #dddddd;
+    background-color: var(--neutral-fill-alt);
     height: 2.5rem;
 }
 
@@ -43,7 +43,7 @@ main {
 }
 
 .status-divider {
-    border-left: solid black;
+    border-left: solid var(--border-strong);
     height: 75%;
     margin-top: auto;
     margin-bottom: auto;
@@ -67,19 +67,19 @@ main {
 }
 
 .status-selected {
-    color: #63E6BE;
+    color: var(--success);
 }
 
 .status-unselected {
-    color: #dddddd;
+    color: var(--neutral-border);
 }
 
 #delivery {
-    background-color: #dddddd;
+    background-color: var(--neutral-fill-alt);
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    border: solid black;
+    border: solid var(--border-strong);
     margin-top: 1rem;
     border-radius: 10px;
     padding: 10px;

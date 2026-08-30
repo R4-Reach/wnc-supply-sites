@@ -181,18 +181,11 @@ Do not bring these frameworks in, these frameworks are intentionally rejected:
 
 #### HTML Page Layout
 
-Keep in mind we want all pages to "work" when viewed directly in a web browser, without a web server.
-This is only a challenge so much that the path to resources on the file system needs to match
-what the path would be on the webserver.
-
-For example, a page might be at path: "/page/details/data"
-If that page references a "../details.css", that CSS page needs to be in "/page/details/details.css"
-
-The issue is that the path on the server does not have to match the file system, the server
-path "/page/details/data" could easily map to a template page located at "/page/data.html"
-
-So, we really want every page when opened via web browser, without a web server,
-to have fully functioning CSS & JS. To do this, we need to carefully line up paths.
+A page's CSS and JS must resolve from its server URL, which isn't tied to where
+the template or asset lives on disk — a controller can serve "/page/details/data"
+from a template at "/page/data.html". Relative asset links like "../details.css"
+resolve off the request URL, so the same link silently breaks at a different URL
+depth. Keep assets at a fixed location and reference them absolutely instead.
 
 **Watch out for controller-shadowed URLs.** A static file only serves if no
 controller claims its URL. Some controllers own an entire URL prefix via a path

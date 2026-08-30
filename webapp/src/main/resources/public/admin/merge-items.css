@@ -7,11 +7,11 @@
 }
 
 .merge-keep-row {
-    background-color: lightgreen;
+    background-color: var(--available-bg);
 }
 
 .merge-delete-row {
-    background-color: lightcoral;
+    background-color: var(--danger-bg);
 }
 
 #mergeButton {

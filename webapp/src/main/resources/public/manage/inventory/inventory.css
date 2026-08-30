@@ -1,6 +1,6 @@
 .disabled {
   font-style: italic;
-  color: gray;
+  color: var(--neutral-muted-text);
 }
 
 .update-confirm-div {
@@ -27,7 +27,7 @@
 }
 
 tbody#inventoryTableBody tr {
-  outline: solid black thin;
+  outline: solid var(--border-strong) thin;
 }
 
 tbody#inventoryTableBody td {
@@ -39,16 +39,16 @@ tbody#inventoryTableBody td {
   position: sticky;
   width: 100%;
   height: 100px;
-  border: 1px solid red;
-  color: #FCFCFD;
-  background: #A33;
+  border: 1px solid var(--danger);
+  color: var(--surface);
+  background: var(--danger);
   padding-right: 10px;
   display: none;
   top: 0px;
 }
 
 #addItemResult {
-  color: red;
+  color: var(--danger);
 }
 
 .inventoryLabel {
@@ -120,7 +120,7 @@ table.inventoryTable td {
 
 #tags-container {
   max-height: 200px;
-  border:1px solid gray;
+  border:1px solid var(--neutral-border);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -148,12 +148,12 @@ table.inventoryTable td {
   padding: .25rem .5rem;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 2px 2px 5px gray;
-  border: 1px solid gray;
+  box-shadow: 2px 2px 5px var(--neutral-border-strong);
+  border: 1px solid var(--neutral-border);
 }
 
 .tag-selected {
-  box-shadow: inset 2px 2px 5px gray;
+  box-shadow: inset 2px 2px 5px var(--neutral-border-strong);
 }
 
 .no-pointer {

@@ -24,6 +24,13 @@ the flag), Spring Boot 3.3, **Mustache** server-side views, **JDBI3** for data
 access (**not** JPA/Hibernate — no `@Entity`, write SQL), Postgres, Flyway
 migrations, Lombok, AssertJ. Frontend is static HTML/CSS/JS served by Spring.
 
+## Styling
+
+Colors and CSS conventions live in `docs/style-guide.md`. The short version: raw
+color values live only in `webapp/src/main/resources/public/tokens.css`;
+everywhere else use `var(--…)`, never a hex literal or inline `style="…"` color.
+Read the guide before adding or changing any color.
+
 ## `/rcommons` is a foreign transplant — don't treat it as the house style
 
 The volunteer portal under `webapp/src/main/resources/public/rcommons/` (and its

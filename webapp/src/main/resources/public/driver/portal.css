@@ -9,11 +9,11 @@
 }
 
 .update-button:active {
-    background-color: #FF0;
+    background-color: var(--highlight);
 }
 
 .update-button:hover {
-    background-color: lightyellow;
+    background-color: var(--highlight-soft);
 }
 
 .form-header {
@@ -45,9 +45,9 @@ h3 {
 }
 
 .route-container {
-    border: 2px solid black;
+    border: 2px solid var(--border-strong);
     border-radius: 20px;
-    background-color: #f5f5f5;
+    background-color: var(--neutral-fill);
     white-space: nowrap;
 }
 

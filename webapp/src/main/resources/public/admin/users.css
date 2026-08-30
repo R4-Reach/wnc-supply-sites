@@ -19,19 +19,19 @@
 
 .user-grid th,
 .user-grid td {
-  border: 1px solid #ccc;
+  border: 1px solid var(--neutral-border);
   padding: 0.4em 0.6em;
   text-align: left;
 }
 
 .user-grid thead th {
-  background-color: #f0f0f0;
+  background-color: var(--neutral-fill);
   white-space: nowrap;
 }
 
 .user-grid tr.user-removed {
-  background-color: #f7f7f7;
-  color: #999;
+  background-color: var(--neutral-fill);
+  color: var(--neutral-muted-text);
 }
 
 .user-name {
@@ -40,12 +40,12 @@
 }
 
 .user-name.saved {
-  border-color: #2e7d32;
+  border-color: var(--available);
 }
 
 .user-name.missingData,
 .save-error {
-  border-color: #c62828;
+  border-color: var(--danger);
 }
 
 .user-phone {
@@ -55,35 +55,35 @@
 
 /* Role chicklets: off is a plain outline, on is filled. */
 .chicklet {
-  border: 1px solid #999;
+  border: 1px solid var(--neutral-border);
   border-radius: 1em;
-  background-color: #fff;
-  color: #555;
+  background-color: var(--surface);
+  color: var(--neutral-muted-text);
   padding: 0.25em 0.75em;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chicklet.on {
-  background-color: #2e7d32;
-  border-color: #2e7d32;
-  color: #fff;
+  background-color: var(--available);
+  border-color: var(--available);
+  color: var(--surface);
 }
 
 .status-toggle {
   border-radius: 0.4em;
   padding: 0.3em 0.7em;
   cursor: pointer;
-  border: 1px solid #999;
+  border: 1px solid var(--neutral-border);
 }
 
 .status-toggle.active {
-  background-color: #2e7d32;
-  border-color: #2e7d32;
-  color: #fff;
+  background-color: var(--available);
+  border-color: var(--available);
+  color: var(--surface);
 }
 
 .status-toggle.inactive {
-  background-color: #eee;
-  color: #777;
+  background-color: var(--neutral-fill-alt);
+  color: var(--neutral-muted-text);
 }

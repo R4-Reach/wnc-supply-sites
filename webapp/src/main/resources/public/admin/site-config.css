@@ -5,7 +5,7 @@
 }
 
 .site-config-section {
-  border: 1px solid #ccc;
+  border: 1px solid var(--neutral-border);
   border-radius: 6px;
   padding: 1rem 1.25rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -41,9 +41,9 @@
   max-width: 640px;
   margin: 1rem auto;
   padding: 0.5rem 1rem;
-  border: 1px solid #2e7d32;
-  background: #e8f5e9;
-  color: #2e7d32;
+  border: 1px solid var(--available);
+  background: var(--available-bg);
+  color: var(--available);
   border-radius: 6px;
   text-align: center;
 }
@@ -56,7 +56,7 @@
 
 .vehicle-types-hint {
   margin: 0 0 1rem;
-  color: #555;
+  color: var(--neutral-muted-text);
 }
 
 .vehicle-type-list {
@@ -71,7 +71,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.35rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--neutral-fill-alt);
 }
 
 .add-vehicle-type {

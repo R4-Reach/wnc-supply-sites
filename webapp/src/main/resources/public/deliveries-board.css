@@ -82,7 +82,7 @@
   border-radius: 6px;
   padding: 10px;
   cursor: grab;
-  box-shadow: rgba(45, 35, 66, 0.12) 0 1px 3px;
+  box-shadow: rgba(var(--shadow-rgb), 0.12) 0 1px 3px;
 }
 
 .kanban-card.dragging {

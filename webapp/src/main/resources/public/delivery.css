@@ -23,8 +23,8 @@ body {
 .page-subsection {
     margin: 3px;
     padding: 5px;
-    background-color: #DDD;
-    border: solid #111;
+    background-color: var(--neutral-fill-alt);
+    border: solid var(--border-strong);
     border-radius: 20px;
 }
 
@@ -84,19 +84,19 @@ pre {
 }
 
 .confirm-button {
-    background-color: lightgreen !important;
+    background-color: var(--available-bg) !important;
 }
 
 .confirm-button:active {
-    background-color: green !important;
+    background-color: var(--available) !important;
 }
 
 .decline-button {
-    background-color: pink !important;
+    background-color: var(--danger-bg) !important;
 }
 
 .decline-button:active {
-    background-color: red !important;
+    background-color: var(--danger) !important;
 }
 
 .confirmations-table {
@@ -106,7 +106,7 @@ pre {
 
 .confirmations-table th,
 .confirmations-table td {
-    border: solid 2px darkgray;
+    border: solid 2px var(--neutral-border);
     padding-top: 2px;
     padding-bottom: 2px;
     padding-left: 4px;
@@ -125,7 +125,7 @@ pre {
 .unable-to-confirm-message {
     font-style: italic;
     font-size: 1.0em;
-    color: red;
+    color: var(--danger);
 }
 
 .confirmation-checkbox-row {

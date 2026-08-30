@@ -67,7 +67,7 @@ div.data-field label {
 }
 
 .missingData {
-    background-color: lightcoral;
+    background-color: var(--danger-bg);
 }
 
 @media only screen and (max-width: 675px) {

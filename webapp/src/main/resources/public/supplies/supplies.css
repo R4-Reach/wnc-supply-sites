@@ -25,7 +25,7 @@ dialog form {
 .get-involved-link {
     border-radius: 4px;
     border: 0px;
-    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, var(--shadow-inset) 0 -3px 0 inset;
+    box-shadow: var(--shadow-raised);
     box-sizing: border-box;
     color: var(--nav-btn-text);
     cursor: pointer;
@@ -158,8 +158,8 @@ table.results-table tbody tr:nth-child(even) {
 
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background-color: rgba(0, 0, 0, .5);
-    box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+    background-color: var(--overlay);
+    box-shadow: 0 0 1px var(--overlay-light);
 }
 
 .selection-td {
