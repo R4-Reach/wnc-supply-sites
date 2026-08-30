@@ -28,6 +28,10 @@ public class MergeItemsController {
   ModelAndView showMergeItems() {
     Map<String, Object> params = new HashMap<>();
     params.put("items", fetchAllItems(jdbi));
+    // The shared item-table partial references these; the do-merge POST supplies them, so the
+    // initial page load must too, or strict Mustache rendering fails on the missing keys.
+    params.put("message", "");
+    params.put("messageClass", "");
     return new ModelAndView("admin/merge-items", params);
   }
 
