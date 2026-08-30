@@ -3,6 +3,7 @@ package org.r4reach.dev;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
+import org.r4reach.auth.UserRole;
 import org.r4reach.util.HashingUtil;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -22,11 +23,12 @@ public class LocalDevUserSeeder implements ApplicationRunner {
   private static final String PASSWORD = "wncstrong";
 
   /**
-   * DATA_ADMIN grants god-mode over site data; USER_ADMIN is required for the /admin
-   * user-management UI and its homepage button; SITE_ADMIN unlocks the Site Config page. Grant all
-   * three so the local admin is a full admin.
+   * Every grantable role, taken straight from {@link UserRole} so that a newly added role is seeded
+   * automatically without touching this class. Excludes {@link UserRole#AUTHORIZED}, the implicit
+   * role that is never stored in wss_user_roles. This makes the local admin a full admin.
    */
-  private static final List<String> ROLES = List.of("DATA_ADMIN", "USER_ADMIN", "SITE_ADMIN");
+  private static final List<String> ROLES =
+      UserRole.assignableRoles().stream().map(Enum::name).toList();
 
   private final Jdbi jdbi;
 
@@ -38,9 +40,11 @@ public class LocalDevUserSeeder implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     jdbi.useTransaction(
         handle -> {
+          // insert a seed admin user
           handle
               .createUpdate(
-                  "insert into wss_user(phone) values(:phone) on conflict(phone) do nothing")
+                  "insert into wss_user(phone) values(:phone)"
+                      + " on conflict(phone) do update set removed = false")
               .bind("phone", PHONE)
               .execute();
           handle
