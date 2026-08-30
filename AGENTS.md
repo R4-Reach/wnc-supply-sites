@@ -24,6 +24,23 @@ the flag), Spring Boot 3.3, **Mustache** server-side views, **JDBI3** for data
 access (**not** JPA/Hibernate — no `@Entity`, write SQL), Postgres, Flyway
 migrations, Lombok, AssertJ. Frontend is static HTML/CSS/JS served by Spring.
 
+## `/rcommons` is a foreign transplant — don't treat it as the house style
+
+The volunteer portal under `webapp/src/main/resources/public/rcommons/` (and its
+`RCommonsController`) was built as a **separate app** and dropped in wholesale. It
+does not follow this repo's conventions and should not be used as a pattern to
+copy: it's a vanilla-JS SPA with client-side routing, its own CSS design-token
+system (`rcommons/css/tokens.css`), and a JS module split, whereas the rest of the
+app is server-rendered Mustache with one script/style per page. Its API layer
+(`rcommons/js/api.js`) is only partly wired — several calls still return
+`localStorage`/`DEMO_*` stubs rather than hitting the backend.
+
+It's gated behind the `beta-volunteer` cookie (see `README.md`), so it ships to
+prod without being visible. The intended direction is to **migrate it to match
+the rest of the app**, not to spread its patterns outward. When touching it,
+treat it as legacy-to-be-converted; when building elsewhere, ignore it as a
+reference.
+
 ## Migrations
 
 Flyway files live in `schema/`, named `V<n>__description.sql`. Append-only:
