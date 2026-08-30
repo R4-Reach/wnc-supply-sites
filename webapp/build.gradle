@@ -6,7 +6,7 @@ plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.12"
 }
 
-group = 'com.vanatta.helene'
+group = 'org.r4reach'
 
 java {
 	toolchain {
