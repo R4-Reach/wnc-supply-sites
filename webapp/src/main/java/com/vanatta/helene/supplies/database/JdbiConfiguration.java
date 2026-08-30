@@ -14,8 +14,11 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class JdbiConfiguration {
 
+  // Exposed as its own bean so Spring closes the pool on context shutdown (AutoCloseable). Under
+  // `just up`, DevTools restarts the context on every recompile; without this the old pool's
+  // connections leak on each restart until Postgres runs out of slots.
   @Bean
-  public Jdbi jdbi(
+  public HikariDataSource dataSource(
       @Value("${jdbi.url}") String url,
       @Value("${jdbi.user}") String user,
       @Value("${jdbi.password}") String password) {
@@ -28,13 +31,17 @@ public class JdbiConfiguration {
     // https://github.com/brettwooldridge/HikariCP?tab=readme-ov-file#gear-configuration-knobs-baby
 
     // timeout DB connections at 10s instead of default of 30s
-    config.addDataSourceProperty("connectionTimeout", 10_000);
+    config.setConnectionTimeout(10_000);
 
     // Keep pool size small (default is 10). Target env is a single core linode.
     // https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
-    config.addDataSourceProperty("maximumPoolSize", "4");
-    HikariDataSource ds = new HikariDataSource(config);
-    var jdbi = Jdbi.create(ds).installPlugin(new SqlObjectPlugin());
+    config.setMaximumPoolSize(4);
+    return new HikariDataSource(config);
+  }
+
+  @Bean
+  public Jdbi jdbi(HikariDataSource dataSource) {
+    var jdbi = Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin());
     jdbi.setSqlLogger(new Slf4JSqlLogger());
     return jdbi;
   }
