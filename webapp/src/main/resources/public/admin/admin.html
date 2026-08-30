@@ -16,6 +16,7 @@
 </div>
 
 <div class="nav-buttons-container">
+  {{#isUserAdmin}}
   <div class="nav-button-container">
     <a href="/admin/users">
       <button type="button" class="nav-button wide-button">
@@ -31,6 +32,17 @@
       </button>
     </a>
   </div>
+  {{/isUserAdmin}}
+
+  {{#isSiteAdmin}}
+  <div class="nav-button-container">
+    <a href="/admin/site-config">
+      <button type="button" class="nav-button wide-button">
+        Site Config
+      </button>
+    </a>
+  </div>
+  {{/isSiteAdmin}}
 </div>
 
 </body>

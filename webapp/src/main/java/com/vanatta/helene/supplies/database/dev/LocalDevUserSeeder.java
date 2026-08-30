@@ -23,9 +23,10 @@ public class LocalDevUserSeeder implements ApplicationRunner {
 
   /**
    * DATA_ADMIN grants god-mode over site data; USER_ADMIN is required for the /admin
-   * user-management UI and its homepage button. Grant both so the local admin is a full admin.
+   * user-management UI and its homepage button; SITE_ADMIN unlocks the Site Config page. Grant all
+   * three so the local admin is a full admin.
    */
-  private static final List<String> ROLES = List.of("DATA_ADMIN", "USER_ADMIN");
+  private static final List<String> ROLES = List.of("DATA_ADMIN", "USER_ADMIN", "SITE_ADMIN");
 
   private final Jdbi jdbi;
 

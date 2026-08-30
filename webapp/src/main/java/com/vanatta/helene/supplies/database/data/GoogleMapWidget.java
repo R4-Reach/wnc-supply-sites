@@ -1,16 +1,17 @@
 package com.vanatta.helene.supplies.database.data;
 
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigKey;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
 import com.vanatta.helene.supplies.database.util.UrlEncode;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GoogleMapWidget {
 
-  private final String apiKey;
+  private final SiteConfigService siteConfigService;
 
-  public GoogleMapWidget(@Value("${google.maps.api.key}") String apiKey) {
-    this.apiKey = apiKey;
+  public GoogleMapWidget(SiteConfigService siteConfigService) {
+    this.siteConfigService = siteConfigService;
   }
 
   /**
@@ -39,7 +40,7 @@ public class GoogleMapWidget {
     return String.format(
         "https://www.google.com/maps/embed/v1/directions?key=%s"
             + "&origin=%s,%s,%s&destination=%s,%s,%s",
-        apiKey,
+        siteConfigService.getOrEmpty(SiteConfigKey.GOOGLE_MAPS_API_KEY),
         encode(from.getAddress()),
         encode(from.getCity()),
         encode(from.getState()),

@@ -1,14 +1,15 @@
 package com.vanatta.helene.supplies.database.data;
 
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigKey;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
 import com.vanatta.helene.supplies.database.util.HttpGetSender;
 import java.util.Map;
 import lombok.Builder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GoogleDistanceApi {
-  private final String apiKey;
+  private final SiteConfigService siteConfigService;
 
   private static final String googleMapsApiUrl =
       "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -27,7 +28,7 @@ public class GoogleDistanceApi {
 
   // @VisibleForTesting
   public static GoogleDistanceApi stubbed() {
-    return new GoogleDistanceApi("") {
+    return new GoogleDistanceApi((SiteConfigService) null) {
       @Override
       public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
         return GoogleDistanceResponse.builder()
@@ -39,15 +40,15 @@ public class GoogleDistanceApi {
     };
   }
 
-  public GoogleDistanceApi(@Value("${google.maps.api.key}") String apiKey) {
-    this.apiKey = apiKey;
+  public GoogleDistanceApi(SiteConfigService siteConfigService) {
+    this.siteConfigService = siteConfigService;
   }
 
   public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
     Map<String, String> params =
         Map.of(
             "key",
-            apiKey,
+            siteConfigService.getOrEmpty(SiteConfigKey.GOOGLE_MAPS_API_KEY),
             "origins",
             from.toEncodedUrlValue(),
             "destinations",

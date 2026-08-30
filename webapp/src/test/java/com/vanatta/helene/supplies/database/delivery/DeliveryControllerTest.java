@@ -6,9 +6,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.data.GoogleMapWidget;
 import com.vanatta.helene.supplies.database.delivery.DeliveryController.TemplateParams;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigKey;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
 import com.vanatta.helene.supplies.database.test.util.TestDataFile;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,7 +32,11 @@ class DeliveryControllerTest {
   }
 
   DeliveryController deliveryController =
-      new DeliveryController(jdbiTest, new GoogleMapWidget("dummy api key"));
+      new DeliveryController(
+          jdbiTest,
+          new GoogleMapWidget(
+              SiteConfigService.withValues(
+                  Map.of(SiteConfigKey.GOOGLE_MAPS_API_KEY, "dummy api key"))));
 
   @Nested
   class RenderDetailPage {

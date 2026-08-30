@@ -11,6 +11,7 @@ public enum UserRole {
   SITE_MANAGER,
   DATA_ADMIN,
   USER_ADMIN,
+  SITE_ADMIN,
   ;
 
   static boolean hasGodMode(List<UserRole> userRoles) {
@@ -23,6 +24,19 @@ public enum UserRole {
 
   public static boolean isUserAdmin(List<UserRole> roles) {
     return roles.contains(USER_ADMIN);
+  }
+
+  /** Grants access to the site-wide DB configuration (API keys, Twilio settings) UI. */
+  public static boolean isSiteAdmin(List<UserRole> roles) {
+    return roles.contains(SITE_ADMIN);
+  }
+
+  /**
+   * Whether the user may reach the /admin area at all. The landing page and its home-page button
+   * are shown to any admin; each sub-page still gates on its own specific role.
+   */
+  public static boolean canAccessAdminArea(List<UserRole> roles) {
+    return isUserAdmin(roles) || isSiteAdmin(roles);
   }
 
   /**

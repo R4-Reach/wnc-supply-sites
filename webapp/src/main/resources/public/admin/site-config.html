@@ -1,0 +1,62 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - Site Config</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <link rel="stylesheet" href="../mobile.css"/>
+  <link rel="stylesheet" href="site-config.css"/>
+  {{> header-include }}
+</head>
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/admin">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">Site Config</span>
+</div>
+
+{{#saved}}
+<div class="site-config-saved">Configuration saved.</div>
+{{/saved}}
+
+<form class="site-config-form" method="post" action="/admin/site-config">
+
+  <fieldset class="site-config-section">
+    <legend>Google Maps</legend>
+    <div class="site-config-field">
+      <label for="google-maps-api-key">API Key</label>
+      <input type="password" id="google-maps-api-key" name="GOOGLE_MAPS_API_KEY"
+             autocomplete="off"
+             placeholder="{{#googleMapsApiKeySet}}•••• (set — leave blank to keep){{/googleMapsApiKeySet}}{{^googleMapsApiKeySet}}not set{{/googleMapsApiKeySet}}"/>
+    </div>
+  </fieldset>
+
+  <fieldset class="site-config-section">
+    <legend>Twilio</legend>
+    <div class="site-config-field">
+      <label for="twilio-account-sid">Account SID</label>
+      <input type="text" id="twilio-account-sid" name="TWILIO_ACCOUNT_SID"
+             autocomplete="off" value="{{twilioAccountSid}}"/>
+    </div>
+    <div class="site-config-field">
+      <label for="twilio-auth-token">Auth Token (API Key)</label>
+      <input type="password" id="twilio-auth-token" name="TWILIO_AUTH_TOKEN"
+             autocomplete="off"
+             placeholder="{{#twilioAuthTokenSet}}•••• (set — leave blank to keep){{/twilioAuthTokenSet}}{{^twilioAuthTokenSet}}not set{{/twilioAuthTokenSet}}"/>
+    </div>
+    <div class="site-config-field">
+      <label for="twilio-from-number">Phone Number</label>
+      <input type="text" id="twilio-from-number" name="TWILIO_FROM_NUMBER"
+             autocomplete="off" value="{{twilioFromNumber}}" placeholder="+1..."/>
+    </div>
+  </fieldset>
+
+  <div class="site-config-actions">
+    <button type="submit" class="nav-button wide-button">Save</button>
+  </div>
+
+</form>
+
+</body>
+</html>

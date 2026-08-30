@@ -1,0 +1,49 @@
+.site-config-form {
+  max-width: 640px;
+  margin: 1rem auto;
+  padding: 0 1rem;
+}
+
+.site-config-section {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 1rem 1.25rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.site-config-section legend {
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 0 0.5rem;
+}
+
+.site-config-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.site-config-field label {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.site-config-field input {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.site-config-actions {
+  text-align: center;
+}
+
+.site-config-saved {
+  max-width: 640px;
+  margin: 1rem auto;
+  padding: 0.5rem 1rem;
+  border: 1px solid #2e7d32;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 6px;
+  text-align: center;
+}

@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
-/** Admin landing page. Only {@link UserRole#USER_ADMIN}s may see it. */
+/**
+ * Admin landing page. Any admin ({@link UserRole#USER_ADMIN} or {@link UserRole#SITE_ADMIN}) may
+ * see it; each button is gated on its own role so an admin only sees the sections they can use.
+ */
 @Controller
 @AllArgsConstructor
 public class AdminController {
@@ -19,9 +22,13 @@ public class AdminController {
 
   @GetMapping(PATH_ADMIN)
   ModelAndView adminHome(@ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles) {
-    if (!UserRole.isUserAdmin(roles)) {
+    if (!UserRole.canAccessAdminArea(roles)) {
       return new ModelAndView("redirect:/");
     }
-    return new ModelAndView("admin/admin", Map.of());
+    return new ModelAndView(
+        "admin/admin",
+        Map.of(
+            "isUserAdmin", UserRole.isUserAdmin(roles),
+            "isSiteAdmin", UserRole.isSiteAdmin(roles)));
   }
 }

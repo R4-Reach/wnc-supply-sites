@@ -3,6 +3,8 @@ package com.vanatta.helene.supplies.database.twilio.sms;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigKey;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
 import com.vanatta.helene.supplies.database.util.TruncateString;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,28 +19,19 @@ public class SmsSender {
 
   // @VisibleForTesting
   public static SmsSender newDisabled(Jdbi jdbi) {
-    return new SmsSender("+1", "", "", false, jdbi);
+    return new SmsSender(false, null, jdbi);
   }
 
-  private final String twilioFromNumber;
   private final boolean twilioSmsEnabled;
+  private final SiteConfigService siteConfigService;
   private final Jdbi jdbi;
 
   SmsSender(
-      @Value("${twilio.from.number}") String twilioFromNumber,
-      @Value("${twilio.account.sid}") String twilioAccountSid,
-      @Value("${twilio.auth.token}") String twilioAuthToken,
       @Value("${twilio.sms.enabled}") boolean twilioSmsEnabled,
+      SiteConfigService siteConfigService,
       Jdbi jdbi) {
-    this.twilioFromNumber = twilioFromNumber;
-    if (!twilioFromNumber.startsWith("+1")) {
-      throw new IllegalArgumentException(
-          "Twilio from number must start with '+1', number provided: " + twilioFromNumber);
-    }
     this.twilioSmsEnabled = twilioSmsEnabled;
-    if (twilioSmsEnabled) {
-      Twilio.init(twilioAccountSid, twilioAuthToken);
-    }
+    this.siteConfigService = siteConfigService;
     this.jdbi = jdbi;
   }
 
@@ -63,6 +56,22 @@ public class SmsSender {
       return true;
     } else {
       log.info("Sending SMS to: {}, message length: {}", phoneNumber, message.length());
+
+      String twilioFromNumber = siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_FROM_NUMBER);
+      if (!twilioFromNumber.startsWith("+1")) {
+        log.warn("Twilio from number is not set / invalid in site config; cannot send SMS");
+        recordMessage(
+            jdbi,
+            MessageResult.builder()
+                .toNumber(phoneNumber)
+                .messageLength(message.length())
+                .errorMessage("Twilio from number not configured")
+                .build());
+        return false;
+      }
+      Twilio.init(
+          siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_ACCOUNT_SID),
+          siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_AUTH_TOKEN));
 
       try {
         Message smsMessage =

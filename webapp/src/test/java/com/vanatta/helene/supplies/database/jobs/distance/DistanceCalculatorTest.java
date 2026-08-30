@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import com.vanatta.helene.supplies.database.TestConfiguration;
 import com.vanatta.helene.supplies.database.data.GoogleDistanceApi;
 import com.vanatta.helene.supplies.database.data.SiteAddress;
+import com.vanatta.helene.supplies.database.siteconfig.SiteConfigService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class DistanceCalculatorTest {
     DistanceCalculator calculator =
         new DistanceCalculator(
             TestConfiguration.jdbiTest,
-            new GoogleDistanceApi("") {
+            new GoogleDistanceApi((SiteConfigService) null) {
               @Override
               public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
                 return GoogleDistanceResponse.builder()
@@ -53,7 +54,7 @@ class DistanceCalculatorTest {
     DistanceCalculator calculator =
         new DistanceCalculator(
             TestConfiguration.jdbiTest,
-            new GoogleDistanceApi("") {
+            new GoogleDistanceApi((SiteConfigService) null) {
               @Override
               public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
                 return GoogleDistanceResponse.builder()
@@ -82,7 +83,7 @@ class DistanceCalculatorTest {
     DistanceCalculator calculator =
         new DistanceCalculator(
             TestConfiguration.jdbiTest,
-            new GoogleDistanceApi("") {
+            new GoogleDistanceApi((SiteConfigService) null) {
               @Override
               public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
                 return GoogleDistanceResponse.builder()

@@ -68,13 +68,13 @@
   </div>
   {{/canManageSites}}
 
-  {{#isUserAdmin}}
+  {{#canAccessAdminArea}}
   <div class="nav-button-container margin-left-50">
     <a href="/admin">
       <button type="button" class="nav-button wide-button button-30">Admin</button>
     </a>
   </div>
-  {{/isUserAdmin}}
+  {{/canAccessAdminArea}}
 
   <div class="nav-button-container margin-left-50">
     <a href="{{contactUsLink}}">
