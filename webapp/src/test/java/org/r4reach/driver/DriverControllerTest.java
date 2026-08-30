@@ -67,6 +67,7 @@ class DriverControllerTest {
     params.put(DriverController.PageParams.location.name(), "location demo");
     params.put(DriverController.PageParams.licensePlates.name(), "plates demo");
     params.put(DriverController.PageParams.availability.name(), "availability demo");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "true");
     params.put(DriverController.PageParams.palletCapacity.name(), "1");
 
     var response = driverController.updateDriver("123-123-4444", params);
@@ -77,7 +78,72 @@ class DriverControllerTest {
     assertThat(dataResult.getLocation()).isEqualTo("location demo");
     assertThat(dataResult.getLicensePlates()).isEqualTo("plates demo");
     assertThat(dataResult.getAvailability()).isEqualTo("availability demo");
+    assertThat(dataResult.isCan_lift_50lbs()).isTrue();
     assertThat(dataResult.getPallet_capacity()).isEqualTo(1);
+  }
+
+  /** Capability fields are required (no silent "least-capable" default) -- see F4/T3. */
+  @Test
+  void updateRejectsMissingCanLiftAnswer() {
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "comments demo");
+    params.put(DriverController.PageParams.location.name(), "location demo");
+    params.put(DriverController.PageParams.licensePlates.name(), "plates demo");
+    params.put(DriverController.PageParams.availability.name(), "availability demo");
+    params.put(DriverController.PageParams.palletCapacity.name(), "1");
+
+    var response = driverController.updateDriver("123-123-4444", params);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+    assertThat(response.getBody()).contains("lift 50 lbs");
+    // The rejected save must not have touched the stored row.
+    var dataResult = DriverDao.lookupByPhone(jdbiTest, driver.getPhone()).orElseThrow();
+    assertThat(dataResult.getLocation()).isEqualTo(driver.getLocation());
+  }
+
+  @Test
+  void updateRejectsMissingPalletCapacity() {
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "comments demo");
+    params.put(DriverController.PageParams.location.name(), "location demo");
+    params.put(DriverController.PageParams.licensePlates.name(), "plates demo");
+    params.put(DriverController.PageParams.availability.name(), "availability demo");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "true");
+
+    var response = driverController.updateDriver("123-123-4444", params);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+    assertThat(response.getBody()).contains("pallets");
+  }
+
+  @Test
+  void updateRejectsOutOfRangePalletCapacity() {
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "comments demo");
+    params.put(DriverController.PageParams.location.name(), "location demo");
+    params.put(DriverController.PageParams.licensePlates.name(), "plates demo");
+    params.put(DriverController.PageParams.availability.name(), "availability demo");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "true");
+    params.put(DriverController.PageParams.palletCapacity.name(), "not-a-number");
+
+    var response = driverController.updateDriver("123-123-4444", params);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+  }
+
+  @Test
+  void updateRejectsMissingLocation() {
+    Map<String, String> params = new HashMap<>();
+    params.put(DriverController.PageParams.comments.name(), "comments demo");
+    params.put(DriverController.PageParams.location.name(), "  ");
+    params.put(DriverController.PageParams.licensePlates.name(), "plates demo");
+    params.put(DriverController.PageParams.availability.name(), "availability demo");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "true");
+    params.put(DriverController.PageParams.palletCapacity.name(), "1");
+
+    var response = driverController.updateDriver("123-123-4444", params);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
   }
 
   /**
@@ -128,6 +194,7 @@ class DriverControllerTest {
     params.put(DriverController.PageParams.location.name(), "new location");
     params.put(DriverController.PageParams.licensePlates.name(), "PLATE1");
     params.put(DriverController.PageParams.availability.name(), "weekends");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "false");
     params.put(DriverController.PageParams.palletCapacity.name(), "2");
 
     var response = driverController.updateDriver("555-000-1111", params);
@@ -154,6 +221,7 @@ class DriverControllerTest {
     params.put(DriverController.PageParams.location.name(), "edited location");
     params.put(DriverController.PageParams.licensePlates.name(), "EDIT1");
     params.put(DriverController.PageParams.availability.name(), "edited availability");
+    params.put(DriverController.PageParams.canLift50lbs.name(), "true");
     params.put(DriverController.PageParams.palletCapacity.name(), "0");
 
     driverController.updateDriver("555-222-3333", params);

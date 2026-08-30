@@ -131,6 +131,24 @@ public class Delivery {
     return itemList.size();
   }
 
+  /**
+   * The driver-facing status text -- the single place a raw backend status (e.g. "Creating
+   * Dispatch") is translated to the word a driver reads, reused for both the route filter and this
+   * card's own "Status:" line so the two never disagree (driver-portal UX review F6).
+   */
+  public String getDriverFacingStatusLabel() {
+    return DeliveryStatus.fromAirtableName(deliveryStatus)
+        .map(DeliveryStatus::getDriverFacingLabel)
+        .orElse(deliveryStatus == null ? "Unknown" : deliveryStatus);
+  }
+
+  /** Which of the driver portal's four workflow-ordered filter buckets this status falls into. */
+  public String getDriverFacingStatusBucketId() {
+    return DeliveryStatus.fromAirtableName(deliveryStatus)
+        .map(DeliveryStatus::getDriverFacingBucketId)
+        .orElse("pending");
+  }
+
   @SuppressWarnings("unused")
   String getItemListTruncated() {
     return getItemListTruncated(itemList);

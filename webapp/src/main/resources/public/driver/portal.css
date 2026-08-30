@@ -1,74 +1,314 @@
-.smaller {
-    font-size: smaller;
+/* Route filter: pure CSS, no JS. Each route card carries the single driver-facing status bucket
+   id (see Delivery.getDriverFacingStatusBucketId / driver-portal UX review F6) in
+   data-route-status; the checked radio decides which cards stay visible. "All (active)" is the
+   default and excludes only Completed -- see F3. */
+#routes-wrap:has(#filter-all:checked) .route-container[data-route-status="completed"],
+#routes-wrap:has(#filter-volunteered:checked) .route-container:not([data-route-status="volunteered"]),
+#routes-wrap:has(#filter-confirmed:checked) .route-container:not([data-route-status="confirmed"]),
+#routes-wrap:has(#filter-pending:checked) .route-container:not([data-route-status="pending"]),
+#routes-wrap:has(#filter-completed:checked) .route-container:not([data-route-status="completed"]) {
+  display: none;
 }
 
-.update-button {
-    margin-top: 20px;
-    height: 40px;
-    width: 100%;
+/* Matching empty-state sentence per filter: each is only ever rendered server-side when that
+   bucket's count is zero (see *IsEmpty params), so showing/hiding by checked radio never contradicts
+   the counts next to the tabs -- there's no way to land on a false "nothing here" (F3). */
+.route-empty-state {
+  display: none;
+  font-style: italic;
+  color: var(--neutral-muted-text);
+  padding: 10px;
 }
 
-.update-button:active {
-    background-color: var(--highlight);
+#routes-wrap:has(#filter-all:checked) .route-empty-state[data-empty-for="all"],
+#routes-wrap:has(#filter-volunteered:checked) .route-empty-state[data-empty-for="volunteered"],
+#routes-wrap:has(#filter-confirmed:checked) .route-empty-state[data-empty-for="confirmed"],
+#routes-wrap:has(#filter-pending:checked) .route-empty-state[data-empty-for="pending"],
+#routes-wrap:has(#filter-completed:checked) .route-empty-state[data-empty-for="completed"] {
+  display: block;
 }
 
-.update-button:hover {
-    background-color: var(--highlight-soft);
+/* Driver Portal / My Info tabs -- CSS-only, no JS, same :has() pattern as the route filter above.
+   Splits the frequent glanceable task (routes) from the rare deliberate one (profile/account) so
+   neither fights the other for scroll position (F7/F11). */
+.portal-tabs {
+  margin: 10px 30px 0;
 }
 
-.form-header {
-    font-weight: bold;
-    margin-top: 10px;
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border-strong);
 }
 
-dt {
-    font-weight: bold;
+.tab-label {
+  position: relative;
+  padding: 10px 20px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1em;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
 }
 
-h3 {
-    font-family: sans-serif;
-    margin-top: 0px;
-    margin-bottom: 5px;
-    margin-left: 50px;
+.tab-label input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
 }
 
-.inactive-message {
-    margin-left: 80px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    font-size: 1.35em;
+.tab-label:has(input:checked) {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
-.confirmation-div {
-    margin-top: 10px;
-    justify-content: center;
+.tab-label:has(input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.route-container {
-    border: 2px solid var(--border-strong);
-    border-radius: 20px;
-    background-color: var(--neutral-fill);
-    white-space: nowrap;
+.tab-panel {
+  display: none;
 }
 
-.route-title {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow:hidden;
-    width: 175px;
-    font-size: 1.25rem;
+.portal-tabs:has(#tab-routes:checked) #panel-routes {
+  display: block;
 }
 
-#routes-filter-container {
-    width: 500px;
-    margin: 0px 30px 0px 30px;
-    padding: 5px 10px 5px 10px;
+.portal-tabs:has(#tab-info:checked) #panel-info {
+  display: block;
 }
 
 @media only screen and (max-width: 768px) {
-    #routes-filter-container {
-        margin: 0px 10px 0px 10px;
-        width: 100%;
-        flex-direction: column;
-    }
+  .portal-tabs {
+    margin: 10px 10px 0;
+  }
+}
+
+/* Helper text -- an absolute floor, never the relative `smaller` that used to compound
+   unpredictably (F14). Load-bearing instructions (like the license-plate rationale) are promoted
+   out of this and into normal body text instead; see .field-rationale below. */
+.helper-text {
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 4px;
+}
+
+.helper-text p {
+  margin: 0 0 4px 0;
+}
+
+.helper-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Normal-body-size rationale placed before its field, promoted out of helper text (F14). */
+.field-rationale {
+  font-size: 1em;
+  margin-top: 14px;
+  margin-bottom: 2px;
+}
+
+.required-key {
+  font-size: 0.9rem;
+  color: var(--neutral-muted-text);
+  margin-top: 4px;
+}
+
+.update-button {
+  margin-top: 20px;
+  height: 44px;
+  width: 100%;
+  font-weight: bold;
+  font-size: 1.05em;
+  border: 2px solid var(--accent);
+}
+
+.update-button:active {
+  background-color: var(--highlight);
+}
+
+.update-button:hover {
+  background-color: var(--highlight-soft);
+}
+
+.update-button[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.saving-indicator {
+  font-style: italic;
+  color: var(--neutral-muted-text);
+  margin-top: 6px;
+}
+
+.form-header {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+dt {
+  font-weight: bold;
+}
+
+/* Route-card title, promoted to a heading (F13) -- the dead h3 rule this replaced had no element
+   using it. */
+.route-card-title {
+  font-family: sans-serif;
+  font-size: 1em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.account-status-block {
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.status-positive {
+  background-color: var(--available-bg);
+  border: 2px solid var(--success);
+  color: var(--success);
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.status-warning {
+  background-color: var(--well);
+  border: 2px solid var(--warning);
+  color: var(--warning);
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.status-banner {
+  margin: 10px 30px 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 1.1em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-banner.status-positive {
+  background-color: var(--available-bg);
+  border: 2px solid var(--success);
+  color: var(--success);
+}
+
+.status-banner.status-warning {
+  background-color: var(--well);
+  border: 2px solid var(--warning);
+  color: var(--warning);
+}
+
+.toggle-active-button {
+  background-color: var(--surface);
+  border: 1px solid var(--neutral-border);
+  color: var(--text);
+  font-weight: normal;
+  box-shadow: none;
+  height: 40px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-top: 12px;
+  margin-left: 0;
+}
+
+.toggle-active-button:hover {
+  background-color: var(--neutral-fill);
+}
+
+.muted-text {
+  color: var(--neutral-muted-text);
+}
+
+.confirm-success {
+  color: var(--success);
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+.confirm-error {
+  color: var(--danger);
+  font-weight: bold;
+  font-size: 0.95em;
+  display: block;
+}
+
+.confirmation-div {
+  margin-top: 10px;
+  justify-content: center;
+}
+
+/* Route touch target + wrap: radios/labels enlarged for gloved/outdoor use (F15); route titles
+   wrap instead of truncating the identifying from/to site names (F8). */
+#routes-filter-container .m-1 {
+  margin: 4px;
+}
+
+#routes-filter-container label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 1px solid var(--neutral-border);
+  border-radius: 22px;
+  cursor: pointer;
+}
+
+#routes-filter-container input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.route-container {
+  border: 2px solid var(--border-strong);
+  border-radius: 20px;
+  background-color: var(--neutral-fill);
+  white-space: normal;
+}
+
+.route-title {
+  white-space: normal;
+  font-size: 1.25rem;
+}
+
+#routes-filter-container {
+  width: 500px;
+  margin: 0px 30px 0px 30px;
+  padding: 5px 10px 5px 10px;
+}
+
+.back-link a {
+  display: inline-block;
+  padding: 6px 4px;
+}
+
+.logout a {
+  display: inline-block;
+  padding: 4px;
+}
+
+@media only screen and (max-width: 768px) {
+  #routes-filter-container {
+    margin: 0px 10px 0px 10px;
+    width: 100%;
+    flex-direction: column;
+  }
 }

@@ -4,15 +4,7 @@
   <link rel="stylesheet" href="../style.css"/>
   <link rel="stylesheet" href="../mobile.css"/>
   <link rel="stylesheet" href="portal.css"/>
-  <style>
-    /* Route filter: show only routes whose status matches the checked radio. */
-    #routes-wrap:has(#volunteered:checked) .route-container:not([data-route-status="Driver Volunteered"]),
-    #routes-wrap:has(#confirmed:checked) .route-container:not([data-route-status="Confirmed"]),
-    #routes-wrap:has(#pending:checked) .route-container:not([data-route-status="Creating Dispatch"]),
-    #routes-wrap:has(#completed:checked) .route-container:not([data-route-status="Delivery Completed"]) {
-      display: none;
-    }
-  </style>
+  <script src="portal.js" defer></script>
   {{> header-include }}
 </head>
 <body>
@@ -22,142 +14,213 @@
   <div class="back-link">
     <a href="/">[&larr; Go Back]</a>
   </div>
-  <span class="page-title-sub-header">Driver Portal</span>
+  <h2 class="page-title-sub-header">Driver Portal</h2>
 </div>
 
+{{#active}}
+<div class="status-banner status-positive">
+  <span class="status-glyph" aria-hidden="true">&#9679;</span> Active &mdash; visible to dispatch
+</div>
+{{/active}}
 {{^active}}
-<div class="errorMessage inactive-message">Your driver status is currently set to INACTIVE.</div>
+<div class="status-banner status-warning">
+  <span class="status-glyph" aria-hidden="true">&#9632;</span> Inactive &mdash; dispatch won't route to you
+</div>
 {{/active}}
 
-<h2 class="margin-left-30 mobile-margin-left-10"> Your Routes </h2>
-<div id="routes-wrap">
-<fieldset class="horizontal" id="routes-filter-container">
-    <legend> Filter your routes: </legend>
-    <div class="m-1">
-      <input type="radio" id="volunteered" name="route-type" value="Driver Volunteered" checked>
-      <label for="volunteered">Volunteered</label><br>
-    </div>
-    <div class="m-1">
-      <input type="radio" id="confirmed" name="route-type" value="Confirmed">
-      <label for="confirmed">Confirmed</label><br>
-    </div>
-    <div class="m-1">
-      <input type="radio" id="pending" name="route-type" value="Creating Dispatch">
-      <label for="pending">Pending</label>
-    </div>
-    <div class="m-1">
-      <input type="radio" id="completed" name="route-type" value="Delivery Completed">
-      <label for="completed">Completed</label>
-    </div>
-</fieldset>
-<div class="content-container margin-top-10 h-15 scroll-y">
-  {{#driverDeliveries}}
-  <div class="vertical route-container m-1 p-1" data-route-status="{{deliveryStatus}}">
-    <div class="w-full bold horizontal justify-between">
-      <span class="route-title"><a href="{{#fromSiteLink}}{{.}}{{/fromSiteLink}}">{{#fromSite}} {{.}} {{/fromSite}}, {{#fromState}} {{.}} {{/fromState}}</a> </span>  <span>&rarr;</span> <span class="route-title text-align-start"> <a href="{{#toSiteLink}}{{.}}{{/toSiteLink}}">{{#toSite}} {{.}} {{/toSite}}, {{#toState}} {{.}} {{/toState}}</a> </span>
-    </div>
-    <div class="vertical flex-gap-3 margin-top-10">
-      <div>
-        {{#deliveryDate}}
-        <span class="bold">Scheduled Date:</span>  {{deliveryDate}}
-        {{/deliveryDate}}
-        {{^deliveryDate}}
-        <span class="bold">Scheduled Date:</span>  Not available
-        {{/deliveryDate}}
+<div class="portal-tabs">
+  <div class="tab-bar">
+    <label class="tab-label">
+      <input type="radio" name="portal-tab" id="tab-routes" checked>
+      Routes
+    </label>
+    <label class="tab-label">
+      <input type="radio" name="portal-tab" id="tab-info">
+      My Info
+    </label>
+  </div>
+
+  <div class="tab-panel" id="panel-routes">
+    <h2 class="margin-left-30 mobile-margin-left-10">Routes</h2>
+    <div id="routes-wrap">
+      <fieldset class="horizontal" id="routes-filter-container">
+        <legend>Filter your routes:</legend>
+        <div class="m-1">
+          <input type="radio" id="filter-all" name="route-status" value="all" checked>
+          <label for="filter-all">All (active) ({{activeCount}})</label>
+        </div>
+        <div class="m-1">
+          <input type="radio" id="filter-volunteered" name="route-status" value="volunteered">
+          <label for="filter-volunteered">Volunteered ({{volunteeredCount}})</label>
+        </div>
+        <div class="m-1">
+          <input type="radio" id="filter-confirmed" name="route-status" value="confirmed">
+          <label for="filter-confirmed">Confirmed ({{confirmedCount}})</label>
+        </div>
+        <div class="m-1">
+          <input type="radio" id="filter-pending" name="route-status" value="pending">
+          <label for="filter-pending">Being scheduled ({{pendingCount}})</label>
+        </div>
+        <div class="m-1">
+          <input type="radio" id="filter-completed" name="route-status" value="completed">
+          <label for="filter-completed">Completed ({{completedCount}})</label>
+        </div>
+      </fieldset>
+
+      {{#routesLoadError}}
+      <p class="route-empty-state route-load-error" role="alert" style="display: block;">
+        Couldn't load your routes. Please reload the page.
+      </p>
+      {{/routesLoadError}}
+
+      <div class="content-container margin-top-10">
+        {{#activeIsEmpty}}
+        <p class="route-empty-state" data-empty-for="all">
+          No active routes right now &mdash; nothing volunteered, confirmed, or being scheduled.
+        </p>
+        {{/activeIsEmpty}}
+        {{#volunteeredIsEmpty}}
+        <p class="route-empty-state" data-empty-for="volunteered">
+          No routes you've volunteered for right now.
+        </p>
+        {{/volunteeredIsEmpty}}
+        {{#confirmedIsEmpty}}
+        <p class="route-empty-state" data-empty-for="confirmed">
+          No confirmed routes right now.
+        </p>
+        {{/confirmedIsEmpty}}
+        {{#pendingIsEmpty}}
+        <p class="route-empty-state" data-empty-for="pending">
+          No routes being scheduled right now.
+        </p>
+        {{/pendingIsEmpty}}
+        {{#completedIsEmpty}}
+        <p class="route-empty-state" data-empty-for="completed">
+          No completed routes yet.
+        </p>
+        {{/completedIsEmpty}}
+
+        {{#driverDeliveries}}
+        <div class="vertical route-container m-1 p-1" data-route-status="{{driverFacingStatusBucketId}}">
+          <h3 class="route-card-title w-full horizontal justify-between">
+            <span class="route-title">
+              <a href="{{#fromSiteLink}}{{.}}{{/fromSiteLink}}">{{#fromSite}}{{.}}{{/fromSite}}, {{#fromState}}{{.}}{{/fromState}}</a>
+            </span>
+            <span aria-hidden="true">&rarr;</span>
+            <span class="route-title text-align-start">
+              <a href="{{#toSiteLink}}{{.}}{{/toSiteLink}}">{{#toSite}}{{.}}{{/toSite}}, {{#toState}}{{.}}{{/toState}}</a>
+            </span>
+          </h3>
+          <div class="vertical flex-gap-3 margin-top-10">
+            <div>
+              {{#deliveryDate}}
+              <span class="bold">Scheduled Date:</span> {{deliveryDate}}
+              {{/deliveryDate}}
+              {{^deliveryDate}}
+              <span class="bold">Scheduled Date:</span> <span class="muted-text">Not yet scheduled</span>
+              {{/deliveryDate}}
+            </div>
+            <div>
+              <span class="bold">Status:</span> {{driverFacingStatusLabel}}
+            </div>
+            <div>
+              {{#detailLink}}
+              <a href="{{.}}" class="no-text-deco nav-button w-full">View route details</a>
+              {{/detailLink}}
+            </div>
+          </div>
+        </div>
+        {{/driverDeliveries}}
       </div>
-      <div>
-        <span class="bold">Status:</span> {{#deliveryStatus}}{{.}}{{/deliveryStatus}}
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-info">
+    <h2 class="margin-left-30 mobile-margin-left-10">My Info</h2>
+
+    <form id="profile-form" class="mission-statement margin-top-10 vertical" hx-post="/driver/update"
+          hx-target="#confirmation" hx-swap="innerHTML" hx-indicator="#saving-indicator"
+          hx-disabled-elt="#save-button">
+      <p class="required-key"><span class="required" aria-hidden="true">*</span> Required</p>
+
+      <div class="vertical">
+        <label for="location" class="form-header">City, State: <span class="required" aria-hidden="true">*</span></label>
+        <input id="location" name="location" type="text" maxlength="128" value="{{location}}"
+               autocomplete="address-level2" required>
+        <span class="helper-text">We use your region information to prioritize deliveries closer to you.</span>
+
+        <p class="field-rationale">License plate is the primary way for supply sites to confirm you are a driver within our network.</p>
+        <label for="licensePlates" class="form-header">License Plate Number(s): <span class="required" aria-hidden="true">*</span></label>
+        <textarea rows="3" cols="10" id="licensePlates" name="licensePlates" maxlength="256" required>{{licensePlates}}</textarea>
+        <span class="helper-text">List all license plate numbers for vehicles that you will be using.</span>
+
+        <label for="availability" class="form-header">Availability:</label>
+        <textarea rows="4" cols="10" id="availability" name="availability" maxlength="1024">{{availability}}</textarea>
+        <span class="helper-text">We'll try to line up deliveries for you on these dates and days.</span>
+
+        <label for="can-lift" class="form-header">Can you lift 50 lbs? <span class="required" aria-hidden="true">*</span></label>
+        <select id="can-lift" name="canLift50lbs" required>
+          <option value="" {{#canLiftBlankSelected}}selected{{/canLiftBlankSelected}} disabled>-- Select --</option>
+          <option value="true" {{#canLiftYesSelected}}selected{{/canLiftYesSelected}}>Yes, I can</option>
+          <option value="false" {{#canLiftNoSelected}}selected{{/canLiftNoSelected}}>No, I cannot</option>
+        </select>
+
+        <label for="pallet-capacity" class="form-header">How many pallets are you able to transport? <span class="required" aria-hidden="true">*</span></label>
+        <select id="pallet-capacity" name="palletCapacity" required>
+          <option value="" {{#palletSelectedBlank}}selected{{/palletSelectedBlank}} disabled>-- Select --</option>
+          <option value="0" id="pallet-capacity-0" {{#palletSelected0}}selected{{/palletSelected0}}>0</option>
+          <option value="1" id="pallet-capacity-1" {{#palletSelected1}}selected{{/palletSelected1}}>1</option>
+          <option value="2" id="pallet-capacity-2" {{#palletSelected2}}selected{{/palletSelected2}}>2</option>
+          <option value="3" id="pallet-capacity-3" {{#palletSelected3}}selected{{/palletSelected3}}>3</option>
+          <option value="4" id="pallet-capacity-4" {{#palletSelected4}}selected{{/palletSelected4}}>4</option>
+          <option value="5" id="pallet-capacity-5" {{#palletSelected5}}selected{{/palletSelected5}}>5+</option>
+        </select>
+
+        <label for="comments" class="form-header">Comments:</label>
+        <textarea rows="4" cols="10" id="comments" name="comments" maxlength="1024">{{comments}}</textarea>
+        <span class="helper-text">Is there anything else that would be helpful for us to know?</span>
       </div>
-      <div>
-        {{#detailLink}}
-          <a href="{{.}}" class="no-text-deco w-full"><button class="w-full"> View Route details </button></a>
-        {{/detailLink}}
+
+      <button id="save-button" class="update-button" type="submit">Save your info</button>
+      <span id="saving-indicator" class="htmx-indicator saving-indicator">Saving&hellip;</span>
+      <div class="horizontal padding confirmation-div">
+        <div id="confirmation"></div>
+      </div>
+    </form>
+
+    <h2 class="margin-left-30 mobile-margin-left-10">Information Policy</h2>
+    <div class="mission-statement margin-top-10 larger">
+      <p>
+        Only supply sites and our dispatchers will have access to your information.
+      </p>
+      <p>
+        Your information is only used to schedule deliveries. Your information will never be shared for commercial purposes.
+      </p>
+    </div>
+
+    <h2 class="margin-left-30 mobile-margin-left-10">Account status</h2>
+    <div class="mission-statement margin-top-10">
+      <div class="account-status-block">
+        {{#active}}
+        <p class="status-positive">Active &mdash; visible to dispatch. Deliveries may still take time to line up.</p>
+        {{/active}}
+        {{^active}}
+        <p class="status-warning">You're now inactive &mdash; dispatch won't route you any deliveries.</p>
+        {{/active}}
+        <form method="post" action="/driver/toggle-active">
+          <button type="submit" class="toggle-active-button">Go {{#active}}Inactive{{/active}}{{^active}}Active{{/active}}</button>
+        </form>
+        <span class="helper-text">
+          {{#active}}
+          Going unavailable for a little while? Going inactive stops dispatch from sending you routes &mdash; you can go active again anytime.
+          {{/active}}
+          {{^active}}
+          Ready for deliveries again? Go active to start receiving routes again.
+          {{/active}}
+        </span>
       </div>
     </div>
   </div>
-  {{/driverDeliveries}}
-</div>
-</div>
-
-<h2 class="margin-left-30 mobile-margin-left-10">Your Info</h2>
-
-<form class="mission-statement margin-top-10 vertical" hx-post="/driver/update"
-      hx-target="#confirmation" hx-swap="innerHTML">
-  <div class="vertical">
-    <label for="location" class="form-header">City, State<span class="required">*</span>:</label>
-    <input id="location" name="location" type="text" maxlength="128" value="{{location}}" required></input>
-    <span class="smaller">We use your region information to prioritize deliveries closer to you.</span>
-
-    <label for="licensePlates" class="form-header">License Plate Number(s)<span class="required">*</span>:</label>
-    <textarea rows="3" cols="10" id="licensePlates" name="licensePlates" maxlength="256" required>{{licensePlates}}</textarea>
-    <span class="smaller">
-      List all license plate numbers for vehicles that you will be using.<br>
-      License plate is the primary way for supply sites to confirm you are a driver within our network.
-    </span>
-
-    <label for="availability" class="form-header">Availability:</label>
-    <textarea rows="4" cols="10" id="availability" name="availability" maxlength="1024">{{availability}}</textarea>
-    <span class="smaller">
-      Which days or dates are you available? We will try to line up deliveries for you on these dates and days.
-    </span>
-
-    <label for="can-lift" class="form-header">Can you lift 50lbs?</label>
-    <select id="can-lift" name="canLift50lbs">
-      <option value="true" {{#canLift50lbs}}selected{{/canLift50lbs}}> Yes, I can </option>
-      <option value="false" {{^canLift50lbs}}selected{{/canLift50lbs}}> No, I cannot </option>
-    </select>
-
-    <label for="pallet-capacity" class="form-header">How many pallets are you able to transport?</label>
-    <select id="pallet-capacity" name="palletCapacity">
-      <option value="0" id="pallet-capacity-0" {{#palletSelected0}}selected{{/palletSelected0}}> 0 </option>
-      <option value="1" id="pallet-capacity-1" {{#palletSelected1}}selected{{/palletSelected1}}> 1 </option>
-      <option value="2" id="pallet-capacity-2" {{#palletSelected2}}selected{{/palletSelected2}}> 2 </option>
-      <option value="3" id="pallet-capacity-3" {{#palletSelected3}}selected{{/palletSelected3}}> 3 </option>
-      <option value="4" id="pallet-capacity-4" {{#palletSelected4}}selected{{/palletSelected4}}> 4 </option>
-      <option value="5" id="pallet-capacity-5" {{#palletSelected5}}selected{{/palletSelected5}}> 5+ </option>
-    </select>
-
-    <label for="comments" class="form-header">Comments:</label>
-    <textarea rows="4" cols="10" id="comments" name="comments" maxlength="1024">{{comments}}</textarea>
-    <span class="smaller">
-      Is there anything else that would be helpful for us to know?
-    </span>
-  </div>
-
-  <button class="update-button" type="submit">Update</button>
-  <div class="horizontal padding confirmation-div">
-    <div id="confirmation" class="confirm-message"></div>
-  </div>
-</form>
-
-<h2 class="margin-left-30 mobile-margin-left-10">Information Policy</h2>
-
-<div class="mission-statement margin-top-10 larger">
-  <p>
-    Only supply sites and our dispatchers will have access to your information.
-  </p>
-  <p>
-    Your information is only used to schedule deliveries. Your information will never be shared for commercial purposes.
-  </p>
-</div>
-
-<h2 class="margin-left-30 mobile-margin-left-10">Go {{#active}}Inactive{{/active}}{{^active}}Active{{/active}}</h2>
-<div class="mission-statement margin-top-10">
-  <div class="nav-button-container">
-    <a href="/driver/toggle-active">
-      <button type="button" class="nav-button wide-button danger-fields">
-        Click Here to Go {{#active}}Inactive{{/active}}{{^active}}Active{{/active}}
-      </button>
-    </a>
-  </div>
-  <span class="larger">
-     {{#active}}
-  Going unavailable for a little while? Click to go inactive. You can re-activate your account later when you're ready.
-     {{/active}}
-     {{^active}}
-  Ready to go active again? Click to go active.
-     {{/active}}
-  </span>
 </div>
 
 </body>
