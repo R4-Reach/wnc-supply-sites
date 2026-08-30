@@ -1,0 +1,20 @@
+<form id="verification-form" hx-post="/volunteer/verify-delivery"
+      hx-target="#request-portal" hx-swap="innerHTML">
+  <div>
+    <h1> Verification Required </h1>
+    {{#error}}
+    <span class="errorMessage" id="verification-error-msg"> ** Verification Error: Phone number is not associated with delivery request </span>
+    {{/error}}
+  </div>
+  <input type="hidden" name="urlKey" value="{{urlKey}}">
+  <div>
+    <div>
+      <label for="phone-verification">Phone Number: </label>
+      <input type="tel" pattern="[0-9]{10}" id="phone-verification" name="userPhone" required/>
+    </div>
+    <label for="phone-verification" class="italic" style="font-size:small">Format: Please only use numbers (ex. 1112223333) </label>
+  </div>
+  <div style="display: flex; flex-direction: row-reverse">
+    <button type="submit"> Submit </button>
+  </div>
+</form>

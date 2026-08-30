@@ -1,0 +1,20 @@
+<div id="access-code-div">
+  <h2>Confirm Access Code</h2>
+
+  <div class="larger">
+    <form class="horizontal confirm-code-form" hx-post="/setup-password/confirm-code"
+          hx-target="#setup-wizard" hx-swap="innerHTML">
+      <label class="padding" for="confirm-code">Enter Code:</label>
+      <input class="padding" id="confirm-code" name="confirmCode" size="8" maxlength="6"
+             placeholder="_ _ _ _ _ _">
+      <input type="hidden" name="csrf" value="{{csrf}}">
+      <button class="submitButton" type="submit">Submit</button>
+    </form>
+
+    <div id="confirm-code-error-message" class="errorMessage">{{{errorMessage}}}</div>
+
+    <div class="mission-statement">
+      You should soon receive a text message with a passcode. Enter that passcode above.
+    </div>
+  </div>
+</div>

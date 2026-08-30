@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="./delivery-form.css">
-  <script src="./delivery-form.js"></script>
   <title>Volunteer Delivery Form</title>
   {{> header-include }}
 </head>
@@ -18,41 +17,27 @@
     <span class="page-title-sub-header">Form</span>
   </div>
 
-  <dialog id="success-modal">
-    <div class="vertical flex-gap-10">
-      <div>
-        <h1> Success! </h1>
-        <p class="italic font-large"> Thank you for volunteering! </p>
-        <p> Your delivery request has been sent! You'll be contacted shortly if the request has been accepted. </p>
-        <p> You can view the status of your request via the link below. </p>
-      </div>
-
-      <form method="dialog" style="display: flex; flex-direction: row-reverse; margin: 5px">
-        <a class="redirect-button" type="button" href="" id="request-redirect"> View Request </a>
-        <a class="redirect-button" type="button" href="/">Go back home</a>
-      </form>
-    </div>
-  </dialog>
-
   <main>
-    <form id="volunteer-delivery-form">
+    <form id="volunteer-delivery-form" hx-post="/volunteer/delivery"
+          hx-target="main" hx-swap="innerHTML">
       <div>
         <h1> Volunteer Form: Delivery </h1>
-        <span id="submission-error-text" class="hidden errorMessage"> Error: Something happened when submitting form. Please try again.  </span>
       </div>
       <section>
         <h2> Site </h2>
         <div class="inputs">
           <div class="form-input">
             <label for="site-select"> Select your site: </label>
-            <select name="site" id="site-select" required>
+            <select name="site" id="site-select" required
+                    hx-get="/volunteer/site-items"
+                    hx-trigger="load, change"
+                    hx-target="#site-items-panel" hx-swap="innerHTML">
               {{#sites}}
                 <option value="{{id}}"> {{name}} </option>
               {{/sites}}
             </select>
           </div>
         </div>
-        <span id="selected-site-address"> Site Address: 123 Main street </span>
       </section>
 
       <section>
@@ -76,14 +61,9 @@
         <h2> Items </h2>
         <div class="items">
           <div class="items-container">
-            <h4> Needed Items </h4>
-            <span class="errorMessage hidden" id="items-error-msg"> * Please make sure to select items to send </span>
-            <div id="needed-items">
-            </div>
-          </div>
-          <div class="items-container" >
-            <h4> Donating Items </h4>
-            <div id="selected-items">
+            <h4> Site &amp; Needed Items </h4>
+            <div id="site-items-panel">
+              <!-- htmx loads the selected site's address + needed-item checkboxes here -->
             </div>
           </div>
         </div>
@@ -91,7 +71,6 @@
 
       <section style="display: flex; flex-direction: row-reverse">
         <button type="submit"> Submit </button>
-        <div id="loader-div"></div>
       </section>
     </form>
   </main>

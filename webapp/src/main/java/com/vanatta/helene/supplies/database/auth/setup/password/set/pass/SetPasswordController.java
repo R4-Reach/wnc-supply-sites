@@ -3,6 +3,8 @@ package com.vanatta.helene.supplies.database.auth.setup.password.set.pass;
 import com.google.gson.Gson;
 import com.vanatta.helene.supplies.database.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Part of the setup password flow, the last part. Accepts the users new password and then redirects
@@ -27,17 +31,40 @@ public class SetPasswordController {
   ResponseEntity<SetPasswordResponse> setPassword(
       @RequestBody String request, HttpServletResponse response) {
     SetPasswordRequest setPasswordRequest = SetPasswordRequest.parse(request);
+    return doSetPassword(
+        setPasswordRequest.getValidationToken(), setPasswordRequest.getPassword(), response);
+  }
 
-    if (setPasswordRequest.getPassword() == null || setPasswordRequest.getPassword().length() < 5) {
+  /**
+   * Posted by the setup-password wizard's htmx set-password form. Shows the success fragment on
+   * success, or re-renders the set-password fragment with an error message on failure.
+   */
+  @PostMapping("/setup-password/set")
+  ModelAndView setPasswordHtmx(
+      @RequestParam String validationToken,
+      @RequestParam String password,
+      HttpServletResponse response) {
+    ResponseEntity<SetPasswordResponse> result = doSetPassword(validationToken, password, response);
+    if (result.getStatusCode().is2xxSuccessful()) {
+      return new ModelAndView("login/fragments/success");
+    }
+    Map<String, Object> model = new HashMap<>();
+    model.put("validationToken", validationToken);
+    model.put("errorMessage", result.getBody().getError());
+    return new ModelAndView("login/fragments/set-password", model);
+  }
+
+  /** Core set-password logic, shared by the JSON endpoint and the htmx wizard endpoint. */
+  private ResponseEntity<SetPasswordResponse> doSetPassword(
+      String validationToken, String password, HttpServletResponse response) {
+    if (password == null || password.length() < 5) {
       return ResponseEntity.badRequest().body(new SetPasswordResponse("Password too short"));
-    } else if (EasyPasswordList.isEasyPassword(setPasswordRequest.getPassword())) {
+    } else if (EasyPasswordList.isEasyPassword(password)) {
       return ResponseEntity.badRequest()
           .body(new SetPasswordResponse("Password is too easy to guess"));
     }
 
-    boolean success =
-        SetPasswordDao.updatePassword(
-            jdbi, setPasswordRequest.getValidationToken(), setPasswordRequest.getPassword());
+    boolean success = SetPasswordDao.updatePassword(jdbi, validationToken, password);
 
     if (success) {
       CookieUtil.deleteCookie(response, "auth");

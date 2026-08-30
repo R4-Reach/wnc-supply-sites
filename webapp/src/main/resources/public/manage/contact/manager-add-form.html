@@ -1,0 +1,8 @@
+<form class="horizontal additional-contact add-manager-form" hx-post="/manage/add-manager"
+      hx-target="this" hx-swap="outerHTML">
+  <input type="hidden" name="managerId" value="">
+  <input type="hidden" name="siteId" value="{{siteId}}">
+  Name: <input class="name" type="text" name="name" maxlength="32" size="18" required>
+  Phone: <input class="phone" type="text" name="phone" maxlength="16" size="12" required>
+  <button type="submit">Add</button>
+</form>

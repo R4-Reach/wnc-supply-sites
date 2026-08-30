@@ -1,8 +1,6 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
   <title>WNC Supply Sites - Site Management</title>
-  <script type="text/javascript" src="contact.js"></script>
-  <script type="text/javascript" src="../common.js"></script>
   <link rel="stylesheet" href="../../style.css"/>
   <link rel="stylesheet" href="../../mobile.css"/>
   <link rel="stylesheet" href="../manage.css"/>
@@ -26,24 +24,30 @@
 <div class="data-entry-div vertical">
   <div class="data-field vertical">
     <label for="Contact Name">Name: </label>
-    <div class="horizontal">
-      <input id="Contact Name" type="text" class="shortTextField" value="{{siteContactName}}" maxlength="24"
-             placeholder="Contact person name"/>
-      <button onclick="showUpdateConfirmation({{siteId}}, 'Contact Name')" class="update-button">Update</button>
-      <div class="green-check hidden" id="Contact Name-update-confirm-checkmark">&#10003;</div>
-    </div>
-    <div id="Contact Name-update-confirm" class="confirm-text"></div>
+    <form class="horizontal" hx-post="/manage/update-site"
+          hx-target="next .confirm-text" hx-swap="innerHTML">
+      <input type="hidden" name="siteId" value="{{siteId}}">
+      <input type="hidden" name="field" value="Contact Name">
+      <input id="Contact Name" name="newValue" type="text" class="shortTextField"
+             value="{{siteContactName}}" maxlength="24" placeholder="Contact person name"/>
+      <button type="submit" class="update-button">Update</button>
+    </form>
+    <div class="confirm-text"></div>
   </div>
 
   <div class="data-field vertical">
     <label for="Contact Number">Phone Number<span class="required">*</span>: </label>
-    <div class="horizontal">
-      <input id="Contact Number" type="text" class="shortTextField" value="{{siteContactNumber}}" maxlength="24"
-             placeholder="555-555-5555"/>
-      <button onclick="updatePhoneNumber({{siteId}}, 'Contact Number')" class="update-button">Update</button>
-      <div class="green-check hidden" id="Contact Number-update-confirm-checkmark">&#10003;</div>
-    </div>
-    <div id="Contact Number-update-confirm" class="confirm-text"></div>
+    <form class="horizontal" hx-post="/manage/update-site"
+          hx-target="next .confirm-text" hx-swap="innerHTML">
+      <input type="hidden" name="siteId" value="{{siteId}}">
+      <input type="hidden" name="field" value="Contact Number">
+      <input id="Contact Number" name="newValue" type="tel" class="shortTextField"
+             value="{{siteContactNumber}}" maxlength="24" placeholder="555-555-5555"
+             pattern="[^0-9]*([0-9][^0-9]*){10}"
+             title="Enter a 10-digit phone number" required/>
+      <button type="submit" class="update-button">Update</button>
+    </form>
+    <div class="confirm-text"></div>
   </div>
 </div>
 
@@ -56,34 +60,16 @@
 <h3>Additional Site Managers</h3>
 <div class="data-entry-div vertical">
   <div class="data-field vertical" id="add-managers-div">
-    <!-- copy/paste warning: also update contact.js that has a similar block -->
     {{#additionalContacts}}
-    <div class="horizontal additional-contact">
-      <input class="managerId" type="hidden" value="{{id}}">
-      Name: <input class="name" type="text" maxlength="32" value="{{name}}" size="18">
-      Phone: <input class="phone" type="text" maxlength="16" value="{{phone}}" size="12">
-      <button onclick="updateContact({{siteId}})">Update</button>
-      <button onclick="removeContact({{siteId}})" class="remove-button">Remove</button>
-      <div class="errorMessage"></div>
-      <div class="green-check hidden">&#10003;</div>
-      <div class="message"></div>
-    </div>
+    {{> manage/contact/manager-row }}
     {{/additionalContacts}}
-    <!--JS will add rows here -->
-
-  </div>
-  <div>
-    <button onclick="addAdditionalManager({{siteId}})">+</button>
+    {{> manage/contact/manager-add-form }}
   </div>
   <div class="mission-statement">
     Any additional site managers will be granted access to wnc-supply-sites.com and will be able to register
     using their phone number. They will have full access to manage this site.
   </div>
 </div>
-
-<script>
-  addAdditionalManager({{siteId}})
-</script>
 
 </body>
 </html>

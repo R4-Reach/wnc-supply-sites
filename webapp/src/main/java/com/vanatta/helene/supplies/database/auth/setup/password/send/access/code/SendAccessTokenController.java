@@ -2,6 +2,8 @@ package com.vanatta.helene.supplies.database.auth.setup.password.send.access.cod
 
 import com.google.gson.Gson;
 import com.vanatta.helene.supplies.database.twilio.sms.SmsSender;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.Value;
@@ -12,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @Slf4j
@@ -49,9 +53,41 @@ public class SendAccessTokenController {
       throw new IllegalArgumentException("Invalid phone number");
     }
 
-    // check that the user has a registered phone number
-    String phoneNumber = sendAccessCodeRequest.getNumber();
+    return sendAccessCodeForNumber(sendAccessCodeRequest.getNumber());
+  }
 
+  /**
+   * Posted by the setup-password wizard's htmx phone-number form. Returns the next wizard step (the
+   * access-code fragment) on success, or the phone fragment with an error message on failure.
+   */
+  @PostMapping("/setup-password/send-code")
+  ModelAndView sendCodeHtmx(@RequestParam String number) {
+    String cleaned = number == null ? "" : number.trim().replaceAll("\\D", "");
+    if (cleaned.length() < 10) {
+      return phoneFragment(number, "Phone number too short");
+    } else if (cleaned.length() > 11) {
+      return phoneFragment(number, "Phone number too long");
+    }
+
+    ResponseEntity<SendAccessCodeResponse> result = sendAccessCodeForNumber(cleaned);
+    if (result.getStatusCode().is2xxSuccessful()) {
+      Map<String, Object> model = new HashMap<>();
+      model.put("csrf", result.getBody().getCsrf());
+      model.put("errorMessage", "");
+      return new ModelAndView("login/fragments/confirm-code", model);
+    }
+    return phoneFragment(number, result.getBody().getError());
+  }
+
+  private ModelAndView phoneFragment(String number, String error) {
+    Map<String, Object> model = new HashMap<>();
+    model.put("number", number == null ? "" : number);
+    model.put("errorMessage", error == null ? "" : error);
+    return new ModelAndView("login/fragments/phone", model);
+  }
+
+  /** Core send-access-code logic, shared by the JSON endpoint and the htmx wizard endpoint. */
+  private ResponseEntity<SendAccessCodeResponse> sendAccessCodeForNumber(String phoneNumber) {
     if (!SendAccessTokenDao.isPhoneNumberRegistered(jdbi, phoneNumber)) {
       log.warn("Access code requested for unregistered phone number: {}", phoneNumber);
       return ResponseEntity.status(401)

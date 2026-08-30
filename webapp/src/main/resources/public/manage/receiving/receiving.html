@@ -1,8 +1,6 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
   <title>WNC Supply Sites - Hours & Receiving</title>
-  <script type="text/javascript" src="../common.js"></script>
-  <script type="text/javascript" src="receiving.js"></script>
   <link rel="stylesheet" href="../../style.css"/>
   <link rel="stylesheet" href="../../mobile.css"/>
   <link rel="stylesheet" href="../manage.css"/>
@@ -28,14 +26,17 @@
   <div class="data-entry-div vertical">
     <div class="data-field vertical">
       <label for="Site Hours">Site Hours: </label>
-      <textarea id="Site Hours" rows="5">{{hours}}</textarea>
-      <div>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Site Hours')" class="update-button">Update</button>
-      </div>
+      <form class="vertical" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Site Hours">
+        <textarea id="Site Hours" name="newValue" rows="5">{{hours}}</textarea>
+        <div>
+          <button type="submit" class="update-button">Update</button>
+        </div>
+      </form>
       <div class="confirmation">
-        <div class="green-check hidden" id="Site Hours-update-confirm-checkmark">&#10003;</div>
-
-        <div id="Site Hours-update-confirm" class="confirm-text"></div>
+        <div class="confirm-text"></div>
       </div>
     </div>
   </div>
@@ -47,27 +48,26 @@
 <div class="data-entry-container">
   <div class="data-entry-div vertical">
     <div class="data-field vertical">
-      <div class="data-field-inner gap-half">
+      <form class="data-field-inner gap-half" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="max supply load">
         <div class="bold"><label for="max supply load">Max Supply Load: </label></div>
         <div class="horizontal gap-half">
           <div>
-            <select id="max supply load">
+            <select id="max supply load" name="newValue">
               {{#maxSupplyDeliveryOptions}}
               <option value="{{name}}" {{selected}}>{{name}}</option>
               {{/maxSupplyDeliveryOptions}}
             </select>
           </div>
           <div>
-            <button onclick="showUpdateConfirmation({{siteId}}, 'max supply load')" class="update-button">Update
-            </button>
+            <button type="submit" class="update-button">Update</button>
           </div>
         </div>
-      </div>
-
+      </form>
       <div class="confirmation">
-        <div class="green-check hidden" id="max supply load-update-confirm-checkmark">&#10003;</div>
-
-        <div id="max supply load-update-confirm" class="confirm-text"></div>
+        <div class="confirm-text"></div>
       </div>
     </div>
   </div>
@@ -75,18 +75,18 @@
   <div class="data-entry-div vertical">
     <div class="data-field vertical">
       <label for="receiving notes">Receiving Notes/Instructions:</label>
-      <textarea cols="20" rows="3" id="receiving notes">{{receivingNotes}}</textarea>
-
-      <div class="horizontal">
-        <button onclick="showUpdateConfirmation({{siteId}}, 'receiving notes')" class="update-button">Update
-        </button>
-      </div>
-
+      <form class="vertical" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="receiving notes">
+        <textarea cols="20" rows="3" id="receiving notes" name="newValue">{{receivingNotes}}</textarea>
+        <div class="horizontal">
+          <button type="submit" class="update-button">Update</button>
+        </div>
+      </form>
       <div class="confirmation">
-        <div class="green-check hidden" id="receiving notes-update-confirm-checkmark">&#10003;</div>
-        <div id="receiving notes-update-confirm" class="confirm-text"></div>
+        <div class="confirm-text"></div>
       </div>
-
     </div>
   </div>
 </div>

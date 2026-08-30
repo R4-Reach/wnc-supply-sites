@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
@@ -62,13 +62,19 @@ public class DriverController {
     params.put(PageParams.palletCapacity.name(), driver.getPallet_capacity());
     params.put(PageParams.driverDeliveries.name(), deliveries);
 
+    // Server-side "selected" flags for the pallet-capacity dropdown (5 represents "5+").
+    int selectedPallet = Math.min(Math.max(driver.getPallet_capacity(), 0), 5);
+    for (int i = 0; i <= 5; i++) {
+      params.put("palletSelected" + i, i == selectedPallet);
+    }
+
     return new ModelAndView("driver/portal", params);
   }
 
   @PostMapping("/driver/update")
   ResponseEntity<String> updateDriver(
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String userPhone,
-      @RequestBody Map<String, String> update) {
+      @RequestParam Map<String, String> update) {
     var updatedDriverData =
         DriverDao.lookupByPhone(jdbi, userPhone)
             .orElseThrow(
@@ -86,7 +92,9 @@ public class DriverController {
 
     DriverDao.upsert(jdbi, updatedDriverData);
 
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok()
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body("<span class=\"green-check\">&#10003;</span> Updated!");
   }
 
   @GetMapping("/driver/toggle-active")

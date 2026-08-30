@@ -16,8 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
@@ -69,8 +69,13 @@ public class SiteContactController {
     final String text;
   }
 
+  /**
+   * Removes an additional site manager. Posted by the manager row's htmx Remove button; returns an
+   * empty body so htmx swaps the row out of the page.
+   */
   @PostMapping("/manage/remove-manager")
-  ResponseEntity<String> removeManager(@RequestBody Map<String, String> params) {
+  @ResponseBody
+  ResponseEntity<String> removeManager(@RequestParam Map<String, String> params) {
     log.info("/manage/remove-manager received params: {}", params);
 
     long siteId = Long.parseLong(params.get("siteId"));
@@ -82,14 +87,16 @@ public class SiteContactController {
 
     ContactDao.removeAdditionalSiteManager(jdbi, siteId, managerId);
 
-    return ResponseEntity.ok(
-        """
-        {"message": "removed"}
-        """);
+    return ResponseEntity.ok().header("Content-Type", "text/html; charset=UTF-8").body("");
   }
 
+  /**
+   * Adds a new additional site manager (when managerId is blank) or updates an existing one. Posted
+   * by the manager forms; returns an HTML fragment: the saved row on its own for an update, or the
+   * saved row plus a fresh blank add-form for a new manager, so the user can keep adding.
+   */
   @PostMapping("/manage/add-manager")
-  ResponseEntity<String> addManager(@RequestBody Map<String, String> params) {
+  ModelAndView addManager(@RequestParam Map<String, String> params) {
     log.info("/manage/add-manager received params: {}", params);
 
     long siteId = Long.parseLong(params.get("siteId"));
@@ -106,25 +113,21 @@ public class SiteContactController {
       try {
         idUpdated = ContactDao.addAdditionalSiteManager(jdbi, siteId, contactName, contactPhone);
       } catch (Exception e) {
-        if (e.getMessage().contains("duplicate key value")) {
-          return ResponseEntity.badRequest()
-              .body(
-                  """
-            {"error": "Duplicate phone number"}
-            """);
-        } else {
+        boolean duplicate =
+            e.getMessage() != null && e.getMessage().contains("duplicate key value");
+        if (!duplicate) {
           log.error(
               "Error saving: siteId = {}, contact name = {}, contact phone ={}",
               siteId,
               contactName,
               contactPhone,
               e);
-          return ResponseEntity.internalServerError()
-              .body(
-                  """
-            {"error": "Database error saving data"}
-            """);
         }
+        Map<String, Object> errorModel = new HashMap<>();
+        errorModel.put("siteId", String.valueOf(siteId));
+        errorModel.put(
+            "errorMessage", duplicate ? "Duplicate phone number" : "Database error saving data");
+        return new ModelAndView("manage/contact/manager-error", errorModel);
       }
     } else {
       var manager =
@@ -137,11 +140,12 @@ public class SiteContactController {
       idUpdated = managerId;
     }
 
-    return ResponseEntity.ok(
-        String.format(
-            """
-        {"id": %s, "message": "%s"}
-        """,
-            idUpdated, managerId == null ? "Saved" : "Updated"));
+    Map<String, Object> model = new HashMap<>();
+    model.put("siteId", String.valueOf(siteId));
+    model.put("id", idUpdated);
+    model.put("name", contactName);
+    model.put("phone", contactPhone);
+    return new ModelAndView(
+        managerId == null ? "manage/contact/manager-added" : "manage/contact/manager-row", model);
   }
 }

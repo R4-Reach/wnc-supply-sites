@@ -107,6 +107,9 @@ class DeliveryController {
     confirmButton,
 
     cancelReason,
+
+    deliveryKey,
+    code,
     ;
   }
 
@@ -166,6 +169,8 @@ class DeliveryController {
     templateParams.put(
         TemplateParams.sendDeclineUrl.name(),
         DeliveryConfirmationController.buildCancelUrl(delivery.getPublicKey(), code));
+    templateParams.put(TemplateParams.deliveryKey.name(), delivery.getPublicKey());
+    templateParams.put(TemplateParams.code.name(), code);
 
     // code == null means we have someone without a confirmation role viewing the current page
     if (code == null) {

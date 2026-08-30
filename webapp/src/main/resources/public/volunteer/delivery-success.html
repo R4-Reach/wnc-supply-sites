@@ -1,0 +1,15 @@
+<div class="vertical flex-gap-10">
+  {{^error}}
+  <h1> Success! </h1>
+  <p class="italic font-large"> Thank you for volunteering! </p>
+  <p> Your delivery request has been sent! You'll be contacted shortly if the request has been accepted. </p>
+  <p> You can view the status of your request via the link below. </p>
+  <div style="display: flex; flex-direction: row-reverse; margin: 5px">
+    <a class="redirect-button" href="/volunteer/delivery/request?urlKey={{urlKey}}"> View Request </a>
+    <a class="redirect-button" href="/">Go back home</a>
+  </div>
+  {{/error}}
+  {{#error}}
+  <span class="errorMessage"> Error: Something happened when submitting the form. Please try again. </span>
+  {{/error}}
+</div>

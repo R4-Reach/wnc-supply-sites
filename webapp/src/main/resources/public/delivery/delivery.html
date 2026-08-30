@@ -4,7 +4,6 @@
   <link rel="stylesheet" href="../delivery.css"/>
   <link rel="stylesheet" href="../style.css"/>
   <link rel="stylesheet" href="../mobile.css"/>
-  <script type="text/javascript" src="../delivery.js"></script>
   {{> header-include }}
 </head>
 <body>
@@ -41,19 +40,18 @@
 
       {{#sendDeclineVisible}}
       <div class="nav-button-container">
-        <div id="cancel-button">
-          <button class="nav-button decline-button" onclick="toggleConfirmCancel()">
-            CLICK TO CANCEL
-          </button>
-        </div>
-
-        <div id="confirm-cancel" class="hidden vertical">
-          <button class="nav-button decline-button" onclick="sendCancel('{{sendDeclineUrl}}')">
-            ARE YOU SURE?
-          </button>
-          <label for="cancelReason">Cancel Reason:</label>
-          <textarea id="cancelReason" rows="2" cols="20"></textarea>
-        </div>
+        <details>
+          <summary class="nav-button decline-button">CLICK TO CANCEL</summary>
+          <form class="vertical" method="get" action="/confirm/cancel">
+            <input type="hidden" name="deliveryKey" value="{{deliveryKey}}">
+            <input type="hidden" name="code" value="{{code}}">
+            <label for="cancelReason">Cancel Reason:</label>
+            <textarea id="cancelReason" name="cancelReason" rows="2" cols="20"></textarea>
+            <button class="nav-button decline-button" type="submit">
+              ARE YOU SURE?
+            </button>
+          </form>
+        </details>
       </div>
       {{/sendDeclineVisible}}
     </div>

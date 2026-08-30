@@ -1,8 +1,6 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
   <title>WNC Supply Sites - Add New Site </title>
-  <script type="text/javascript" src="add-site.js"></script>
-  <script type="text/javascript" src="../common.js"></script>
   <link rel="stylesheet" href="add-site.css"/>
   <link rel="stylesheet" href="../manage.css"/>
   <link rel="stylesheet" href="../../style.css"/>
@@ -21,6 +19,8 @@
 
 <h3>Site Info & Contact - publicly visible</h3>
 
+<form id="add-site-form" hx-post="/manage/add-site" hx-swap="none"
+      hx-on::response-error="document.getElementById('error-message').innerHTML = event.detail.xhr.responseText; document.getElementById('red-x').classList.remove('hidden'); window.scrollTo(0, document.body.scrollHeight)">
 <div id="data-entry">
   <div class="data-entry-div vertical">
 
@@ -30,7 +30,7 @@
         <span class="required">*</span>
       </div>
       <div class="horizontal">
-        <input id="Site Name" type="text" class="shortTextField" value="" maxlength="128"/>
+        <input id="Site Name" name="siteName" type="text" class="shortTextField" maxlength="128" required/>
       </div>
     </div>
 
@@ -39,9 +39,8 @@
         <label for="Street Address">Street Address: </label>
         <span class="required">*</span>
       </div>
-
       <div class="horizontal">
-        <input id="Street Address" type="text" class="shortTextField" value="" maxlength="64"/>
+        <input id="Street Address" name="streetAddress" type="text" class="shortTextField" maxlength="64" required/>
       </div>
     </div>
 
@@ -51,7 +50,7 @@
         <span class="required">*</span>
       </div>
       <div class="horizontal">
-        <input id="City" type="text" class="shortTextField" value="" maxlength="32"/>
+        <input id="City" name="city" type="text" class="shortTextField" maxlength="32" required/>
       </div>
     </div>
 
@@ -61,7 +60,7 @@
         <span class="required">*</span>
       </div>
       <div class="horizontal">
-        <select id="State" onchange="changeCounty()">
+        <select id="State" name="state" onchange="changeCounty()">
           {{#stateList}}
           <option value="{{name}}" {{selected}}>{{name}}</option>
           {{/stateList}}
@@ -75,7 +74,7 @@
         <span class="required">*</span>
       </div>
       <div class="horizontal">
-        <select id="County">
+        <select id="County" name="county">
           {{#countyList}}
           <option value="{{name}}" {{selected}}>{{name}}</option>
           {{/countyList}}
@@ -85,10 +84,10 @@
 
     <div class="data-field vertical">
       <div class="horizontal">
-        <label for="website">Website: </label>
+        <label for="Website">Website: </label>
       </div>
       <div class="horizontal">
-        <input id="Website" type="text" class="shortTextField" value="" maxlength="128"
+        <input id="Website" name="website" type="text" class="shortTextField" maxlength="128"
                placeholder="site-website.com"/>
       </div>
     </div>
@@ -98,7 +97,7 @@
         <label for="Facebook">Facebook: </label>
       </div>
       <div class="horizontal">
-        <input id="Facebook" type="text" class="shortTextField" value="" maxlength="128"
+        <input id="Facebook" name="facebook" type="text" class="shortTextField" maxlength="128"
                placeholder="facebook.com/site"/>
       </div>
     </div>
@@ -107,15 +106,15 @@
       <fieldset>
         <legend>Site Type:</legend>
         <div class="horizontal">
-          <input type="radio" name="siteType" id="distributionCenterRadio" checked/>
+          <input type="radio" name="siteType" id="distributionCenterRadio" value="Distribution Center" checked/>
           <label for="distributionCenterRadio">Distribution Center</label>
         </div>
         <div class="horizontal">
-          <input type="radio" name="siteType" id="supplyHubRadio"/>
+          <input type="radio" name="siteType" id="supplyHubRadio" value="Supply Hub"/>
           <label for="supplyHubRadio">Supply Warehouse</label>
         </div>
         <div class="horizontal">
-          <input type="radio" name="siteType" id="foodPantryRadio"/>
+          <input type="radio" name="siteType" id="foodPantryRadio" value="Food Pantry"/>
           <label for="foodPantryRadio">Food Pantry</label>
         </div>
       </fieldset>
@@ -127,7 +126,7 @@
         <label for="Site Hours">Site Hours: </label>
       </div>
       <div class="horizontal">
-        <textarea id="Site Hours" rows="7" cols="20"></textarea>
+        <textarea id="Site Hours" name="siteHours" rows="7" cols="20"></textarea>
       </div>
     </div>
 
@@ -139,7 +138,7 @@
           <dl>
             <dt>Max Supply Load</dt>
             <dd>
-              <select id="maxSupplyLoad">
+              <select id="maxSupplyLoad" name="maxSupplyLoad">
                 {{#maxSupplyDeliveryOptions}}
                 <option value="{{name}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                 {{/maxSupplyDeliveryOptions}}
@@ -153,7 +152,7 @@
         <div>
           <dl>
             <dt>Receiving Notes/Instructions</dt>
-            <dd><textarea cols="20" rows="3" maxlength="1024" id="receivingNotes"></textarea></dd>
+            <dd><textarea cols="20" rows="3" maxlength="1024" id="receivingNotes" name="receivingNotes"></textarea></dd>
           </dl>
         </div>
       </div>
@@ -167,7 +166,7 @@
         <label for="Contact Name">Contact Name: </label>
       </div>
       <div class="horizontal">
-        <input id="Contact Name" type="text" class="shortTextField" value="" maxlength="24"
+        <input id="Contact Name" name="contactName" type="text" class="shortTextField" maxlength="24"
                placeholder="Your Name"/>
       </div>
     </div>
@@ -176,9 +175,10 @@
       You can add additional authorized users to your site after creating it.
     </div>
 
-    <button onclick="saveNewSite()" id="saveButton">Save</button>
+    <button type="submit" id="saveButton">Save</button>
   </div>
 </div>
+</form>
 
 <div class="horizontal" id="saveSiteConfirmationDiv">
   <div id="red-x" class="hidden">&#x274c;</div>
@@ -195,6 +195,16 @@
   {{/value}}
   {{/entrySet}}
   {{/fullCountyList}}
+
+  // Repopulates the county dropdown when the state changes; county data is preloaded above so this
+  // stays instant and offline-friendly.
+  function changeCounty() {
+    const state = document.getElementById('State').value;
+    const counties = (countyMapByState[state] || []).slice().sort();
+    document.getElementById('County').innerHTML =
+        counties.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
   changeCounty();
 </script>
 

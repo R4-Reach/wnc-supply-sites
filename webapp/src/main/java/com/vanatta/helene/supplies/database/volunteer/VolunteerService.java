@@ -51,6 +51,7 @@ public class VolunteerService {
 
   @Data
   @AllArgsConstructor
+  @NoArgsConstructor
   @Builder
   public static class DeliveryForm {
     List<Long> neededItems;

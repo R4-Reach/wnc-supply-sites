@@ -1,0 +1,31 @@
+<div id="itemTableWrap">
+  <div id="message" class="{{messageClass}}">{{message}}</div>
+
+  <fieldSet>
+    <table id="itemTable">
+      <thead>
+      <tr>
+        <th>Item</th>
+        <th class="date-column">Date Created</th>
+        <th>Merge Into (keep)</th>
+        <th>Merge (delete)</th>
+      </tr>
+      </thead>
+      <tbody>
+
+      {{#items}}
+      <tr>
+        <td>{{itemName}}</td>
+        <td>{{dateCreated}}</td>
+        <td class="centered">
+          <input type="radio" name="mergeInto" id="{{id}}-radio" value="{{id}}">
+        </td>
+        <td class="centered">
+          <input type="checkbox" name="mergeItems" id="{{id}}-checkbox" value="{{id}}">
+        </td>
+      </tr>
+      {{/items}}
+      </tbody>
+    </table>
+  </fieldSet>
+</div>

@@ -1,6 +1,8 @@
 package com.vanatta.helene.supplies.database.auth.setup.password.confirm.access.code;
 
 import com.google.gson.Gson;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.Builder;
@@ -12,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Receives the challenge access code that we send to a user via SMS, validates the access code. If
@@ -37,16 +41,50 @@ public class ConfirmAccessCodeController {
   ResponseEntity<ConfirmAccessCodeResponse> confirmAccessCode(@RequestBody String input) {
     log.info("Confirm access code: {}", input);
 
-    String validationToken = validationTokenGenerator.get();
-
     ConfirmAccessCodeRequest confirmAccessCodeRequest = ConfirmAccessCodeRequest.parse(input);
     if (!confirmAccessCodeRequest.isValid()) {
       log.warn("Invalid confirm access code request: {}", input);
       throw new IllegalArgumentException("Invalid confirm access code request");
     }
 
-    int updateCount =
-        ConfirmAccessCodeDao.confirmAccessCode(jdbi, confirmAccessCodeRequest, validationToken);
+    return doConfirm(confirmAccessCodeRequest);
+  }
+
+  /**
+   * Posted by the setup-password wizard's htmx confirm-code form. Advances to the set-password
+   * fragment on success, or re-renders the confirm-code fragment with an error message on failure.
+   */
+  @PostMapping("/setup-password/confirm-code")
+  ModelAndView confirmCodeHtmx(@RequestParam String csrf, @RequestParam String confirmCode) {
+    String cleaned = confirmCode == null ? "" : confirmCode.trim().replaceAll("\\D", "");
+    ConfirmAccessCodeRequest request =
+        ConfirmAccessCodeRequest.builder().csrf(csrf).confirmCode(cleaned).build();
+    if (!request.isValid()) {
+      return confirmFragment(csrf, "Confirm code not valid");
+    }
+
+    ResponseEntity<ConfirmAccessCodeResponse> result = doConfirm(request);
+    if (result.getStatusCode().is2xxSuccessful()) {
+      Map<String, Object> model = new HashMap<>();
+      model.put("validationToken", result.getBody().getValidationToken());
+      model.put("errorMessage", "");
+      return new ModelAndView("login/fragments/set-password", model);
+    }
+    return confirmFragment(csrf, result.getBody().getError());
+  }
+
+  private ModelAndView confirmFragment(String csrf, String error) {
+    Map<String, Object> model = new HashMap<>();
+    model.put("csrf", csrf == null ? "" : csrf);
+    model.put("errorMessage", error == null ? "" : error);
+    return new ModelAndView("login/fragments/confirm-code", model);
+  }
+
+  /** Core confirm logic, shared by the JSON endpoint and the htmx wizard endpoint. */
+  private ResponseEntity<ConfirmAccessCodeResponse> doConfirm(ConfirmAccessCodeRequest request) {
+    String validationToken = validationTokenGenerator.get();
+
+    int updateCount = ConfirmAccessCodeDao.confirmAccessCode(jdbi, request, validationToken);
 
     if (updateCount == 1) {
       return ResponseEntity.ok(

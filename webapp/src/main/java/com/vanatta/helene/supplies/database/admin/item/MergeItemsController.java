@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @Slf4j
@@ -58,9 +58,41 @@ public class MergeItemsController {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * htmx endpoint posted by the merge-items form. Binds the selected "keep" item and the checked
+   * "merge" items from url-encoded params, performs the merge, and returns the refreshed item-table
+   * fragment (merged items removed) with a status message.
+   */
   @PostMapping("/admin/merge-items/do-merge")
-  ResponseEntity<String> doMerge(@RequestBody Map<String, Object> params) {
+  ModelAndView doMergeForm(
+      @RequestParam(required = false) Long mergeInto,
+      @RequestParam(name = "mergeItems", required = false) List<Long> mergeItems) {
+    Map<String, Object> params = new HashMap<>();
+    params.put("mergeInto", mergeInto == null ? 0L : mergeInto);
+    // Never merge the "keep" item into itself, even if its checkbox was also ticked.
+    params.put(
+        "mergeItems",
+        mergeItems == null
+            ? List.of()
+            : mergeItems.stream().filter(id -> !id.equals(mergeInto)).toList());
+
+    ResponseEntity<String> result = doMerge(params);
+
+    Map<String, Object> model = new HashMap<>();
+    model.put("items", fetchAllItems(jdbi));
+    if (result.getStatusCode().is2xxSuccessful()) {
+      model.put("message", "Success — selected items merged.");
+      model.put("messageClass", "confirm-message");
+    } else {
+      model.put(
+          "message", "Merge failed. Select an item to keep and at least one item to merge in.");
+      model.put("messageClass", "errorMessage");
+    }
+    return new ModelAndView("admin/merge-items-table", model);
+  }
+
+  @SuppressWarnings("unchecked")
+  ResponseEntity<String> doMerge(Map<String, Object> params) {
     log.info("/admin/merge-items/do-merge received merge request: {}", params);
     long mergeIntoItemId = Long.parseLong(String.valueOf(params.get("mergeInto")));
     if (mergeIntoItemId == 0) {

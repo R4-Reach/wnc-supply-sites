@@ -7,7 +7,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
@@ -16,10 +16,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class UpdateSiteDataController {
   private final Jdbi jdbi;
 
-  /** Info update for a site, eg: site-rename, site contact info changed. */
+  /**
+   * Info update for a single site field (site-rename, contact info, etc). Posted by each manage
+   * page's htmx field form as url-encoded params; returns an HTML confirmation fragment that htmx
+   * swaps in beside the field.
+   */
   @PostMapping("/manage/update-site")
   @ResponseBody
-  ResponseEntity<?> updateSiteData(@RequestBody Map<String, String> params) {
+  ResponseEntity<?> updateSiteData(@RequestParam Map<String, String> params) {
     log.info("Update site data request received: {}", params);
 
     String siteId = params.get("siteId");
@@ -43,6 +47,10 @@ public class UpdateSiteDataController {
 
     ManageSiteDao.updateSiteField(jdbi, Long.parseLong(siteId), siteField, newValue);
     log.info("Site updated: {}", params);
-    return ResponseEntity.ok().body("Updated");
+    String message =
+        newValue == null || newValue.isBlank() ? field + " was deleted" : field + " updated";
+    return ResponseEntity.ok()
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body("<span class=\"green-check\">&#10003;</span> " + message);
   }
 }

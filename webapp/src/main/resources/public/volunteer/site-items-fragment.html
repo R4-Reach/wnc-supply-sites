@@ -1,0 +1,9 @@
+<span id="selected-site-address"> Site Address: {{address}} </span>
+<div id="needed-items">
+  {{#items}}
+  <div class="checkbox-container">
+    <input type="checkbox" name="neededItems" value="{{id}}" id="item-{{id}}">
+    <label for="item-{{id}}"> {{name}} </label>
+  </div>
+  {{/items}}
+</div>

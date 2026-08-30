@@ -19,7 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -67,12 +67,16 @@ public class AddSiteController {
     Boolean selected;
   }
 
-  /** REST endpoint to create a new site */
+  /**
+   * Creates a new site. Posted by the add-site page's htmx form as url-encoded params; on success
+   * responds with an {@code HX-Redirect} header so htmx navigates the browser to the new site's
+   * management page.
+   */
   @PostMapping("/manage/add-site")
   @ResponseBody
   ResponseEntity<String> postNewSite(
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String phone,
-      @RequestBody Map<String, String> params) {
+      @RequestParam Map<String, String> params) {
     log.info("Received add new site data: {}", params);
     var addSiteData =
         AddSiteData.builder()
@@ -102,12 +106,14 @@ public class AddSiteController {
       long newSiteId = AddSiteDao.addSite(jdbi, addSiteData);
 
       String manageSiteUrl = SelectSiteController.buildSiteSelectedUrl(newSiteId);
-      return ResponseEntity.ok(
-          String.format(
-              """
-           { "result": "success", "manageSiteUrl": "%s" }
-          """,
-              manageSiteUrl));
+      return ResponseEntity.ok()
+          .header("HX-Redirect", manageSiteUrl)
+          .body(
+              String.format(
+                  """
+               { "result": "success", "manageSiteUrl": "%s" }
+              """,
+                  manageSiteUrl));
     } catch (AddSiteDao.DuplicateSiteException e) {
       return ResponseEntity.badRequest()
           .body("{\"result\": \"fail\", \"error\": \"site name already exists\"}");

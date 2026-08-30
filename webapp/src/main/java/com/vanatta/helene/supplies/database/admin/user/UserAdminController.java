@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 /** User-management UI: whitelist phones, edit names, toggle roles, activate/deactivate. */
@@ -38,108 +38,132 @@ public class UserAdminController {
 
   private Map<String, Object> buildPageParams() {
     List<UserAdminDao.UserData> users = UserAdminDao.fetchAllUsers(jdbi);
-    Map<Long, Set<String>> rolesByUser =
-        UserAdminDao.fetchAllUserRoles(jdbi).stream()
-            .collect(
-                Collectors.groupingBy(
-                    UserAdminDao.UserRoleRow::getUserId,
-                    Collectors.mapping(UserAdminDao.UserRoleRow::getRoleName, Collectors.toSet())));
-
-    List<UserRole> assignable = UserRole.assignableRoles();
+    Map<Long, Set<String>> rolesByUser = rolesByUser();
 
     List<Map<String, Object>> userRows =
         users.stream()
-            .map(
-                user -> {
-                  Set<String> held = rolesByUser.getOrDefault(user.getId(), Set.of());
-                  List<Map<String, Object>> cells =
-                      assignable.stream()
-                          .map(
-                              role ->
-                                  Map.<String, Object>of(
-                                      "role", role.name(),
-                                      "active", held.contains(role.name())))
-                          .toList();
-                  return Map.<String, Object>of(
-                      "id", user.getId(),
-                      "phone", user.getPhone(),
-                      "name", Optional.ofNullable(user.getName()).orElse(""),
-                      "removed", user.isRemoved(),
-                      "active", !user.isRemoved(),
-                      "roles", cells);
-                })
+            .map(user -> toRow(user, rolesByUser.getOrDefault(user.getId(), Set.of())))
             .toList();
 
-    return Map.of("users", userRows, "roleHeaders", assignable.stream().map(Enum::name).toList());
+    return Map.of(
+        "users",
+        userRows,
+        "roleHeaders",
+        UserRole.assignableRoles().stream().map(Enum::name).toList());
+  }
+
+  private Map<Long, Set<String>> rolesByUser() {
+    return UserAdminDao.fetchAllUserRoles(jdbi).stream()
+        .collect(
+            Collectors.groupingBy(
+                UserAdminDao.UserRoleRow::getUserId,
+                Collectors.mapping(UserAdminDao.UserRoleRow::getRoleName, Collectors.toSet())));
+  }
+
+  /** Builds the template model for a single user's table row (also used to swap a row via htmx). */
+  private Map<String, Object> buildUserRow(long userId) {
+    UserAdminDao.UserData user =
+        UserAdminDao.fetchAllUsers(jdbi).stream()
+            .filter(u -> u.getId() == userId)
+            .findFirst()
+            .orElseThrow();
+    return toRow(user, rolesByUser().getOrDefault(userId, Set.of()));
+  }
+
+  private static Map<String, Object> toRow(UserAdminDao.UserData user, Set<String> held) {
+    // Each role cell carries the userId so the row fragment can post without a parent-path lookup.
+    List<Map<String, Object>> cells =
+        UserRole.assignableRoles().stream()
+            .map(
+                role ->
+                    Map.<String, Object>of(
+                        "userId", user.getId(),
+                        "role", role.name(),
+                        "active", held.contains(role.name())))
+            .toList();
+    return Map.of(
+        "id", user.getId(),
+        "phone", user.getPhone(),
+        "name", Optional.ofNullable(user.getName()).orElse(""),
+        "removed", user.isRemoved(),
+        "active", !user.isRemoved(),
+        "roles", cells);
   }
 
   @PostMapping(PATH_ADMIN_USERS + "/whitelist")
   ResponseEntity<String> whitelist(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
-      @RequestBody Map<String, String> params) {
+      @RequestParam String phone,
+      @RequestParam(required = false) String name) {
     if (!UserRole.isUserAdmin(roles)) {
-      return forbidden();
+      return htmlBadRequest("Not authorized");
     }
-    boolean added = UserAdminDao.whitelistUser(jdbi, params.get("phone"), params.get("name"));
+    boolean added = UserAdminDao.whitelistUser(jdbi, phone, name);
     if (!added) {
-      return ResponseEntity.badRequest().body("{\"error\": \"Invalid phone number\"}");
+      return htmlBadRequest("Invalid phone number");
     }
-    return ok();
+    // Re-render the whole page so the new user appears in the grid.
+    return ResponseEntity.ok().header("HX-Refresh", "true").build();
   }
 
   @PostMapping(PATH_ADMIN_USERS + "/set-name")
-  ResponseEntity<String> setName(
+  ModelAndView setName(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
-      @RequestBody Map<String, String> params) {
+      @RequestParam long userId,
+      @RequestParam(required = false) String name) {
     if (!UserRole.isUserAdmin(roles)) {
-      return forbidden();
+      return new ModelAndView("redirect:/");
     }
-    UserAdminDao.setName(jdbi, Long.parseLong(params.get("userId")), params.get("name"));
-    return ok();
+    UserAdminDao.setName(jdbi, userId, name);
+    return userRowView(userId);
   }
 
   @PostMapping(PATH_ADMIN_USERS + "/set-removed")
-  ResponseEntity<String> setRemoved(
+  ModelAndView setRemoved(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
-      @RequestBody Map<String, String> params) {
+      @RequestParam long userId,
+      @RequestParam boolean removed) {
     if (!UserRole.isUserAdmin(roles)) {
-      return forbidden();
+      return new ModelAndView("redirect:/");
     }
-    UserAdminDao.setRemoved(
-        jdbi, Long.parseLong(params.get("userId")), Boolean.parseBoolean(params.get("removed")));
-    return ok();
+    UserAdminDao.setRemoved(jdbi, userId, removed);
+    return userRowView(userId);
   }
 
   @PostMapping(PATH_ADMIN_USERS + "/toggle-role")
-  ResponseEntity<String> toggleRole(
+  ModelAndView toggleRole(
       @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
-      @RequestBody Map<String, String> params) {
+      @RequestParam long userId,
+      @RequestParam String role,
+      @RequestParam boolean enabled) {
     if (!UserRole.isUserAdmin(roles)) {
-      return forbidden();
+      return new ModelAndView("redirect:/");
     }
-    UserRole role;
+    UserRole target;
     try {
-      role = UserRole.valueOf(params.get("role"));
+      target = UserRole.valueOf(role);
     } catch (IllegalArgumentException | NullPointerException e) {
-      return ResponseEntity.badRequest().body("{\"error\": \"Unknown role\"}");
+      log.warn("Ignoring toggle-role for unknown role: {}", role);
+      return userRowView(userId);
     }
-    if (!UserRole.assignableRoles().contains(role)) {
-      return ResponseEntity.badRequest().body("{\"error\": \"Role is not assignable\"}");
+    if (UserRole.assignableRoles().contains(target)) {
+      if (enabled) {
+        UserAdminDao.addRole(jdbi, userId, target);
+      } else {
+        UserAdminDao.removeRole(jdbi, userId, target);
+      }
     }
-    long userId = Long.parseLong(params.get("userId"));
-    if (Boolean.parseBoolean(params.get("enabled"))) {
-      UserAdminDao.addRole(jdbi, userId, role);
-    } else {
-      UserAdminDao.removeRole(jdbi, userId, role);
-    }
-    return ok();
+    return userRowView(userId);
   }
 
-  private static ResponseEntity<String> ok() {
-    return ResponseEntity.ok("{\"message\": \"Saved\"}");
+  private ModelAndView userRowView(long userId) {
+    return new ModelAndView("admin/user-row", buildUserRow(userId));
   }
 
-  private static ResponseEntity<String> forbidden() {
-    return ResponseEntity.status(403).body("{\"error\": \"Not authorized\"}");
+  private static ResponseEntity<String> htmlBadRequest(String message) {
+    // 200 so htmx swaps the message into place (it ignores non-2xx bodies by default).
+    return ResponseEntity.ok()
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body("<span class=\"errorMessage\">" + message + "</span>");
   }
 }

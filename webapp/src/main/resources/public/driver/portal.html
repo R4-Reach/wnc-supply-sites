@@ -4,7 +4,15 @@
   <link rel="stylesheet" href="../style.css"/>
   <link rel="stylesheet" href="../mobile.css"/>
   <link rel="stylesheet" href="portal.css"/>
-  <script type="text/javascript" src="portal.js"></script>
+  <style>
+    /* Route filter: show only routes whose status matches the checked radio. */
+    #routes-wrap:has(#volunteered:checked) .route-container:not([data-route-status="Driver Volunteered"]),
+    #routes-wrap:has(#confirmed:checked) .route-container:not([data-route-status="Confirmed"]),
+    #routes-wrap:has(#pending:checked) .route-container:not([data-route-status="Creating Dispatch"]),
+    #routes-wrap:has(#completed:checked) .route-container:not([data-route-status="Delivery Completed"]) {
+      display: none;
+    }
+  </style>
   {{> header-include }}
 </head>
 <body>
@@ -22,22 +30,23 @@
 {{/active}}
 
 <h2 class="margin-left-30 mobile-margin-left-10"> Your Routes </h2>
+<div id="routes-wrap">
 <fieldset class="horizontal" id="routes-filter-container">
     <legend> Filter your routes: </legend>
     <div class="m-1">
-      <input onclick="filterDriverRoutes()" type="radio" id="volunteered" name="route-type" value="Driver Volunteered" checked>
+      <input type="radio" id="volunteered" name="route-type" value="Driver Volunteered" checked>
       <label for="volunteered">Volunteered</label><br>
     </div>
     <div class="m-1">
-      <input onclick="filterDriverRoutes()" type="radio" id="confirmed" name="route-type" value="Confirmed">
+      <input type="radio" id="confirmed" name="route-type" value="Confirmed">
       <label for="confirmed">Confirmed</label><br>
     </div>
     <div class="m-1">
-      <input onclick="filterDriverRoutes()" type="radio" id="pending" name="route-type" value="Creating Dispatch">
+      <input type="radio" id="pending" name="route-type" value="Creating Dispatch">
       <label for="pending">Pending</label>
     </div>
     <div class="m-1">
-      <input onclick="filterDriverRoutes()" type="radio" id="completed" name="route-type" value="Delivery Completed">
+      <input type="radio" id="completed" name="route-type" value="Delivery Completed">
       <label for="completed">Completed</label>
     </div>
 </fieldset>
@@ -68,58 +77,58 @@
   </div>
   {{/driverDeliveries}}
 </div>
+</div>
 
 <h2 class="margin-left-30 mobile-margin-left-10">Your Info</h2>
 
-<div class="mission-statement margin-top-10 vertical">
+<form class="mission-statement margin-top-10 vertical" hx-post="/driver/update"
+      hx-target="#confirmation" hx-swap="innerHTML">
   <div class="vertical">
     <label for="location" class="form-header">City, State<span class="required">*</span>:</label>
-    <input id="location" type="text" maxlength="128" value="{{location}}"></input>
+    <input id="location" name="location" type="text" maxlength="128" value="{{location}}" required></input>
     <span class="smaller">We use your region information to prioritize deliveries closer to you.</span>
 
     <label for="licensePlates" class="form-header">License Plate Number(s)<span class="required">*</span>:</label>
-    <textarea rows="3" cols="10" id="licensePlates" maxlength="256">{{licensePlates}}</textarea>
+    <textarea rows="3" cols="10" id="licensePlates" name="licensePlates" maxlength="256" required>{{licensePlates}}</textarea>
     <span class="smaller">
       List all license plate numbers for vehicles that you will be using.<br>
       License plate is the primary way for supply sites to confirm you are a driver within our network.
     </span>
 
     <label for="availability" class="form-header">Availability:</label>
-    <textarea rows="4" cols="10" id="availability" maxlength="1024">{{availability}}</textarea>
+    <textarea rows="4" cols="10" id="availability" name="availability" maxlength="1024">{{availability}}</textarea>
     <span class="smaller">
       Which days or dates are you available? We will try to line up deliveries for you on these dates and days.
     </span>
 
     <label for="can-lift" class="form-header">Can you lift 50lbs?</label>
-    <select id="can-lift" name="can-lift">
-      <option value="true" > Yes, I can </option>
+    <select id="can-lift" name="canLift50lbs">
+      <option value="true" {{#canLift50lbs}}selected{{/canLift50lbs}}> Yes, I can </option>
       <option value="false" {{^canLift50lbs}}selected{{/canLift50lbs}}> No, I cannot </option>
     </select>
 
     <label for="pallet-capacity" class="form-header">How many pallets are you able to transport?</label>
-    <select id="pallet-capacity" name="pallet-capacity">
-      <option value="0" id="pallet-capacity-0"> 0 </option>
-      <option value="1" id="pallet-capacity-1"> 1 </option>
-      <option value="2" id="pallet-capacity-2"> 2 </option>
-      <option value="3" id="pallet-capacity-3"> 3 </option>
-      <option value="4" id="pallet-capacity-4"> 4 </option>
-      <option value="5" id="pallet-capacity-5"> 5+ </option>
+    <select id="pallet-capacity" name="palletCapacity">
+      <option value="0" id="pallet-capacity-0" {{#palletSelected0}}selected{{/palletSelected0}}> 0 </option>
+      <option value="1" id="pallet-capacity-1" {{#palletSelected1}}selected{{/palletSelected1}}> 1 </option>
+      <option value="2" id="pallet-capacity-2" {{#palletSelected2}}selected{{/palletSelected2}}> 2 </option>
+      <option value="3" id="pallet-capacity-3" {{#palletSelected3}}selected{{/palletSelected3}}> 3 </option>
+      <option value="4" id="pallet-capacity-4" {{#palletSelected4}}selected{{/palletSelected4}}> 4 </option>
+      <option value="5" id="pallet-capacity-5" {{#palletSelected5}}selected{{/palletSelected5}}> 5+ </option>
     </select>
 
     <label for="comments" class="form-header">Comments:</label>
-    <textarea rows="4" cols="10" id="comments" maxlength="1024">{{comments}}</textarea>
+    <textarea rows="4" cols="10" id="comments" name="comments" maxlength="1024">{{comments}}</textarea>
     <span class="smaller">
       Is there anything else that would be helpful for us to know?
     </span>
   </div>
 
-  <button class="update-button" onclick="sendUpdate()">Update</button>
+  <button class="update-button" type="submit">Update</button>
   <div class="horizontal padding confirmation-div">
-    <div id="greenCheck" class="green-check hidden">&#10003;</div>
     <div id="confirmation" class="confirm-message"></div>
   </div>
-  <div id="errorMessage" class="errorMessage"></div>
-</div>
+</form>
 
 <h2 class="margin-left-30 mobile-margin-left-10">Information Policy</h2>
 
@@ -150,11 +159,6 @@
      {{/active}}
   </span>
 </div>
-
-<script>
-  filterDriverRoutes();
-  instantiateTransportablePalletsValue({{palletCapacity}})
-</script>
 
 </body>
 </html>

@@ -1,10 +1,14 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
   <title>Site Status</title>
-  <script type="text/javascript" src="status.js"></script>
   <link rel="stylesheet" href="../../style.css"/>
   <link rel="stylesheet" href="../../mobile.css"/>
   <link rel="stylesheet" href="status.css"/>
+  <style>
+    /* The inactive-reason box is only relevant when the site is marked inactive. */
+    #inactive-div { display: none; }
+    #data-entry:has(#activeNo:checked) #inactive-div { display: block; }
+  </style>
   {{> header-include }}
 </head>
 
@@ -27,15 +31,19 @@
         <legend class="bold">Accepting Supplies from the Public:</legend>
         <div class="horizontal">
           <div class="vertical">
-            <div class="statusControls">
-              <input type="radio" id="acceptingYes" name="acceptingDonations" {{#siteAcceptingDonations}}checked{{/siteAcceptingDonations}}><label
+            <form class="statusControls" hx-post="/manage/update-status"
+                  hx-target="next .confirm-message" hx-swap="innerHTML">
+              <input type="hidden" name="siteId" value="{{siteId}}">
+              <input type="hidden" name="statusFlag" value="acceptingSupplies">
+              <input type="radio" id="acceptingYes" name="newValue" value="true"
+                     {{#siteAcceptingDonations}}checked{{/siteAcceptingDonations}}><label
                 for="acceptingYes">Yes</label>
-              <input type="radio" id="acceptingNo" name="acceptingDonations" {{^siteAcceptingDonations}}checked{{/siteAcceptingDonations}}><label
+              <input type="radio" id="acceptingNo" name="newValue" value="false"
+                     {{^siteAcceptingDonations}}checked{{/siteAcceptingDonations}}><label
                 for="acceptingNo">No</label>
-              <button class="siteStatusUpdateButton" onclick="updateSiteAcceptingDonations({{siteId}})">Update</button>
-            </div>
+              <button class="siteStatusUpdateButton" type="submit">Update</button>
+            </form>
             <div class="confirm-message"></div>
-            <div class="errorMessage"></div>
           </div>
           <span class="statusCaption larger">A site not accepting donations is still listed.</span>
 
@@ -49,18 +57,19 @@
         <legend class="bold">Distributing Supplies to the Public:</legend>
         <div class="horizontal">
           <div class="vertical">
-            <div class="statusControls">
-              <input type="radio" id="distributingYes" name="distributingDonations"
+            <form class="statusControls" hx-post="/manage/update-status"
+                  hx-target="next .confirm-message" hx-swap="innerHTML">
+              <input type="hidden" name="siteId" value="{{siteId}}">
+              <input type="hidden" name="statusFlag" value="distributingSupplies">
+              <input type="radio" id="distributingYes" name="newValue" value="true"
                      {{#siteDistributingDonations}}checked{{/siteDistributingDonations}}><label
                 for="distributingYes">Yes</label>
-              <input type="radio" id="distributingNo" name="distributingDonations"
+              <input type="radio" id="distributingNo" name="newValue" value="false"
                      {{^siteDistributingDonations}}checked{{/siteDistributingDonations}}><label
                 for="distributingNo">No</label>
-              <button class="siteStatusUpdateButton" onclick="updateSiteDistributingDonations({{siteId}})">Update
-              </button>
-            </div>
+              <button class="siteStatusUpdateButton" type="submit">Update</button>
+            </form>
             <div class="confirm-message"></div>
-            <div class="errorMessage"></div>
           </div>
           <span class="statusCaption larger">
               Yes if supplies are being provided to the community and general public.
@@ -75,28 +84,35 @@
         <legend class="bold">Site Type:</legend>
         <div class="horizontal">
           <div class="vertical">
-            <div class="statusControls vertical">
-              <div class="horizontal radioButtonControl">
-                <input type="radio" id="distributionCenter" name="siteType" {{distributionSiteChecked}}/>
-                <label for="distributionCenter">Distribution Center</label>
-              </div>
+            <form hx-post="/manage/update-status"
+                  hx-target="next .confirm-message" hx-swap="innerHTML">
+              <input type="hidden" name="siteId" value="{{siteId}}">
+              <input type="hidden" name="statusFlag" value="distSite">
+              <div class="statusControls vertical">
+                <div class="horizontal radioButtonControl">
+                  <input type="radio" id="distributionCenter" name="newValue" value="Distribution Center"
+                         {{distributionSiteChecked}}/>
+                  <label for="distributionCenter">Distribution Center</label>
+                </div>
 
-              <div class="horizontal radioButtonControl">
-                <input type="radio" id="supplyHub" name="siteType" {{supplyHubChecked}}/>
-                <label for="supplyHub">Supply Warehouse</label>
-              </div>
+                <div class="horizontal radioButtonControl">
+                  <input type="radio" id="supplyHub" name="newValue" value="Supply Hub"
+                         {{supplyHubChecked}}/>
+                  <label for="supplyHub">Supply Warehouse</label>
+                </div>
 
-              <div class="horizontal radioButtonControl">
-                <input type="radio" id="foodPantry" name="siteType" {{foodPantryChecked}}/>
-                <label for="foodPantry">Food Pantry</label>
-              </div>
+                <div class="horizontal radioButtonControl">
+                  <input type="radio" id="foodPantry" name="newValue" value="Food Pantry"
+                         {{foodPantryChecked}}/>
+                  <label for="foodPantry">Food Pantry</label>
+                </div>
 
-            </div>
-            <div>
-              <button class="siteStatusUpdateButton" onclick="updateSiteSiteType({{siteId}})">Update</button>
-            </div>
+              </div>
+              <div>
+                <button class="siteStatusUpdateButton" type="submit">Update</button>
+              </div>
+            </form>
             <div class="confirm-message"></div>
-            <div class="errorMessage"></div>
           </div>
 
           <span class="statusCaption larger">
@@ -113,15 +129,19 @@
         <legend class="bold">Publicly Visible:</legend>
         <div class="horizontal">
           <div class="vertical">
-            <div class="statusControls">
-              <input type="radio" id="publicYes" name="public" {{#sitePublic}}checked{{/sitePublic}}><label
+            <form class="statusControls" hx-post="/manage/update-status"
+                  hx-target="next .confirm-message" hx-swap="innerHTML">
+              <input type="hidden" name="siteId" value="{{siteId}}">
+              <input type="hidden" name="statusFlag" value="publiclyVisible">
+              <input type="radio" id="publicYes" name="newValue" value="true"
+                     {{#sitePublic}}checked{{/sitePublic}}><label
                 for="publicYes">Yes</label>
-              <input type="radio" id="publicNo" name="public" {{^sitePublic}}checked{{/sitePublic}}><label
+              <input type="radio" id="publicNo" name="newValue" value="false"
+                     {{^sitePublic}}checked{{/sitePublic}}><label
                 for="publicNo">No</label>
-              <button class="siteStatusUpdateButton" onclick="updatePubliclyVisible({{siteId}})">Update</button>
-            </div>
+              <button class="siteStatusUpdateButton" type="submit">Update</button>
+            </form>
             <div class="confirm-message"></div>
-            <div class="errorMessage"></div>
           </div>
           <span class="statusCaption larger">
               Impacts search result display only.<br>
@@ -139,27 +159,38 @@
         <legend class="bold">Site is Active:</legend>
         <div class="horizontal">
           <div class="vertical">
-            <div class="statusControls">
-              <input onclick="hideInactiveReason()" type="radio" id="activeYes" name="activeSite" {{#siteActive}}checked{{/siteActive}}><label
+            <form class="statusControls" hx-post="/manage/update-status"
+                  hx-target="next .confirm-message" hx-swap="innerHTML">
+              <input type="hidden" name="siteId" value="{{siteId}}">
+              <input type="hidden" name="statusFlag" value="active">
+              <input type="radio" id="activeYes" name="newValue" value="true"
+                     {{#siteActive}}checked{{/siteActive}}><label
                 for="activeYes">Yes</label>
-              <input onclick="showInactiveReason()" type="radio" id="activeNo" name="activeSite" {{^siteActive}}checked{{/siteActive}}/><label
+              <input type="radio" id="activeNo" name="newValue" value="false"
+                     {{^siteActive}}checked{{/siteActive}}/><label
                 for="activeNo">No</label>
-              <button class="siteStatusUpdateButton" onclick="updateSiteActive({{siteId}})">Update</button>
-            </div>
+              <button class="siteStatusUpdateButton" type="submit">Update</button>
+            </form>
             <div class="confirm-message"></div>
-            <div class="errorMessage"></div>
           </div>
           <span class="statusCaption larger">An inactive site is no longer listed and is effectively removed from wnc-supply-sites.com</span>
         </div>
 
-        <div id="inactive-div" class="{{#siteActive}}hidden{{/siteActive}}">
-          <dl>
-            <dt>Inactive Reason:</dt>
-            <dd><textarea
-                id="inactive-reason" cols="50" rows="3" placeholder="Example: Site is closed
+        <div id="inactive-div">
+          <form hx-post="/manage/update-status"
+                hx-target="next .confirm-message" hx-swap="innerHTML">
+            <input type="hidden" name="siteId" value="{{siteId}}">
+            <input type="hidden" name="statusFlag" value="inactiveReason">
+            <dl>
+              <dt>Inactive Reason:</dt>
+              <dd><textarea
+                  id="inactive-reason" name="newValue" cols="50" rows="3" placeholder="Example: Site is closed
 Example: Temporary closure">{{inactiveReason}}</textarea>
-            </dd>
-          </dl>
+              </dd>
+            </dl>
+            <button class="siteStatusUpdateButton" type="submit">Update Reason</button>
+          </form>
+          <div class="confirm-message"></div>
         </div>
       </fieldset>
     </div>

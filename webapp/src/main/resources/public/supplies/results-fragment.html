@@ -1,0 +1,4 @@
+{{! htmx response for a filter change: the new table rows (swapped into #results-tbody) plus an
+    out-of-band update of the result count. }}
+{{> supplies/results-rows }}
+<div class="bold" id="result-count" hx-swap-oob="true">{{resultCount}} results</div>

@@ -1,0 +1,19 @@
+<div id="phone-number-div">
+  <h2>Setup Password</h2>
+
+  <div class="larger">
+    <form class="horizontal phone-input-form" hx-post="/setup-password/send-code"
+          hx-target="#setup-wizard" hx-swap="innerHTML">
+      <label class="padding" for="phone-number">Phone Number:</label>
+      <input class="padding" id="phone-number" name="number" size="13" maxlength="18"
+             placeholder="828.555.5555" value="{{number}}">
+      <button class="sendSmsButton" type="submit">Send SMS</button>
+    </form>
+
+    <div id="phone-number-error-message" class="errorMessage">{{{errorMessage}}}</div>
+
+    <div class="mission-statement">
+      Enter your phone number above to receive an access code via text message.
+    </div>
+  </div>
+</div>

@@ -1,8 +1,6 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
   <title>WNC Supply Sites - Site Management</title>
-  <script type="text/javascript" src="address.js"></script>
-  <script type="text/javascript" src="../common.js"></script>
   <link rel="stylesheet" href="../../style.css"/>
   <link rel="stylesheet" href="../../mobile.css"/>
   <link rel="stylesheet" href="../manage.css"/>
@@ -27,94 +25,110 @@
 
     <div class="data-field vertical">
       <label for="Site Name">Site Name:<span class="required">*</span></label>
-      <div class="horizontal">
-        <input id="Site Name" type="text" class="shortTextField" value="{{siteName}}" maxlength="128"/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Site Name')" class="update-button">Update</button>
-        <div class="green-check hidden" id="Site Name-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="Site Name-update-confirm" class="confirm-text"></div>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Site Name">
+        <input id="Site Name" name="newValue" type="text" class="shortTextField" value="{{siteName}}"
+               maxlength="128" required/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="Street Address">Street Address:<span class="required">*</span></label>
-      <div class="horizontal">
-        <input id="Street Address" type="text" class="shortTextField" value="{{address}}" maxlength="64"/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Street Address')" class="update-button">Update</button>
-        <div class="green-check hidden" id="Street Address-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="Street Address-update-confirm" class="confirm-text"></div>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Street Address">
+        <input id="Street Address" name="newValue" type="text" class="shortTextField" value="{{address}}"
+               maxlength="64" required/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="City">City:<span class="required">*</span></label>
-      <div class="horizontal">
-        <input id="City" type="text" class="shortTextField" value="{{city}}" maxlength="32"/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'City')" class="update-button">Update</button>
-        <div class="green-check hidden" id="City-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="City-update-confirm" class="confirm-text"></div>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="City">
+        <input id="City" name="newValue" type="text" class="shortTextField" value="{{city}}"
+               maxlength="32" required/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="State">State/Country:<span class="required">*</span></label>
-      <div class="horizontal">
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-vals='js:{siteId: "{{siteId}}", field: "State", newValue: document.getElementById("County").value + "," + document.getElementById("State").value}'
+            hx-target="next .confirm-text" hx-swap="innerHTML">
         <select id="State" onchange="changeCounty()">
           {{#stateList}}
           <option value="{{name}}" {{selected}}>{{name}}</option>
           {{/stateList}}
         </select>
-
-        <button onclick="showUpdateConfirmation({{siteId}}, 'State')" class="update-button">Update</button>
-        <div class="green-check hidden" id="State-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="State-update-confirm" class="confirm-text"></div>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="County">County:<span class="required">*</span></label>
-      <div class="horizontal">
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-vals='js:{siteId: "{{siteId}}", field: "County", newValue: document.getElementById("County").value + "," + document.getElementById("State").value}'
+            hx-target="next .confirm-text" hx-swap="innerHTML">
         <select id="County">
           {{#countyList}}
           <option value="{{name}}" {{selected}}>{{name}}</option>
           {{/countyList}}
         </select>
-
-        <button onclick="showUpdateConfirmation({{siteId}}, 'County')" class="update-button">Update</button>
-        <div class="green-check hidden" id="County-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="County-update-confirm" class="confirm-text"></div>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
-      <label for="website">Website: </label>
-      <div class="horizontal">
-        <input id="Website" type="text" class="shortTextField" value="{{website}}" maxlength="128"
-               placeholder="your-website.com"/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Website')" class="update-button">Update</button>
-        <div class="green-check hidden" id="Website-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="Website-update-confirm" class="confirm-text"></div>
+      <label for="Website">Website: </label>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Website">
+        <input id="Website" name="newValue" type="text" class="shortTextField" value="{{website}}"
+               maxlength="128" placeholder="your-website.com"/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="Facebook">Facebook: </label>
-      <div class="horizontal">
-        <input id="Facebook" type="text" class="shortTextField" value="{{facebook}}" maxlength="128"
-               placeholder="facebook.com/your-group"/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Facebook')" class="update-button">Update</button>
-        <div class="green-check hidden" id="Facebook-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="Facebook-update-confirm" class="confirm-text"></div>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Facebook">
+        <input id="Facebook" name="newValue" type="text" class="shortTextField" value="{{facebook}}"
+               maxlength="128" placeholder="facebook.com/your-group"/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
     <div class="data-field vertical">
       <label for="Weekly Served">(Est.) Number of People Served Weekly:</label>
-      <div class="horizontal">
-        <input id="Weekly Served" type="number" class="shortTextField" value="{{weeklyServed}}" required/>
-        <button onclick="showUpdateConfirmation({{siteId}}, 'Weekly Served')" class="update-button">Update</button>
-        <div class="green-check hidden" id="Weekly Served-update-confirm-checkmark">&#10003;</div>
-      </div>
-      <div id="Weekly Served-update-confirm" class="confirm-text"></div>
+      <form class="horizontal" hx-post="/manage/update-site"
+            hx-target="next .confirm-text" hx-swap="innerHTML">
+        <input type="hidden" name="siteId" value="{{siteId}}">
+        <input type="hidden" name="field" value="Weekly Served">
+        <input id="Weekly Served" name="newValue" type="number" class="shortTextField"
+               value="{{weeklyServed}}" required/>
+        <button type="submit" class="update-button">Update</button>
+      </form>
+      <div class="confirm-text"></div>
     </div>
 
   </div>
@@ -133,6 +147,15 @@
       {{/value}}
     {{/entrySet}}
   {{/fullCountyList}}
+
+  // Repopulates the county dropdown when the state changes; county data is preloaded above so this
+  // stays instant and offline-friendly.
+  function changeCounty() {
+    const state = document.getElementById('State').value;
+    const counties = (countyMapByState[state] || []).slice().sort();
+    document.getElementById('County').innerHTML =
+        counties.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
 </script>
 </body>
 </html>

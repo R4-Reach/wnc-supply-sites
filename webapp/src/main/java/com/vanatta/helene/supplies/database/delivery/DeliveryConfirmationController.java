@@ -6,7 +6,6 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -162,7 +161,7 @@ class DeliveryConfirmationController {
   }
 
   @GetMapping(cancelPath)
-  ResponseEntity<String> cancelRequest(
+  ModelAndView cancelRequest(
       @RequestParam String deliveryKey,
       @RequestParam String code,
       @RequestParam(required = false) String cancelReason) {
@@ -191,9 +190,8 @@ class DeliveryConfirmationController {
             DeliveryDao.fetchDeliveryByPublicKey(jdbi, deliveryKey).orElseThrow());
     messages.forEach(message -> smsSender.send(message.getPhone(), message.getMessage()));
     DeliveryDao.updateDeliveryStatus(jdbi, deliveryKey, DeliveryStatus.DELIVERY_CANCELLED);
-    return ResponseEntity.ok(
-        """
-           {"status": "cancelled"}
-           """);
+    // Redirect back to the delivery page so the cancelled state is shown (form submits as a
+    // full-page GET from the delivery page's cancel form).
+    return new ModelAndView("redirect:/delivery/" + deliveryKey);
   }
 }

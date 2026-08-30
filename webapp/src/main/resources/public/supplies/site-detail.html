@@ -1,10 +1,15 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
     <head>
         <title>{{ siteName }}</title>
-        <script type="text/javascript" src="site-detail.js"></script>
         <link rel="stylesheet" href="../style.css" />
         <link rel="stylesheet" href="site-detail.css" />
         <link rel="stylesheet" href="../mobile.css" />
+        <style>
+            /* The "Filter Inventory" radios toggle between the needed and available item lists. */
+            #site-items-available { display: none; }
+            body:has(#available:checked) #site-items-needs { display: none; }
+            body:has(#available:checked) #site-items-available { display: block; }
+        </style>
         {{> header-include }}
     </head>
 
@@ -197,11 +202,11 @@
         <fieldset class="mission-statement" id="inventory-filter">
             <legend> Filter Inventory: </legend>
             <div class="m-1">
-                <input onclick="selectInventoryList('needs')" type="radio" id="needed" name="inventory-list" value="needs" checked>
+                <input type="radio" id="needed" name="inventory-list" value="needs" checked>
                 <label for="needed">Needed Items</label><br>
             </div>
             <div class="m-1">
-                <input onclick="selectInventoryList('available')" type="radio" id="available" name="inventory-list" value="available">
+                <input type="radio" id="available" name="inventory-list" value="available">
                 <label for="available">Available Items</label><br>
             </div>
         </fieldset>
@@ -216,7 +221,7 @@
                     {{/needsList}}
                 </ul>
             </div>
-            <div class="site-items-container hidden" id="site-items-available">
+            <div class="site-items-container" id="site-items-available">
                 <h3> Available Items ({{availableItemsCt}}): </h3>
                 <ul>
                     {{#availableList}}
@@ -269,10 +274,5 @@
             </div>
         </div>
         {{/loggedIn}}
-
-    <script>
-        addHeaderToItemsList(document.getElementById('site-items-needs'));
-        addHeaderToItemsList(document.getElementById('site-items-available'));
-    </script>
     </body>
 </html>

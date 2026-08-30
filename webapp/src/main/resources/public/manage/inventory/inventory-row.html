@@ -1,0 +1,70 @@
+<tr class="inventory-item" {{#oob}}hx-swap-oob="beforeend:#inventoryTableBody"{{/oob}}>
+  <td>
+    <input type="hidden" name="siteId" value="{{siteId}}">
+    <input type="hidden" name="itemName" value="{{itemName}}">
+    <input type="checkbox" id="{{itemName}}Checkbox" name="active" value="true" {{itemChecked}}
+           hx-post="/manage/update-site-item" hx-include="closest tr"
+           hx-target="closest tr" hx-swap="outerHTML"/>
+  </td>
+  <td>
+    <div>
+      <input type="hidden" class="item-tags" value="{{#tags}} {{tagName}}, {{/tags}}"/>
+      <div class="inventoryLabel {{itemLabelClass}} {{itemStatusDisabled}}" id="{{itemName}}Label">
+        {{itemName}}
+      </div>
+      <div class="item-tags-container">
+        {{#tags}}
+        <div class="item-tag"><div class="item-tag-inner no-pointer" data-tag-color="{{tagColor}}"> {{tagName}} </div></div>
+        {{/tags}}
+      </div>
+    </div>
+    <div class="horizontal update-confirm-div" id="{{itemName}}UpdateConfirm" style="display: none;">
+      <span class="green-check">&#10003;</span>
+      <span>Updated</span>
+    </div>
+  </td>
+  <td>
+    <div class="horizontal">
+      <fieldset class="item-status-fieldset vertical">
+
+        <!-- Urgently Needed -->
+        <div class="horizontal item-status-div">
+          <input type="radio" id="{{itemName}}Urgent" name="{{itemName}}Status" {{itemStatusDisabled}}
+                 hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Urgently Needed"}'
+                 hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{urgentChecked}}/>
+          <label for="{{itemName}}Urgent" class="urgent {{itemStatusDisabled}}" id="{{itemName}}UrgentLabel">
+            Urgently Needed
+          </label>
+        </div>
+
+        <!-- Needed -->
+        <div class="horizontal item-status-div">
+          <input type="radio" id="{{itemName}}Needed" name="{{itemName}}Status" {{itemStatusDisabled}}
+                 hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Needed"}'
+                 hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{neededChecked}}/>
+          <label for="{{itemName}}Needed" class="needed {{itemStatusDisabled}}" id="{{itemName}}NeededLabel">
+            Needed</label>
+        </div>
+
+        <!-- Available -->
+        <div class="horizontal item-status-div">
+          <input type="radio" id="{{itemName}}Available" name="{{itemName}}Status" {{itemStatusDisabled}}
+                 hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Available"}'
+                 hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{availableChecked}}/>
+          <label for="{{itemName}}Available" class="available {{itemStatusDisabled}}" id="{{itemName}}AvailableLabel">
+            Available</label>
+        </div>
+
+        <!-- Oversupply -->
+        <div class="horizontal item-status-div">
+          <input type="radio" id="{{itemName}}Oversupply" name="{{itemName}}Status" {{itemStatusDisabled}}
+                 hx-post="/manage/update-site-item" hx-vals='{"itemStatus": "Oversupply"}'
+                 hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML" {{oversupplyChecked}}/>
+          <label for="{{itemName}}Oversupply" class="oversupply {{itemStatusDisabled}}" id="{{itemName}}OversupplyLabel">
+            Oversupply (too much)
+          </label>
+        </div>
+      </fieldset>
+    </div>
+  </td>
+</tr>

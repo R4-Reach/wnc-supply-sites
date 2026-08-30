@@ -4,7 +4,20 @@
   <link rel="stylesheet" href="../style.css"/>
   <link rel="stylesheet" href="../mobile.css"/>
   <link rel="stylesheet" href="merge-items.css"/>
-  <script type="text/javascript" src="merge-items.js"></script>
+  <style>
+    /* Enable the Merge button only once a keep item and at least one merge item are chosen. */
+    .merge-button { opacity: .5; pointer-events: none; }
+    #merge-form:has(input[name=mergeInto]:checked):has(input[name=mergeItems]:checked) .merge-button {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Highlight the row kept and the rows being merged away. */
+    #itemTable tbody tr:has(input[name=mergeItems]:checked) { background: #f6d9d9; }
+    #itemTable tbody tr:has(input[name=mergeInto]:checked) { background: #d9f6d9; }
+    /* The keep row's own "merge" checkbox is a no-op (never merged into itself). */
+    #itemTable tbody tr:has(input[name=mergeInto]:checked) input[name=mergeItems] { opacity: .3; }
+  </style>
   {{> header-include }}
 </head>
 <body>
@@ -16,44 +29,17 @@
   <span class="page-title-sub-header">Merge Items</span>
 </div>
 
+<form id="merge-form"
+      hx-post="/admin/merge-items/do-merge"
+      hx-target="#itemTableWrap"
+      hx-swap="outerHTML"
+      hx-confirm="Are you sure? The checked items will be merged into the selected keep item and then deleted.">
+  <div class="centered">
+    <button type="submit" class="merge-button" id="mergeButton">Merge!</button>
+  </div>
 
-<div class="centered">
-  <button disabled id="mergeButton" onclick="doMerge()">Merge!</button>
-</div>
-
-<div id="message"></div>
-
-<div id="confirmation-message"></div>
-
-<fieldSet>
-<table id="itemTable">
-  <thead>
-  <tr>
-    <th>Item</th>
-    <th class="date-column">Date Created</th>
-    <th>Merge Into (keep)</th>
-    <th>Merge (delete)</th>
-  </tr>
-  </thead>
-  <tbody>
-
-  {{#items}}
-  <tr>
-    <td>{{itemName}}</td>
-    <td>{{dateCreated}}</td>
-    <td class="centered">
-      <label class="hidden" id="{{id}}-radio-label" for="{{id}}-radio">{{itemName}}</label>
-      <input type="radio" name="mergeKeepItem" id="{{id}}-radio" value="{{id}}" onclick="selectRadio()"></td>
-    <td class="centered">
-      <label class="hidden" id="{{id}}-checkbox-label" for="{{id}}-checkbox">{{itemName}}</label>
-      <input type="checkbox" id="{{id}}-checkbox" value="{{id}}" onclick="selectCheckbox()">
-    </td>
-  </tr>
-  {{/items}}
-  </tbody>
-</table>
-</fieldSet>
-
+  {{> admin/merge-items-table }}
+</form>
 
 </body>
 </html>

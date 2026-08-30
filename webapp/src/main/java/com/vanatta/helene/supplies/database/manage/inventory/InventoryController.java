@@ -18,14 +18,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -164,110 +161,104 @@ public class InventoryController {
     }
   }
 
-  /** Creates a brand new item, and adds that item to a given site. */
-  @PostMapping("/manage/add-site-item")
-  @ResponseBody
-  ResponseEntity<String> addNewSiteItem(
-      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
-      @RequestBody Map<String, String> params) {
+  /** Re-renders a single inventory row fragment for the given item after a mutation. */
+  private ModelAndView renderRow(long siteId, String itemName) {
+    return renderRow(siteId, itemName, "manage/inventory/inventory-row-single", Map.of());
+  }
 
+  private ModelAndView renderRow(
+      long siteId, String itemName, String view, Map<String, Object> extraModel) {
+    ItemInventoryDisplay row =
+        ManageSiteDao.fetchSiteInventory(jdbi, siteId).stream()
+            .map(ItemInventoryDisplay::new)
+            .filter(d -> d.getItemName().equals(itemName))
+            .findFirst()
+            .orElseThrow(
+                () -> new IllegalArgumentException("Item not found after update: " + itemName));
+    Map<String, Object> model = new HashMap<>(extraModel);
+    model.put("row", row);
+    model.put("siteId", String.valueOf(siteId));
+    return new ModelAndView(view, model);
+  }
+
+  /**
+   * Activates/deactivates an item at a site and/or changes its status. Posted by the inventory
+   * row's htmx checkbox and status radios; returns the re-rendered row fragment that htmx swaps in
+   * place. An absent {@code active} param (unchecked checkbox) deactivates the item.
+   */
+  @PostMapping("/manage/update-site-item")
+  ModelAndView updateSiteItem(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
+    String siteId = params.get("siteId");
+    SiteDetailDao.SiteDetailData siteData =
+        UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).orElse(null);
+    if (siteData == null) {
+      return new ModelAndView("redirect:" + SelectSiteController.PATH_SELECT_SITE);
+    }
     String itemName =
         Optional.ofNullable(params.get("itemName"))
+            .map(String::trim)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Missing item name in params: " + params));
+    long id = Long.parseLong(siteId);
+
+    if (params.get("active") != null) {
+      String itemStatus = params.get("itemStatus");
+      if (itemStatus == null || !ItemStatus.allItemStatus().contains(itemStatus)) {
+        itemStatus = ItemStatus.AVAILABLE.getText();
+      }
+      log.info(
+          "Activating item: {}, site: {}, status: {}",
+          itemName,
+          siteData.getSiteName(),
+          itemStatus);
+      InventoryDao.updateSiteItemActive(jdbi, id, itemName, itemStatus);
+    } else {
+      log.info("Deactivating item: {}, site: {}", itemName, siteData.getSiteName());
+      InventoryDao.updateSiteItemInactive(jdbi, id, itemName);
+    }
+    return renderRow(id, itemName);
+  }
+
+  /**
+   * Creates a brand new item, adds it to the site, and returns the new row (swapped into the table
+   * out-of-band) plus a confirmation. On a duplicate name returns an error fragment instead.
+   */
+  @PostMapping("/manage/add-site-item")
+  ModelAndView addNewSiteItem(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
+    String siteId = params.get("siteId");
+    SiteDetailDao.SiteDetailData siteData =
+        UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).orElse(null);
+    if (siteData == null) {
+      return new ModelAndView("redirect:" + SelectSiteController.PATH_SELECT_SITE);
+    }
+    String itemName =
+        Optional.ofNullable(params.get("itemName"))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
             .orElseThrow(
                 () ->
-                    new IllegalArgumentException(
-                        "addNewSiteItem:: missing item name in params: " + params))
-            .trim();
+                    new IllegalArgumentException("addNewSiteItem:: missing item name: " + params));
+    String itemStatus = params.get("itemStatus");
+    if (itemStatus == null || !ItemStatus.allItemStatus().contains(itemStatus)) {
+      itemStatus = ItemStatus.AVAILABLE.getText();
+    }
 
     log.info("Creating brand new item: {}", params);
     boolean itemAdded = InventoryDao.addNewItem(jdbi, itemName);
     if (!itemAdded) {
       log.warn("Failed to add item, already exists. Params: {}", params);
-      return ResponseEntity.badRequest().body("Item not added, already exists");
+      return new ModelAndView("manage/inventory/inventory-add-error");
     }
-    return updateSiteItemActive(sites, params);
-  }
-
-  /** Adds an item to a site */
-  @PostMapping("/manage/activate-site-item")
-  @ResponseBody
-  ResponseEntity<String> updateSiteItemActive(
-      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
-      @RequestBody Map<String, String> params) {
-    String siteId = params.get("siteId");
-    SiteDetailDao.SiteDetailData siteData =
-        UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).orElse(null);
-    if (siteData == null) {
-      return ResponseEntity.status(401).build();
-    }
-    String itemStatus = params.get("itemStatus");
-    if (itemStatus == null || !ItemStatus.allItemStatus().contains(itemStatus)) {
-      log.warn("Failed to activate item. Invalid item status: {}, params: {}", itemStatus, params);
-      return ResponseEntity.badRequest().body("Invalid item status: " + itemStatus);
-    }
-
-    String itemName =
-        Optional.ofNullable(params.get("itemName"))
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Failed to activate item for site, item name missing in params: " + params))
-            .trim();
-    log.info(
-        "Activating item: {}, site: {}, status: {}", itemName, siteData.getSiteName(), itemStatus);
-    InventoryDao.updateSiteItemActive(jdbi, Long.parseLong(siteId), itemName, itemStatus);
-
-    return ResponseEntity.ok("Updated");
-  }
-
-  /** Removes an item from a site */
-  @PostMapping("/manage/deactivate-site-item")
-  @ResponseBody
-  ResponseEntity<String> updateSiteItemInactive(
-      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
-      @RequestBody Map<String, String> params) {
-    String siteId = params.get("siteId");
-    SiteDetailDao.SiteDetailData siteData =
-        UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).orElse(null);
-    if (siteData == null) {
-      return ResponseEntity.status(401).build();
-    }
-
-    String itemName = params.get("itemName");
-    if (itemName == null) {
-      log.warn("Failed to deactivate item, no item name. Params: {}", params);
-      throw new IllegalArgumentException("Invalid item name, none specified.");
-    }
-
-    log.info("Deactivating item: {}, site: {}", itemName, siteData.getSiteName());
-
-    InventoryDao.updateSiteItemInactive(jdbi, Long.parseLong(siteId), itemName);
-    return ResponseEntity.ok("Updated");
-  }
-
-  /** Changes the status of an item within a site */
-  @PostMapping("/manage/update-site-item-status")
-  @ResponseBody
-  ResponseEntity<String> updateSiteItemStatus(@RequestBody Map<String, String> params) {
-    String siteId = params.get("siteId");
-    String itemName = params.get("itemName");
-    String newStatus = params.get("newStatus");
-
-    String siteName = fetchSiteName(siteId);
-    if (siteName == null) {
-      log.warn("Failed to update item status. Invalid site id: {}, params: {}", siteId, params);
-      return ResponseEntity.badRequest().body("Invalid site id");
-    }
-
-    log.info(
-        "Updating item status, site: {}, item name: {}, status: {}", siteName, itemName, newStatus);
-
-    ItemStatus oldStatus = InventoryDao.fetchItemStatus(jdbi, Long.parseLong(siteId), itemName);
-
-    if (oldStatus != ItemStatus.fromTextValue(newStatus)) {
-      InventoryDao.updateItemStatus(jdbi, Long.parseLong(siteId), itemName, newStatus);
-    }
-
-    return ResponseEntity.ok("Updated");
+    long id = Long.parseLong(siteId);
+    InventoryDao.updateSiteItemActive(jdbi, id, itemName, itemStatus);
+    return renderRow(
+        id,
+        itemName,
+        "manage/inventory/inventory-added",
+        Map.of("oob", true, "addedName", itemName));
   }
 }

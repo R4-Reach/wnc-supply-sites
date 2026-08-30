@@ -4,151 +4,28 @@
   <meta charset="UTF-8">
   <link rel="stylesheet" href="./request.css">
   <link rel="stylesheet" href="../../style.css">
-  <script src="./request.js"></script>
   <title>Delivery Request</title>
   {{> header-include }}
 </head>
 <body>
   {{> header }}
 
-  <dialog id="update-confirmation">
-    <h3>Please Confirm you action</h3>
-    <p id="confirmation-message"></p>
-    <div>
-      <button onclick="closeConfirmationModal()">Cancel</button>
-      <button id="confirm-update">OK</button>
-    </div>
-  </dialog>
-
   <h1> Request Page </h1>
   <main>
-      <div id="verification-container">
-        <form id="verification-form">
-          <div>
-            <h1> Verification Required </h1>
-            <span class="errorMessage hidden" id="verification-error-msg"> ** Verification Error: Phone number is not associated with delivery request </span>
-          </div>
-          <div>
-            <div>
-              <label for="phone-verification">Phone Number: </label>
-              <input type="tel" pattern="[0-9]{10}" id="phone-verification" name="userPhone" required/>
-            </div>
-            <label for="phone-verification" class="italic" style="font-size:small">Format: Please only use numbers (ex. 1112223333) </label>
+    <div id="request-portal" data-urlkey="{{urlKey}}">
+      {{#userRequiresPhoneAuth}}
+        {{> volunteer/delivery/verification-form }}
+      {{/userRequiresPhoneAuth}}
+      {{^userRequiresPhoneAuth}}
+        <div hx-post="/volunteer/verify-delivery"
+             hx-trigger="load"
+             hx-vals='{"userPhone":"{{userPhone}}","urlKey":"{{urlKey}}"}'
+             hx-target="#request-portal" hx-swap="innerHTML">
+          Loading delivery details&hellip;
         </div>
-        <div style="display: flex;  flex-direction: row-reverse">
-          <button>
-            Submit
-          </button>
-        </div>
-      </form>
-    </div>
-
-
-    <div class="hidden" id="delivery-details" data-urlkey="{{urlKey}}">
-      <div id="request-status-wrapper">
-        <h1> Request Status: </h1>
-        <div id="request-status">
-          <div class="status" id="status-pending">
-            <span class="status-text">Pending</span>
-            <i class="fa-solid fa-check request-status-icon"></i>
-          </div>
-
-          <div class="status-divider"></div>
-
-          <div class="status" id="status-accepted">
-            <span class="status-text">Accepted</span>
-            <i class="fa-solid fa-check request-status-icon"></i>
-          </div>
-
-          <div class="status-divider"></div>
-
-          <div class="status" id="status-declined">
-            <span class="status-text">Declined</span>
-            <i class="fa-solid fa-check request-status-icon"></i>
-          </div>
-
-          <div class="status-divider"></div>
-
-          <div class="status" id="status-cancelled">
-            <span class="status-text">Cancelled</span>
-            <i class="fa-solid fa-check request-status-icon"></i>
-          </div>
-        </div>
-      </div>
-
-
-      <div id="delivery">
-        <div id="site-info">
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Volunteer Name: </div>
-            <div class="site-detail" id="volunteer-name">  </div>
-          </div>
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Volunteer Contact Number: </div>
-            <div class="site-detail" id="volunteer-contact">  </div>
-          </div>
-
-          <hr style="border-top: solid gray; width: 100%">
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Site Name: </div>
-            <div class="site-detail" id="site-name">  </div>
-          </div>
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Address: </div>
-            <div class="site-detail" id="site-address">   </div>
-          </div>
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Main Contact: </div>
-            <div class="site-detail" id="site-contact-name">  </div>
-          </div>
-
-          <div class="site-detail-container hidden">
-            <div class="detail-label"> Site Contact Number: </div>
-            <div class="site-detail" id="site-contact-number">  </div>
-          </div>
-
-          <div class="site-detail-container">
-            <div id="map"></div>
-          </div>
-
-        </div>
-
-        <div class="hidden" id="items">
-          <span class="detail-label"> Items: </span>
-          <ul id="delivery-items"></ul>
-        </div>
-
-        <div id="update-status" data-userPhone="">
-          <div class="button-group hidden" id="acceptDeclineButtonGroup">
-            <button id="declineRequest" data-request="DECLINED"> Decline </button>
-            <button id="acceptRequest" data-request="ACCEPTED"> Accept </button>
-          </div>
-
-          <div class="button-group hidden" id="cancelButtonGroup">
-            <button id="cancelRequest" data-request="CANCELLED"> Cancel Request </button>
-          </div>
-        </div>
-
-        <div class="errorMessage hidden" id="requestInactiveMessage">
-          ** This request has either been declined or cancelled. No further action is required.
-        </div>
-      </div>
-
+      {{/userRequiresPhoneAuth}}
     </div>
   </main>
 
 </body>
-
-<script>
-  {{^userRequiresPhoneAuth}}
-    window.addEventListener("load", () => {
-      submitVerification("{{userPhone}}", "{{urlKey}}");
-    });
-  {{/userRequiresPhoneAuth}}
-</script>
 </html>

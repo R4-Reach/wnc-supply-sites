@@ -7,8 +7,6 @@ import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -37,10 +35,15 @@ public class VolunteerController {
     return new ModelAndView("volunteer/delivery-form", pageParams);
   }
 
-  /** Create Volunteer Delivery and adds it to the DB */
+  /**
+   * Create Volunteer Delivery and adds it to the DB. Posted by the delivery form as url-encoded
+   * fields; returns an HTML fragment (success message + portal link, or an error message) that htmx
+   * swaps into the page.
+   */
   @PostMapping("/volunteer/delivery")
-  ResponseEntity<String> submitDeliveryRequest(@RequestBody VolunteerService.DeliveryForm request) {
+  ModelAndView submitDeliveryRequest(@ModelAttribute VolunteerService.DeliveryForm request) {
     log.info("Received delivery request for site: {}", request.site);
+    Map<String, Object> params = new HashMap<>();
     try {
       VolunteerService.VolunteerDeliveryRequest createdDelivery =
           volunteerService.createVolunteerDelivery(jdbi, request);
@@ -57,19 +60,22 @@ public class VolunteerController {
       smsSender.send(createdDelivery.getCleanedSitePhoneNumber(), updateMessage);
       smsSender.send(createdDelivery.getCleanedVolunteerPhoneNumber(), updateMessage);
 
-      return ResponseEntity.ok(createdDelivery.urlKey);
+      params.put("urlKey", createdDelivery.urlKey);
     } catch (Exception e) {
       log.error(e.getMessage());
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Failed to create delivery: " + e.getMessage());
+      params.put("error", true);
     }
+    return new ModelAndView("volunteer/delivery-success", params);
   }
 
-  /** Return Site items and information */
+  /** Returns an HTML fragment (site address + needed-item checkboxes) for the selected site. */
   @GetMapping("/volunteer/site-items")
-  ResponseEntity<?> getSiteItems(@RequestParam String siteId) {
+  ModelAndView getSiteItems(@RequestParam("site") String siteId) {
     VolunteerService.Site site = VolunteerDao.fetchSiteItems(jdbi, Long.parseLong(siteId));
-    return ResponseEntity.ok(Map.of("site", site));
+    Map<String, Object> params = new HashMap<>();
+    params.put("address", site.getAddress() + ", " + site.getCounty() + ", " + site.getState());
+    params.put("items", site.getItems());
+    return new ModelAndView("volunteer/site-items-fragment", params);
   }
 
   @GetMapping("/volunteer/delivery/request")
@@ -113,67 +119,53 @@ public class VolunteerController {
   }
 
   /**
-   * Params: urlKey, phoneNumber, and volunteerSection Verify that the provided phone number is
-   * associated with the delivery and returns access level, delivery data, and provided phone number
-   * (used for auth later) If not then an 401 error is returned
+   * Verifies the phone number is associated with the delivery. On success returns the delivery
+   * detail fragment; otherwise re-renders the verification form with an error. Posted by the
+   * request portal's htmx verification form.
    */
   @PostMapping("/volunteer/verify-delivery")
-  ResponseEntity<?> verifyAndRetrieveDelivery(
-      @RequestBody VolunteerService.VerificationRequest body) {
-
-    // Check access
+  ModelAndView verifyAndRetrieveDelivery(
+      @RequestParam String urlKey, @RequestParam("userPhone") String phoneNumber) {
+    String key = urlKey.toUpperCase();
     VolunteerService.Access access =
-        VolunteerService.verifyVolunteerPortalAccess(
-            jdbi, body.urlKey, body.phoneNumber, "delivery");
+        VolunteerService.verifyVolunteerPortalAccess(jdbi, key, phoneNumber, "delivery");
 
-    // If user does not hav access return 403 forbidden response
-    if (!(access.isAuthorized())) {
-      log.info("Verification failed for volunteer volunteer delivery: {}", body.urlKey);
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Access denied: User is not verified");
+    if (!access.isAuthorized()) {
+      log.info("Verification failed for volunteer delivery: {}", key);
+      Map<String, Object> params = new HashMap<>();
+      params.put("urlKey", urlKey);
+      params.put("error", true);
+      return new ModelAndView("volunteer/delivery/verification-form", params);
     }
-    ;
 
     VolunteerService.VolunteerDeliveryRequest deliveryRequest =
-        VolunteerService.getVolunteerDeliveryRequest(jdbi, body.getUrlKey());
-
-    // Only shows volunteer and manager phone numbers if the request status is accepted
-    HashMap<String, Object> requestInfo = deliveryRequest.scrubDataBasedOnStatus();
-
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("access", access);
-    response.put("request", requestInfo);
-
-    // Returning the phone number to use as verification when updating status
-    response.put("userPhoneNumber", body.phoneNumber);
-
-    return ResponseEntity.ok(response);
+        VolunteerService.getVolunteerDeliveryRequest(jdbi, key);
+    return renderRequestDetails(access, deliveryRequest, phoneNumber);
   }
 
   /**
-   * Params: urlKey, new status, and phone number Verify the user Update the delivery Returns the
-   * updated delivery an error if not authorized to make the change
+   * Verifies the user, updates the delivery status, and returns the refreshed delivery detail
+   * fragment. Posted by the request portal's htmx accept/decline/cancel buttons.
    */
   @PostMapping("/volunteer/delivery/update")
-  ResponseEntity<?> updateDeliveryStatus(@RequestBody VolunteerService.UpdateRequest reqBody) {
-    log.info("Received delivery update: {}", reqBody);
+  ModelAndView updateDeliveryStatus(
+      @RequestParam String urlKey, @RequestParam String status, @RequestParam String phoneNumber) {
+    String key = urlKey.toUpperCase();
+    log.info("Received delivery update: {} -> {}", key, status);
 
-    // Check access
     VolunteerService.Access access =
-        VolunteerService.verifyVolunteerPortalAccess(
-            jdbi, reqBody.urlKey, reqBody.phoneNumber, "delivery");
+        VolunteerService.verifyVolunteerPortalAccess(jdbi, key, phoneNumber, "delivery");
     if (!access.isAuthorized()) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("User does not have authorization to update delivery");
+      Map<String, Object> params = new HashMap<>();
+      params.put("urlKey", urlKey);
+      params.put("error", true);
+      return new ModelAndView("volunteer/delivery/verification-form", params);
     }
 
-    // Check delivery exists
     VolunteerService.VolunteerDeliveryRequest deliveryRequest =
-        VolunteerService.getVolunteerDeliveryRequest(jdbi, reqBody.getUrlKey());
-
-    // update status
+        VolunteerService.getVolunteerDeliveryRequest(jdbi, key);
     VolunteerService.VolunteerDeliveryRequest updatedRequest =
-        VolunteerService.updateDeliveryStatus(jdbi, access, reqBody.status, deliveryRequest);
+        VolunteerService.updateDeliveryStatus(jdbi, access, status.toUpperCase(), deliveryRequest);
 
     // Build and send sms
     String updateMessage =
@@ -187,9 +179,39 @@ public class VolunteerController {
     smsSender.send(updatedRequest.getCleanedSitePhoneNumber(), updateMessage);
     smsSender.send(updatedRequest.getCleanedVolunteerPhoneNumber(), updateMessage);
 
-    HashMap<String, Object> response = new HashMap<>();
-    response.put("request", updatedRequest.scrubDataBasedOnStatus());
-    response.put("userPhoneNumber", reqBody.phoneNumber);
-    return ResponseEntity.ok(response);
+    return renderRequestDetails(access, updatedRequest, phoneNumber);
+  }
+
+  /** Builds the delivery-detail fragment model, applying status-based data scrubbing. */
+  private ModelAndView renderRequestDetails(
+      VolunteerService.Access access,
+      VolunteerService.VolunteerDeliveryRequest deliveryRequest,
+      String userPhone) {
+    Map<String, Object> params = new HashMap<>(deliveryRequest.scrubDataBasedOnStatus());
+    String status = deliveryRequest.getStatus();
+
+    params.put("statusPending", "PENDING".equals(status));
+    params.put("statusAccepted", "ACCEPTED".equals(status));
+    params.put("statusDeclined", "DECLINED".equals(status));
+    params.put("statusCancelled", "CANCELLED".equals(status));
+
+    boolean active = !("DECLINED".equals(status) || "CANCELLED".equals(status));
+    params.put("active", active);
+    params.put("showInactiveMessage", !active);
+    params.put(
+        "showAcceptDecline",
+        "PENDING".equals(status) && Boolean.TRUE.equals(access.getHasManagerAccess()));
+    params.put(
+        "showCancel",
+        ("PENDING".equals(status) && Boolean.TRUE.equals(access.getHasVolunteerAccess()))
+            || "ACCEPTED".equals(status));
+
+    params.put("userPhoneNumber", userPhone);
+
+    Object address = params.get("address");
+    if (address != null) {
+      params.put("mapQuery", address + ", " + params.getOrDefault("city", ""));
+    }
+    return new ModelAndView("volunteer/delivery/request-details", params);
   }
 }

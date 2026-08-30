@@ -1,0 +1,29 @@
+<tr class="{{#removed}}user-removed{{/removed}}">
+  <td>
+    <input class="user-name" type="text" name="name" value="{{name}}" maxlength="128"
+           hx-post="/admin/users/set-name"
+           hx-trigger="change"
+           hx-vals='{"userId": "{{id}}"}'
+           hx-target="closest tr"
+           hx-swap="outerHTML"/>
+  </td>
+  <td class="user-phone">{{phone}}</td>
+  <td>
+    <button class="status-toggle {{#active}}active{{/active}}{{^active}}inactive{{/active}}"
+            hx-post="/admin/users/set-removed"
+            hx-vals='{"userId": "{{id}}", "removed": "{{#active}}true{{/active}}{{^active}}false{{/active}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">
+      {{#active}}Active{{/active}}{{^active}}Inactive{{/active}}
+    </button>
+  </td>
+  {{#roles}}
+  <td>
+    <button class="chicklet {{#active}}on{{/active}}"
+            hx-post="/admin/users/toggle-role"
+            hx-vals='{"userId": "{{userId}}", "role": "{{role}}", "enabled": "{{^active}}true{{/active}}{{#active}}false{{/active}}"}'
+            hx-target="closest tr"
+            hx-swap="outerHTML">{{role}}</button>
+  </td>
+  {{/roles}}
+</tr>

@@ -1,0 +1,15 @@
+<form class="horizontal additional-contact" hx-post="/manage/add-manager"
+      hx-target="this" hx-swap="outerHTML">
+  <input class="managerId" type="hidden" name="managerId" value="{{id}}">
+  <input type="hidden" name="siteId" value="{{siteId}}">
+  Name: <input class="name" type="text" name="name" maxlength="32" value="{{name}}" size="18" required>
+  Phone: <input class="phone" type="text" name="phone" maxlength="16" value="{{phone}}" size="12" required>
+  <button type="submit">Update</button>
+  <button type="button" class="remove-button"
+          hx-post="/manage/remove-manager"
+          hx-vals='{"siteId": "{{siteId}}", "managerId": "{{id}}"}'
+          hx-target="closest .additional-contact" hx-swap="outerHTML"
+          hx-confirm="Remove this site manager?">Remove</button>
+  <span class="green-check">&#10003;</span>
+  <span class="message">Saved</span>
+</form>

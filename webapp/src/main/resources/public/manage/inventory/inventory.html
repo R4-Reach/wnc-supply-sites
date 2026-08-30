@@ -61,75 +61,8 @@
         </tr>
         </thead>
         <tbody id="inventoryTableBody">
-
         {{#inventoryList}}
-        <tr class="inventory-item">
-          <td>
-            <input type="checkbox" id="{{itemName}}Checkbox"
-                   onclick="toggleInventory('{{siteId}}', '{{itemName}}')" {{itemChecked}}/>
-          </td>
-          <td onclick="checkAndToggleInventory(event,'{{siteId}}', '{{itemName}}')">
-            <div>
-              <input type="hidden" class="item-tags" value="{{#tags}} {{tagName}}, {{/tags}}" />
-              <div class="inventoryLabel {{itemLabelClass}} {{itemStatusDisabled}}"
-                     id="{{itemName}}Label">
-                {{itemName}}
-              </div>
-              <div class="item-tags-container">
-                {{#tags}}
-                  <div class="item-tag"> <div class="item-tag-inner no-pointer" data-tag-color="{{tagColor}}"> {{tagName}} </div> </div>
-                {{/tags}}
-              </div>
-            </div>
-            <div class="horizontal update-confirm-div" id="{{itemName}}UpdateConfirm">
-              <span class="green-check" id="update-confirm">&#10003;</span>
-              <span>Updated</span>
-            </div>
-          </td>
-          <td>
-            <div class="horizontal">
-              <fieldset class="item-status-fieldset vertical">
-
-                <!-- Urgently Needed (existing item) -->
-                <div class="horizontal item-status-div">
-                  <input type="radio" id="{{itemName}}Urgent" name="{{itemName}}Status" {{itemStatusDisabled}}
-                         onclick="changeItemStatus('{{siteId}}', '{{itemName}}')" {{urgentChecked}}/>
-                  <label for="{{itemName}}Urgent" class="urgent {{itemStatusDisabled}}" id="{{itemName}}UrgentLabel">
-                    Urgently Needed
-                  </label>
-                </div>
-
-                <!-- Needed (existing item) -->
-                <div class="horizontal item-status-div">
-                  <input type="radio" id="{{itemName}}Needed" name="{{itemName}}Status" {{itemStatusDisabled}}
-                         onclick="changeItemStatus('{{siteId}}', '{{itemName}}')" {{neededChecked}}/>
-                  <label for="{{itemName}}Needed" class="needed {{itemStatusDisabled}}"
-                         id="{{itemName}}NeededLabel">
-                    Needed</label>
-                </div>
-
-                <!-- Available (existing item) -->
-                <div class="horizontal item-status-div">
-                  <input type="radio" id="{{itemName}}Available" name="{{itemName}}Status" {{itemStatusDisabled}}
-                         onclick="changeItemStatus('{{siteId}}', '{{itemName}}')" {{availableChecked}}/>
-                  <label for="{{itemName}}Available" class="available {{itemStatusDisabled}}"
-                         id="{{itemName}}AvailableLabel">
-                    Available</label>
-                </div>
-
-                <!-- Oversupply (existing item) -->
-                <div class="horizontal item-status-div">
-                  <input type="radio" id="{{itemName}}Oversupply" name="{{itemName}}Status" {{itemStatusDisabled}}
-                         onclick="changeItemStatus('{{siteId}}', '{{itemName}}')" {{oversupplyChecked}}/>
-                  <label for="{{itemName}}Oversupply" class="oversupply {{itemStatusDisabled}}"
-                         id="{{itemName}}OversupplyLabel">
-                    Oversupply (too much)
-                  </label>
-                </div>
-              </fieldset>
-            </div>
-          </td>
-        </tr>
+        {{> manage/inventory/inventory-row }}
         {{/inventoryList}}
         </tbody>
       </table>
@@ -139,43 +72,42 @@
       <div id="addItemResult" class="update-confirm-div">
       </div>
 
-      <!-- Add new item table -->
-      <div id="newItemForm">
+      <!-- Add new item form -->
+      <form id="newItemForm" hx-post="/manage/add-site-item"
+            hx-target="#addItemResult" hx-swap="innerHTML"
+            hx-on::after-request="if(event.detail.successful){document.getElementById('newItemText').value=''}">
 
+        <input type="hidden" name="siteId" value="{{siteId}}">
         <span class="new-item-form-label"> Add a new item: </span>
 
         <label for="newItemText" style="text-decoration: underline;">Item Name</label>
-        <input type="text" id="newItemText" maxlength="128"/>
+        <input type="text" id="newItemText" name="itemName" maxlength="128" required/>
         <fieldset class="vertical new-item-status-div" id="newItemStatus">
           <legend>item status</legend>
-          <!-- Urgently Needed (new item) -->
           <div class="horizontal">
-            <input type="radio" id="urgentlyNeededRadioNew" name="newItemStatus"/>
+            <input type="radio" id="urgentlyNeededRadioNew" name="itemStatus" value="Urgently Needed"/>
             <label for="urgentlyNeededRadioNew" class="urgent">Urgently Needed</label>
           </div>
 
-          <!-- Needed (new item) -->
           <div class="horizontal">
-            <input type="radio" id="neededRadioNew" name="newItemStatus"/>
+            <input type="radio" id="neededRadioNew" name="itemStatus" value="Needed"/>
             <label for="neededRadioNew" class="needed">Needed</label>
           </div>
 
-          <!--Available (new item) -->
           <div class="horizontal">
-            <input type="radio" id="availableRadioNew" name="newItemStatus" checked/>
+            <input type="radio" id="availableRadioNew" name="itemStatus" value="Available" checked/>
             <label for="availableRadioNew" class="available">Available</label>
           </div>
 
-          <!-- Oversupply (new item) -->
           <div class="horizontal">
-            <input type="radio" id="oversupplyRadioNew" name="newItemStatus"/>
+            <input type="radio" id="oversupplyRadioNew" name="itemStatus" value="Oversupply"/>
             <label for="oversupplyRadioNew" class="oversupply">Oversupply (too much)</label>
           </div>
         </fieldset>
         <div class="add-item-button-container">
-          <button onclick="addItem('{{siteId}}')" id="add-item-button">+ Add Item</button>
+          <button type="submit" id="add-item-button">+ Add Item</button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </div>

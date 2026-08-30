@@ -1,0 +1,45 @@
+{{! Rows of the supplies results table. Rendered server-side on first load and returned by the
+    /supplies/site-data htmx endpoint on every filter change. }}
+{{#results}}
+<tr>
+  <td>
+    <div class="vertical site-name-column">
+      <span>
+        <a href="/supplies/site-detail?id={{id}}"><span class="site-name">{{site}}</span></a>
+      </span>
+      <span>{{county}} County, {{state}}</span>
+      {{#supplyHub}}<span><br><span class="supply-hub">(Supply Warehouse)</span></span>{{/supplyHub}}
+      {{#notAccepting}}<span><br><span class="not-accepting-donations">(Not Accepting Donations)</span></span>{{/notAccepting}}
+      <div class="vertical">
+        <span>Last Updated</span>
+        <span>{{inventoryLastUpdated}}</span>
+      </div>
+      {{#lastDelivery}}
+      <div class="vertical"><span>Last Delivery</span><span>{{.}}</span></div>
+      {{/lastDelivery}}
+    </div>
+  </td>
+  <td>
+    <div class="horizontal">
+      {{#neededColumns}}
+      <ul>
+        {{#items}}
+        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}">{{name}}</div></li>
+        {{/items}}
+      </ul>
+      {{/neededColumns}}
+    </div>
+  </td>
+  <td>
+    <div class="horizontal">
+      {{#availableColumns}}
+      <ul>
+        {{#items}}
+        <li><input type="hidden" value="{{tags}}"><div class="{{displayClass}}">{{name}}</div></li>
+        {{/items}}
+      </ul>
+      {{/availableColumns}}
+    </div>
+  </td>
+</tr>
+{{/results}}

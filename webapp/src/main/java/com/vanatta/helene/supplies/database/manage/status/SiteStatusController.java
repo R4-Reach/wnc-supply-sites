@@ -20,7 +20,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
@@ -85,10 +84,14 @@ public class SiteStatusController {
     }
   }
 
-  /** REST endpoint to toggle the status of sites (active/accepting donations). */
+  /**
+   * Toggles the status of a site (active/accepting donations/etc). Posted by the status page's htmx
+   * forms as url-encoded params; returns an HTML confirmation fragment that htmx swaps in beside
+   * the control that was changed.
+   */
   @PostMapping("/manage/update-status")
   @ResponseBody
-  ResponseEntity<?> updateStatus(@RequestBody Map<String, String> params) {
+  ResponseEntity<?> updateStatus(@RequestParam Map<String, String> params) {
     String siteId = params.get("siteId");
     String statusFlag = params.get("statusFlag");
     String newValue = params.get("newValue");
@@ -136,6 +139,29 @@ public class SiteStatusController {
         throw new IllegalArgumentException("Unmapped status flag: " + statusFlag);
     }
 
-    return ResponseEntity.ok().body("Updated");
+    return ResponseEntity.ok()
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body(confirmationFragment(flag, newValue));
+  }
+
+  /** HTML shown next to a status control after a successful update. */
+  private static String confirmationFragment(EnumStatusUpdateFlag flag, String newValue) {
+    boolean on = Boolean.parseBoolean(newValue);
+    String message =
+        switch (flag) {
+          case ACCEPTING_SUPPLIES ->
+              "Site status set to " + (on ? "" : "NOT ") + "accepting supplies";
+          case DISTRIBUTING_SUPPLIES ->
+              "Site status set to " + (on ? "" : "NOT ") + "distributing supplies";
+          case SITE_TYPE -> "Site type set to " + newValue;
+          case PUBLICLY_VISIBLE ->
+              "Site set to " + (on ? "publicly visible" : "visible to logged in users only");
+          case ACTIVE -> "Site status set to " + (on ? "active" : "inactive");
+          case INACTIVE_REASON ->
+              newValue == null || newValue.isBlank()
+                  ? "Inactive reason cleared"
+                  : "Inactive reason updated";
+        };
+    return "<span class=\"green-check\">&#10003;</span> " + message;
   }
 }

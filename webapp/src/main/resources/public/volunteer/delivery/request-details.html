@@ -1,0 +1,133 @@
+<div id="delivery-details" data-urlkey="{{urlKey}}">
+  <div id="request-status-wrapper">
+    <h1> Request Status: </h1>
+    <div id="request-status">
+      <div class="status" id="status-pending">
+        <span class="status-text">Pending</span>
+        <i class="fa-solid fa-check request-status-icon {{#statusPending}}status-selected{{/statusPending}}{{^statusPending}}status-unselected{{/statusPending}}"></i>
+      </div>
+
+      <div class="status-divider"></div>
+
+      <div class="status" id="status-accepted">
+        <span class="status-text">Accepted</span>
+        <i class="fa-solid fa-check request-status-icon {{#statusAccepted}}status-selected{{/statusAccepted}}{{^statusAccepted}}status-unselected{{/statusAccepted}}"></i>
+      </div>
+
+      <div class="status-divider"></div>
+
+      <div class="status" id="status-declined">
+        <span class="status-text">Declined</span>
+        <i class="fa-solid fa-check request-status-icon {{#statusDeclined}}status-selected{{/statusDeclined}}{{^statusDeclined}}status-unselected{{/statusDeclined}}"></i>
+      </div>
+
+      <div class="status-divider"></div>
+
+      <div class="status" id="status-cancelled">
+        <span class="status-text">Cancelled</span>
+        <i class="fa-solid fa-check request-status-icon {{#statusCancelled}}status-selected{{/statusCancelled}}{{^statusCancelled}}status-unselected{{/statusCancelled}}"></i>
+      </div>
+    </div>
+  </div>
+
+  <div id="delivery">
+    <div id="site-info">
+      {{#volunteerName}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Volunteer Name: </div>
+        <div class="site-detail" id="volunteer-name"> {{volunteerName}} </div>
+      </div>
+      {{/volunteerName}}
+
+      {{#volunteerPhone}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Volunteer Contact Number: </div>
+        <div class="site-detail" id="volunteer-contact"> {{volunteerPhone}} </div>
+      </div>
+      {{/volunteerPhone}}
+
+      <hr style="border-top: solid gray; width: 100%">
+
+      {{#siteName}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Site Name: </div>
+        <div class="site-detail" id="site-name"> {{siteName}} </div>
+      </div>
+      {{/siteName}}
+
+      {{#address}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Address: </div>
+        <div class="site-detail" id="site-address"> {{address}}, {{city}} </div>
+      </div>
+      {{/address}}
+
+      {{#siteContactName}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Main Contact: </div>
+        <div class="site-detail" id="site-contact-name"> {{siteContactName}} </div>
+      </div>
+      {{/siteContactName}}
+
+      {{#siteContactNumber}}
+      <div class="site-detail-container">
+        <div class="detail-label"> Site Contact Number: </div>
+        <div class="site-detail" id="site-contact-number"> {{siteContactNumber}} </div>
+      </div>
+      {{/siteContactNumber}}
+
+      {{#mapQuery}}
+      <div class="site-detail-container">
+        <div id="map">
+          <iframe class="gmap_iframe" frameborder="0" scrolling="no" width="100%" height="300"
+                  src="https://maps.google.com/maps?width=600&amp;height=500&amp;hl=en&amp;q={{mapQuery}}&amp;t=&amp;z=10&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"></iframe>
+        </div>
+      </div>
+      {{/mapQuery}}
+    </div>
+
+    {{#active}}
+    <div id="items">
+      <span class="detail-label"> Items: </span>
+      <ul id="delivery-items">
+        {{#items}}
+        <li>{{name}}</li>
+        {{/items}}
+      </ul>
+    </div>
+    {{/active}}
+
+    <div id="update-status">
+      {{#showAcceptDecline}}
+      <div class="button-group" id="acceptDeclineButtonGroup">
+        <button id="declineRequest"
+                hx-post="/volunteer/delivery/update"
+                hx-vals='{"status":"DECLINED","urlKey":"{{urlKey}}","phoneNumber":"{{userPhoneNumber}}"}'
+                hx-confirm="You are about to DECLINE the delivery request. This action cannot be undone. We will hide delivery information and send a text message upon confirmation."
+                hx-target="#request-portal" hx-swap="innerHTML"> Decline </button>
+        <button id="acceptRequest"
+                hx-post="/volunteer/delivery/update"
+                hx-vals='{"status":"ACCEPTED","urlKey":"{{urlKey}}","phoneNumber":"{{userPhoneNumber}}"}'
+                hx-confirm="You are about to ACCEPT the delivery request. This action cannot be undone. We will share your phone number and send a text message notification upon confirmation."
+                hx-target="#request-portal" hx-swap="innerHTML"> Accept </button>
+      </div>
+      {{/showAcceptDecline}}
+
+      {{#showCancel}}
+      <div class="button-group" id="cancelButtonGroup">
+        <button id="cancelRequest"
+                hx-post="/volunteer/delivery/update"
+                hx-vals='{"status":"CANCELLED","urlKey":"{{urlKey}}","phoneNumber":"{{userPhoneNumber}}"}'
+                hx-confirm="You are about to CANCEL the delivery request. This action cannot be undone. We will hide delivery information and send a text message upon confirmation."
+                hx-target="#request-portal" hx-swap="innerHTML"> Cancel Request </button>
+      </div>
+      {{/showCancel}}
+    </div>
+
+    {{#showInactiveMessage}}
+    <div class="errorMessage" id="requestInactiveMessage">
+      ** This request has either been declined or cancelled. No further action is required.
+    </div>
+    {{/showInactiveMessage}}
+  </div>
+</div>

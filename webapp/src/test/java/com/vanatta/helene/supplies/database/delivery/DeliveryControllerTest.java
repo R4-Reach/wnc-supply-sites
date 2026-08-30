@@ -65,6 +65,8 @@ class DeliveryControllerTest {
                   e ->
                       !List.of(
                               TemplateParams.cancelReason,
+                              // null when no confirmation-role user is viewing the page
+                              TemplateParams.code,
                               TemplateParams.confirmMessage,
                               TemplateParams.deliveryDate,
                               TemplateParams.dispatcherNotes,

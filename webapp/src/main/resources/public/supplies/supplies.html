@@ -6,9 +6,6 @@
   <link rel="stylesheet" href="supplies.css">
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="../mobile.css"/>
-  <script>
-    tagList = {{{tagList}}};
-  </script>
   {{> header-include }}
 </head>
 <body>
@@ -73,6 +70,14 @@
 
 <div id="error-div" class="error-div"></div>
 
+<!-- Filters + sort post to /supplies/site-data on any change; the response swaps into the
+     results table below and updates the count out-of-band. -->
+<form id="filters-form"
+      hx-post="/supplies/site-data"
+      hx-trigger="change, refresh"
+      hx-target="#results-tbody"
+      hx-swap="innerHTML">
+
 <div>
 
 <div style="margin-bottom: .5rem; color: gray">
@@ -95,6 +100,8 @@
         <div class="vertical">
           <label for="site-select">Donation Site:</label>
           <select id="site-select" onchange="handleSelection('site')">
+            <option value=""></option>
+            {{#siteOptions}}<option value="{{.}}">{{.}}</option>{{/siteOptions}}
           </select>
         </div>
       </td>
@@ -104,6 +111,8 @@
         <div class="vertical">
           <label for="state-select">State/Country:</label>
           <select id="state-select" onchange="handleSelection('state')">
+            <option value=""></option>
+            {{#stateOptions}}<option value="{{.}}">{{.}}</option>{{/stateOptions}}
           </select>
         </div>
       </td>
@@ -113,6 +122,8 @@
         <div class="vertical">
           <label for="county-select">County:</label>
           <select id="county-select" onchange="handleSelection('county')">
+            <option value=""></option>
+            {{#countyOptions}}<option value="{{.}}">{{.}}</option>{{/countyOptions}}
           </select>
         </div>
       </td>
@@ -122,6 +133,8 @@
         <div class="vertical">
           <label for="item-select">Items:</label>
           <select id="item-select" onchange="handleSelection('item')">
+            <option value=""></option>
+            {{#itemOptions}}<option value="{{.}}">{{.}}</option>{{/itemOptions}}
           </select>
         </div>
       </td>
@@ -160,27 +173,55 @@
 
     <tr>
 
-      <!-- Filter current selections: Select Site DropDown -->
+      <!-- Filter current selections: Sites -->
       <td>
         <div id="site-selections" class="selection-list">
+          {{#siteSelections}}
+          <div class="box horizontal selection-box">
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div class="selected-value">{{.}}</div>
+            <input type="hidden" name="sites" value="{{.}}">
+          </div>
+          {{/siteSelections}}
         </div>
       </td>
 
-      <!-- Filter current selections: Select state DropDown -->
+      <!-- Filter current selections: States -->
       <td>
         <div id="state-selections" class="selection-list">
+          {{#stateSelections}}
+          <div class="box horizontal selection-box">
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div class="selected-value">{{.}}</div>
+            <input type="hidden" name="states" value="{{.}}">
+          </div>
+          {{/stateSelections}}
         </div>
       </td>
 
-      <!-- Filter current selections: Select county DropDown -->
+      <!-- Filter current selections: Counties -->
       <td>
         <div id="county-selections" class="selection-list">
+          {{#countySelections}}
+          <div class="box horizontal selection-box">
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div class="selected-value">{{.}}</div>
+            <input type="hidden" name="counties" value="{{.}}">
+          </div>
+          {{/countySelections}}
         </div>
       </td>
 
-      <!-- Filter current selections: Select item DropDown -->
+      <!-- Filter current selections: Items -->
       <td>
         <div id="item-selections" class="selection-list">
+          {{#itemSelections}}
+          <div class="box horizontal selection-box">
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div class="selected-value">{{.}}</div>
+            <input type="hidden" name="items" value="{{.}}">
+          </div>
+          {{/itemSelections}}
         </div>
       </td>
     </tr>
@@ -194,29 +235,23 @@
       <fieldset class="vertical h-full" id="item-status">
         <legend>Item Status</legend>
 
-        <!-- Filter: Urgently Needed -->
         <div>
-          <input type="checkbox" id="urgent-items" checked value="Urgently Needed" onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="urgent-items" name="itemStatus" value="Urgently Needed" {{#urgentChecked}}checked{{/urgentChecked}}/>
           <label for="urgent-items" class="urgent">Urgently Needed</label>
         </div>
 
-        <!-- Filter: Needed -->
         <div>
-          <input type="checkbox" id="needed-items" checked value="Needed" onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="needed-items" name="itemStatus" value="Needed" {{#neededChecked}}checked{{/neededChecked}}/>
           <label for="needed-items" class="needed">Needed</label>
         </div>
 
-        <!-- Filter: Available -->
         <div>
-          <input type="checkbox" id="available-items"  {{availableChecked}}  value="Available" onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="available-items" name="itemStatus" value="Available" {{#availableChecked}}checked{{/availableChecked}}/>
           <label for="available-items" class="available">Available</label>
         </div>
 
-        <!-- Filter: Oversupply -->
         <div>
-          {{! OversupplyValue is a variable so we can pre-toggle the value }}
-          <input type="checkbox" id="oversupply-items" {{overSupplyChecked}} value="Oversupply"
-                 onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="oversupply-items" name="itemStatus" value="Oversupply" {{#oversupplyChecked}}checked{{/oversupplyChecked}}/>
           <label for="oversupply-items" class="oversupply">Oversupply<br>(too many)</label>
         </div>
       </fieldset>
@@ -226,13 +261,11 @@
       <fieldset class="vertical h-full" id="site-status">
         <legend>Site Status</legend>
         <div>
-          <input type="checkbox" id="accepting-donations" checked value="Accepting Donations"
-                 onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="accepting-donations" name="acceptingDonations" value="true" {{#acceptingChecked}}checked{{/acceptingChecked}}/>
           <label for="accepting-donations">Accepting Donations</label>
         </div>
         <div>
-          <input type="checkbox" id="not-accepting-donations" {{notAcceptingDonationsChecked}}
-                 value="Not Accepting Donations" onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="not-accepting-donations" name="notAcceptingDonations" value="true" {{#notAcceptingChecked}}checked{{/notAcceptingChecked}}/>
           <label for="not-accepting-donations">Not Accepting Donations</label>
         </div>
       </fieldset>
@@ -242,30 +275,15 @@
       <fieldset class="vertical h-full" id="site-type">
         <legend>Site Type</legend>
         <div>
-          <input
-              type="checkbox"
-              id="distribution-center"
-              checked
-              value="Food Pantry"
-              onchange="handleCheckboxSelection(this, event)"/>
-          <label for="distribution-center">Food Pantry</label>
+          <input type="checkbox" id="food-pantry" name="siteType" value="Food Pantry" {{#foodPantryChecked}}checked{{/foodPantryChecked}}/>
+          <label for="food-pantry">Food Pantry</label>
         </div>
         <div>
-          <input
-              type="checkbox"
-              id="distribution-center"
-              checked
-              value="Distribution Center"
-              onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="distribution-center" name="siteType" value="Distribution Center" {{#distributionCenterChecked}}checked{{/distributionCenterChecked}}/>
           <label for="distribution-center">Distribution Center</label>
         </div>
         <div>
-          <input
-              type="checkbox"
-              id="supply-hub"
-              checked
-              value="Supply Hub"
-              onchange="handleCheckboxSelection(this, event)"/>
+          <input type="checkbox" id="supply-hub" name="siteType" value="Supply Hub" {{#supplyHubChecked}}checked{{/supplyHubChecked}}/>
           <label for="supply-hub">Supply Warehouse</label>
         </div>
       </fieldset>
@@ -277,23 +295,24 @@
 <hr>
 <div id="results-count-and-sort">
   <div id="parent-div">
-    <div id="loader-div"></div>
-    <div class="bold" id="result-count"></div>
+    <div class="bold" id="result-count">{{resultCount}} results</div>
   </div>
   <div id="sort-results-container">
     <label class="bold" for="sort-results">Sort Results By:</label>
 
-    <select name="pets" id="sort-results" onchange="handleSortSelection()">
-      <option value="last-updated" selected>Most Recently Updated First</option>
-      <option value="last-updated-reverse">Most Recently Updated Last</option>
-      <option value="alphabetical">Alphabetical (Site Name)</option>
+    <select name="sort" id="sort-results">
+      <option value="last-updated" {{#sortLastUpdated}}selected{{/sortLastUpdated}}>Most Recently Updated First</option>
+      <option value="last-updated-reverse" {{#sortLastUpdatedReverse}}selected{{/sortLastUpdatedReverse}}>Most Recently Updated Last</option>
+      <option value="alphabetical" {{#sortAlphabetical}}selected{{/sortAlphabetical}}>Alphabetical (Site Name)</option>
     </select>
   </div>
 </div>
 
+</form>
+
 <hr>
 
-<!-- Results table, populated by JS -->
+<!-- Results table. Rows render server-side on load and are swapped in by htmx on filter change. -->
 <div class="results-table-container">
 <table id="results-table" class="results-table">
   <thead>
@@ -303,15 +322,19 @@
     <th>Available Supplies</th>
   </tr>
   </thead>
-  <tbody>
+  <tbody id="results-tbody">
+  {{> supplies/results-rows }}
   </tbody>
 </table>
 </div>
 
 <script>
-  getFilterItems();
   instantiateScrollToTopEvenListener();
-  initializeModal();
+  // Show the "Get Involved" modal once, then remember via a cookie so it doesn't reappear.
+  if (!document.cookie.split("; ").includes("getInvolvedSeen=1")) {
+    document.getElementById("getInvolvedModal").showModal();
+    document.cookie = "getInvolvedSeen=1; max-age=31536000; path=/";
+  }
 </script>
 </body>
 </html>

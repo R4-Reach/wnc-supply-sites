@@ -39,6 +39,16 @@ public class FilterDataController {
     return getFilterData(authenticatedMode, stateList.isEmpty() ? fullstateList : stateList);
   }
 
+  /**
+   * Builds the filter dropdown data for a given auth state. Used by the supplies page to populate
+   * its site/county/item/state selects server-side (htmx migration replaced the old JS fetch).
+   */
+  public FilterDataResponse getFilterData(boolean authenticated, List<String> stateList) {
+    return getFilterData(
+        authenticated ? AuthenticatedMode.AUTHENTICATED : AuthenticatedMode.NOT_AUTHENTICATED,
+        stateList);
+  }
+
   // @VisibleForTesting
   FilterDataResponse getFilterData(AuthenticatedMode authenticatedMode, List<String> stateList) {
     return FilterDataResponse.builder()
