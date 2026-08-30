@@ -112,34 +112,16 @@ function toggleSkill(el) {
 }
 
 // ─── AVAILABILITY GRID ───────────────────────────────
+// Grid-building, hour keys, and quick-action presets live in
+// availability.js (shared with the Profile page and the calendars).
 
-var SLOTS = ['Morning (6am–12pm)', 'Afternoon (12–6pm)', 'Evening (6–10pm)'];
-var DAYS  = ['sun','mon','tue','wed','thu','fri','sat'];
-
-function goToAvail() { buildAvailGrid(); goToScreen('screen-avail'); }
-
-function buildAvailGrid() {
-  var grid = document.getElementById('avail-grid');
-  grid.querySelectorAll('.avail-row-label, .avail-cell').forEach(function(e) { e.remove(); });
-
-  SLOTS.forEach(function(slot) {
-    var label = document.createElement('div');
-    label.className   = 'avail-row-label';
-    label.textContent = slot;
-    grid.appendChild(label);
-
-    DAYS.forEach(function(day) {
-      var key  = day + '_' + slot;
-      var cell = document.createElement('div');
-      cell.className    = 'avail-cell' + (S.availability[key] ? ' on' : '');
-      cell.dataset.key  = key;
-      cell.onclick = function() {
-        this.classList.toggle('on');
-        S.availability[this.dataset.key] = this.classList.contains('on');
-      };
-      grid.appendChild(cell);
-    });
+function goToAvail() {
+  renderAvailGrid(document.getElementById('avail-grid'), S.availability, null);
+  renderAvailPresetButtons(document.getElementById('avail-presets'), function(presetKey) {
+    applyAvailPreset(S.availability, presetKey);
+    renderAvailGrid(document.getElementById('avail-grid'), S.availability, null);
   });
+  goToScreen('screen-avail');
 }
 
 // ─── FINISH ONBOARDING ───────────────────────────────

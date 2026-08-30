@@ -9,6 +9,9 @@
  */
 
 // ─── XP CONFIG ─────────────────────────────────────
+// TODO: Jessie is considering dropping XP/levels entirely in favor of a
+// bigger badge system, including letting orgs author their own badges.
+// Not decided yet — don't build badge-authoring UI until that's settled.
 
 var DEMO_XP       = 120;   // starts partially full so the bar is visible
 var DEMO_LEVEL    = 1;
@@ -117,6 +120,19 @@ function loadProfile() {
       : '<span class="skill-chip" style="opacity:0.5;">No skills added yet</span>';
   }
   var pb = document.getElementById('profile-bio');       if (pb) pb.textContent = p.bio || 'No bio yet.';
+
+  // ── Availability grid ──
+  if (!p.availability) p.availability = {};
+  var saveAvailability = function() {
+    p.full_name = p.full_name || 'Volunteer';
+    localStorage.setItem('rcommons_demo_profile', JSON.stringify(p));
+  };
+  renderAvailGrid(document.getElementById('avail-grid'), p.availability, saveAvailability);
+  renderAvailPresetButtons(document.getElementById('profile-avail-presets'), function(presetKey) {
+    applyAvailPreset(p.availability, presetKey);
+    renderAvailGrid(document.getElementById('avail-grid'), p.availability, saveAvailability);
+    saveAvailability();
+  });
 
   // ── Render dynamic lists ──
   renderDashboardCommitments();
