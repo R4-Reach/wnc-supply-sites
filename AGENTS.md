@@ -63,21 +63,17 @@ database up beforehand (`just db`); they fall back to `localhost:5432`. See
 
 ## Worktrees
 
-Put git worktrees in a **sibling** directory named `wnc-supply-sites-worktrees/`
-next to this repo — one subdirectory per worktree — never inside the repo.
-Nesting worktrees under the working copy makes recursive tooling (`./gradlew`,
-tests, spotless) descend into the nested checkout; a sibling keeps them clear of
-each other and needs no `.gitignore` entry.
+Worktree placement is governed by `~/work/CLAUDE.md` and its global
+`WorktreeCreate`/`WorktreeRemove` hook — create them through that flow, not by
+hand here. Wherever they land, never nest a worktree inside this working copy:
+recursive tooling (`./gradlew`, tests, spotless) would descend into the nested
+checkout.
 
-- Create: `git worktree add ../wnc-supply-sites-worktrees/<branch> <branch>`
-- Remove: `git worktree remove ../wnc-supply-sites-worktrees/<branch>`
-- List:   `git worktree list`
-
-Each checkout's Gradle `test` task uses a docker-compose project name derived
-from the worktree directory and `$USER`, on an ephemeral port — so test suites in
-sibling worktrees (and a running `just up`/`just db`) stay isolated and can run
-in parallel without sharing a database. (IDE test runs are the exception: they
-fall back to the single `localhost:5432` from `just db` and do share it.)
+Each checkout's Gradle `test` task derives its docker-compose project name from
+the worktree directory and `$USER`, on an ephemeral port — so test suites in
+separate worktrees (and a running `just up`/`just db`) stay isolated and run in
+parallel without sharing a database. (IDE test runs are the exception: they fall
+back to the single `localhost:5432` from `just db` and do share it.)
 
 ## Deployment & infrastructure — `R4-Reach/infrastructure`
 
