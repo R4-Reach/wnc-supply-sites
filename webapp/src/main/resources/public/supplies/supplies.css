@@ -70,6 +70,9 @@ table.results-table {
     position: sticky;
     left: 0;
     width: 100%;
+    /* A perceptible frame on the primary triage surface — the white surfaces and
+       soft zebra alone don't bound the table against the tinted canvas. */
+    border: 1px solid var(--border-strong);
 }
 
 table.results-table thead th:nth-child(1) {
@@ -88,6 +91,7 @@ table.results-table thead th {
     background-color: var(--table-head-bg);
     color: var(--table-head-text);
     padding: 8px;
+    border-bottom: 2px solid var(--border-strong);
 }
 
 table.results-table tbody tr:nth-child(odd) {

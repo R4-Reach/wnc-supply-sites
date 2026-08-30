@@ -16,8 +16,12 @@ dialog {
     box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, var(--shadow-inset) 0 -3px 0 inset;
 }
 
-dialog a:focus {
-    outline: none;
+/* Visible keyboard-focus indicator for every focusable element, app-wide.
+   :focus-visible keeps it off mouse/touch clicks so it only shows for keyboard
+   and assistive-tech navigation. */
+:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 dialog::backdrop {

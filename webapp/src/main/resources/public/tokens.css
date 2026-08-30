@@ -12,24 +12,26 @@
 :root {
   /* ── Chrome ─────────────────────────────────────
      The R-Commons "negative space" treatment: a cool tinted canvas with WHITE
-     surfaces floating on it. Elevation comes from the white-on-tint contrast and
-     soft light-blue borders, not from blue fills or drop shadows. Blue is
-     reserved for accents (links, active states, oversupply), not button faces. */
+     surfaces floating on it. Hierarchy is carried by three things, not blue fills
+     or drop shadows: the white-on-tint step, a slightly recessed tint for inset
+     wells, and a perceptible slate container border. Blue is reserved for accents
+     and the focus ring, not button faces. */
   --bg:            #f0f4fa;   /* cool tinted canvas */
   --text:          #0a0e2a;   /* body text */
   --surface:       #ffffff;   /* buttons, floating controls */
   --surface-alt:   #ffffff;   /* content containers, mission box — white cards on the tint */
-  --well:          #ffffff;   /* inset panels — white cards on the tint */
-  --border-strong: #d4dcf0;   /* soft light-blue container borders */
+  --well:          #eaf0fa;   /* inset panels — recessed cool tint below white surfaces */
+  --border-strong: #7c8aa6;   /* container borders — slate, ≥3:1 on both canvas and white cards (WCAG 1.4.11) */
   --shadow-inset:  #d4dcf0;   /* inset edge on raised buttons */
   --accent:        #162df0;   /* primary accent / oversupply emphasis */
+  --focus-ring:    #162df0;   /* keyboard focus outline — ≥3:1 on every surface */
   --nav-btn-bg:    #ffffff;   /* nav button face */
   --nav-btn-text:  #0a0e2a;   /* nav button label */
 
   /* ── Results table (chrome) ────────────────────── */
   --table-head-bg:   #dbe4f5;   /* light cool header, dark text */
   --table-head-text: #0a0e2a;
-  --row-odd:         #f0f4fa;   /* faint tint / white zebra on white cards */
+  --row-odd:         #e2eaf6;   /* zebra tint — deep enough to read against white rows */
   --row-even:        #ffffff;
 
   /* ── Status (brand-independent) ────────────────── */
@@ -38,5 +40,5 @@
   --needed:        #880055;   /* needed items */
   --available:     #006400;   /* available / in-stock */
   --success:       #008000;   /* confirmations */
-  --warning:       #a07000;   /* privately-visible notices */
+  --warning:       #805800;   /* privately-visible notices — darkened to clear AA 4.5:1 on white and the tint */
 }
