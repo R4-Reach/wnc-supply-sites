@@ -1,0 +1,38 @@
+/* Layout for the "create delivery" form. */
+.delivery-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 480px;
+  margin: 0 16px 32px;
+}
+
+.delivery-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.delivery-form input,
+.delivery-form select,
+.delivery-form textarea {
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.delivery-form .required {
+  color: var(--danger);
+}
+
+.delivery-form .form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

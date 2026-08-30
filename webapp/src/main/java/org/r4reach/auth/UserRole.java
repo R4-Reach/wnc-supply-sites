@@ -46,6 +46,14 @@ public enum UserRole {
   }
 
   /**
+   * Whether the user may open the deliveries board and create/move deliveries. Only {@link
+   * #DISPATCHER} has this read/write access.
+   */
+  public static boolean canManageDeliveries(List<UserRole> roles) {
+    return roles.contains(DISPATCHER);
+  }
+
+  /**
    * Whether the user may reach the /admin area at all. The landing page and its home-page button
    * are shown to any admin; each sub-page still gates on its own specific role.
    */

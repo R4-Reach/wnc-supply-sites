@@ -1,0 +1,132 @@
+/* Deliveries kanban board: a horizontal row of status columns holding draggable
+   delivery cards. Chrome colors come from the site-wide tokens (tokens.css); the
+   exception is the per-column near-white lane tints below, which are local to
+   this board and have no semantic role elsewhere. */
+
+.board-toolbar {
+  margin: 0 16px 12px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 0 16px 24px;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 240px;
+  max-height: calc(100vh - 180px);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+
+/* Each column gets its own near-white tint from the shared palette so it reads
+   as a distinct lane floating above the cool --bg canvas, with the pure-white
+   cards popping on top. One tint per forward column, in pipeline order. */
+.kanban-column:nth-child(1) { background: var(--tint-cream); }
+.kanban-column:nth-child(2) { background: var(--tint-amber); }
+.kanban-column:nth-child(3) { background: var(--tint-citron); }
+.kanban-column:nth-child(4) { background: var(--tint-mint); }
+.kanban-column:nth-child(5) { background: var(--tint-aqua); }
+.kanban-column:nth-child(6) { background: var(--tint-lavender); }
+.kanban-column:nth-child(7) { background: var(--tint-rose); }
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.kanban-column-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.kanban-count {
+  flex: 0 0 auto;
+  min-width: 1.6em;
+  padding: 1px 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  background: var(--table-head-bg);
+  color: var(--table-head-text);
+  border-radius: 999px;
+}
+
+/* The drop zone: scrolls independently and highlights while a card hovers over it. */
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  overflow-y: auto;
+  min-height: 60px;
+  flex: 1 1 auto;
+}
+
+.kanban-cards.drag-over {
+  background: var(--row-odd);
+}
+
+.kanban-card {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: grab;
+  box-shadow: rgba(45, 35, 66, 0.12) 0 1px 3px;
+}
+
+.kanban-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.kanban-card-title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--accent);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanban-card-title:hover {
+  text-decoration: underline;
+}
+
+.kanban-card-fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kanban-card-fields div {
+  display: flex;
+  flex-direction: column;
+}
+
+.kanban-card-fields dt {
+  font-size: 0.68rem;
+  color: var(--warning);
+  text-transform: none;
+}
+
+.kanban-card-fields dd {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text);
+  word-break: break-word;
+}

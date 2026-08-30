@@ -40,7 +40,9 @@ public class DispatchController {
     if (!UserRole.canViewDrivers(roles)) {
       return new ModelAndView("redirect:/");
     }
-    return new ModelAndView("dispatch/dispatch");
+    Map<String, Object> params = new HashMap<>();
+    params.put("canManageDeliveries", UserRole.canManageDeliveries(roles));
+    return new ModelAndView("dispatch/dispatch", params);
   }
 
   @GetMapping(PATH_DRIVERS)

@@ -34,6 +34,19 @@
   --row-odd:         #e2eaf6;   /* zebra tint — deep enough to read against white rows */
   --row-even:        #ffffff;
 
+  /* ── Near-white tints ──────────────────────────────
+     A ramp of barely-there pastels, each near enough to white to host body text
+     and pure-white cards, but distinct enough from --bg and from each other to
+     separate side-by-side lanes (e.g. the deliveries kanban columns). Ordered as
+     a subtle hue wheel; use as many as there are lanes. */
+  --tint-cream:    #fdf5f0;
+  --tint-amber:    #fdf9ef;
+  --tint-citron:   #fafbef;
+  --tint-mint:     #f0faf1;
+  --tint-aqua:     #eff9fa;
+  --tint-lavender: #f5f2fc;
+  --tint-rose:     #fcf0f6;
+
   /* ── Status (brand-independent) ────────────────── */
   --urgent:        #b3330c;   /* urgent items — vermilion, ≥4.5:1 on white/tint/zebra; hue-separated from --danger so the two dark reds stay distinct */
   --danger:        #b60808;   /* errors, required-field markers */

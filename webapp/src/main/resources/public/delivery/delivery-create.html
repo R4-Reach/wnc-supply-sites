@@ -1,0 +1,91 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - New Delivery</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <link rel="stylesheet" href="/mobile.css"/>
+  <link rel="stylesheet" href="/delivery-create.css"/>
+  {{> header-include }}
+</head>
+
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/dispatch/deliveries">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">New Delivery</span>
+</div>
+
+{{#errorMessage}}
+<div class="errorMessage" style="margin: 0 16px 12px;">{{errorMessage}}</div>
+{{/errorMessage}}
+
+<form class="delivery-form" method="post" action="/dispatch/deliveries/create">
+  <input type="hidden" name="status" value="{{statusName}}"/>
+
+  <p>Starting column: <strong>{{statusLabel}}</strong></p>
+
+  <label>
+    Pick Up Site <span class="required">*</span>
+    <select name="fromSiteId" required>
+      <option value="">&mdash; select a site &mdash;</option>
+      {{#sites}}
+      <option value="{{id}}">{{name}}</option>
+      {{/sites}}
+    </select>
+  </label>
+
+  <label>
+    Drop Off Site <span class="required">*</span>
+    <select name="toSiteId" required>
+      <option value="">&mdash; select a site &mdash;</option>
+      {{#sites}}
+      <option value="{{id}}">{{name}}</option>
+      {{/sites}}
+    </select>
+  </label>
+
+  <label>
+    Delivery Date
+    <input type="date" name="targetDeliveryDate" value="{{targetDeliveryDate}}"/>
+  </label>
+
+  <label>
+    Driver Name
+    <input type="text" name="driverName" maxlength="64" value="{{driverName}}"/>
+  </label>
+
+  <label>
+    Driver Phone
+    <input type="text" name="driverNumber" maxlength="24" value="{{driverNumber}}"/>
+  </label>
+
+  <label>
+    Dispatcher Name
+    <input type="text" name="dispatcherName" maxlength="64" value="{{dispatcherName}}"/>
+  </label>
+
+  <label>
+    Dispatcher Phone
+    <input type="text" name="dispatcherNumber" maxlength="24" value="{{dispatcherNumber}}"/>
+  </label>
+
+  <label>
+    Dispatcher Notes
+    <textarea name="dispatcherNotes" rows="2" maxlength="2048">{{dispatcherNotes}}</textarea>
+  </label>
+
+  <label>
+    Items (one per line)
+    <textarea name="items" rows="4" placeholder="Water&#10;Blankets&#10;Diapers">{{items}}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="nav-button">Create Delivery</button>
+    <a href="/dispatch/deliveries">Cancel</a>
+  </div>
+</form>
+
+</body>
+</html>

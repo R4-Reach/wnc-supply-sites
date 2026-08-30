@@ -3,12 +3,16 @@ package org.r4reach.delivery;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.SecretCodeGenerator;
 
 @Slf4j
 public class DeliveryDao {
@@ -28,6 +32,107 @@ public class DeliveryDao {
                 .bind("publicKey", publicKey)
                 .bind("deliveryStatus", deliveryStatus.getAirtableName())
                 .execute());
+  }
+
+  /** All deliveries, newest target date first — the data behind the dispatcher deliveries board. */
+  public static List<Delivery> fetchAllDeliveries(Jdbi jdbi) {
+    // fetchDeliveries always binds :id; "true" simply ignores it to select every row.
+    return fetchDeliveries(jdbi, "true", "");
+  }
+
+  /** A site the dispatcher can pick as a delivery's pickup or drop-off endpoint. */
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class SiteOption {
+    long id;
+    String name;
+  }
+
+  public static List<SiteOption> fetchSiteOptions(Jdbi jdbi) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery("select id, name from site order by lower(name)")
+                .mapToBean(SiteOption.class)
+                .list());
+  }
+
+  /** The dispatcher-entered fields for a brand-new delivery. */
+  @Value
+  @Builder
+  public static class CreateDeliveryRequest {
+    Long fromSiteId;
+    Long toSiteId;
+    DeliveryStatus deliveryStatus;
+    String targetDeliveryDate;
+    String dispatcherName;
+    String dispatcherNumber;
+    String driverName;
+    String driverNumber;
+    String dispatcherNotes;
+    @Builder.Default List<String> items = List.of();
+  }
+
+  /**
+   * Creates a delivery from dispatcher-entered fields, minting its own public url key and secret
+   * codes (these were supplied by the Airtable feed before it was removed). Returns the new
+   * delivery's public url key. {@code wss_id} is assigned by its column default sequence.
+   */
+  public static String createDelivery(Jdbi jdbi, CreateDeliveryRequest request) {
+    String publicUrlKey = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    String insert =
+        """
+        insert into delivery(
+          from_site_id, to_site_id, delivery_status, target_delivery_date,
+          dispatcher_name, dispatcher_number, driver_name, driver_number,
+          dispatcher_notes, public_url_key, dispatch_code, driver_code)
+        values(
+          :fromSiteId, :toSiteId, :deliveryStatus,
+          to_date(:targetDeliveryDate, 'YYYY-MM-DD'),
+          :dispatcherName, :dispatcherNumber, :driverName, :driverNumber,
+          :dispatcherNotes, :publicUrlKey, :dispatchCode, :driverCode)
+        """;
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(insert)
+                .bind("fromSiteId", request.getFromSiteId())
+                .bind("toSiteId", request.getToSiteId())
+                .bind("deliveryStatus", request.getDeliveryStatus().getAirtableName())
+                .bind("targetDeliveryDate", blankToNull(request.getTargetDeliveryDate()))
+                .bind("dispatcherName", blankToNull(request.getDispatcherName()))
+                .bind("dispatcherNumber", blankToNull(request.getDispatcherNumber()))
+                .bind("driverName", blankToNull(request.getDriverName()))
+                .bind("driverNumber", blankToNull(request.getDriverNumber()))
+                .bind("dispatcherNotes", blankToNull(request.getDispatcherNotes()))
+                .bind("publicUrlKey", publicUrlKey)
+                .bind("dispatchCode", SecretCodeGenerator.generateCode())
+                .bind("driverCode", SecretCodeGenerator.generateCode())
+                .execute());
+
+    String insertItem =
+        """
+        insert into delivery_item(delivery_id, item_name)
+        values((select id from delivery where public_url_key = :publicUrlKey), :itemName)
+        """;
+    for (String itemName : request.getItems()) {
+      if (itemName == null || itemName.isBlank()) {
+        continue;
+      }
+      jdbi.withHandle(
+          handle ->
+              handle
+                  .createUpdate(insertItem)
+                  .bind("publicUrlKey", publicUrlKey)
+                  .bind("itemName", itemName.strip())
+                  .execute());
+    }
+    return publicUrlKey;
+  }
+
+  private static String blankToNull(String input) {
+    return input == null || input.isBlank() ? null : input.strip();
   }
 
   // get
@@ -161,12 +266,14 @@ public class DeliveryDao {
     List<Delivery> deliveries =
         jdbi
             .withHandle(
-                handle ->
-                    handle
-                        .createQuery(select)
-                        .bind("id", idValue)
-                        .mapToBean(DeliveryData.class)
-                        .list())
+                handle -> {
+                  var query = handle.createQuery(select);
+                  // The "fetch all" clause has no placeholder; binding an unused :id is rejected.
+                  if (whereClause.contains(":id")) {
+                    query.bind("id", idValue);
+                  }
+                  return query.mapToBean(DeliveryData.class).list();
+                })
             .stream()
             .map(Delivery::new)
             .toList();

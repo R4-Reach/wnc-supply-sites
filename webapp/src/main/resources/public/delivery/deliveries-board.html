@@ -1,0 +1,54 @@
+<html xmlns="http://www.w3.org/1999/html" lang="en">
+<head>
+  <title>WNC Supply Sites - Deliveries</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <link rel="stylesheet" href="/mobile.css"/>
+  <link rel="stylesheet" href="/deliveries-board.css"/>
+  {{> header-include }}
+</head>
+
+<body>
+{{> header }}
+
+<div class="page-sub-header horizontal">
+  <div class="back-link">
+    <a href="/dispatch">[&larr; Go Back]</a>
+  </div>
+  <span class="page-title-sub-header">Deliveries</span>
+</div>
+
+<div class="board-toolbar">
+  <a href="/dispatch/deliveries/new">
+    <button type="button" class="nav-button">+ New Delivery</button>
+  </a>
+</div>
+
+<div class="kanban-board">
+  {{#columns}}
+  <section class="kanban-column">
+    <header class="kanban-column-header">
+      <span class="kanban-column-title">{{label}}</span>
+      <span class="kanban-count">{{count}}</span>
+    </header>
+    <div class="kanban-cards" data-status="{{statusName}}">
+      {{#deliveries}}
+      <article class="kanban-card" draggable="true" data-public-key="{{publicKey}}">
+        <a class="kanban-card-title" href="{{detailLink}}">{{deliveryDate}} (#{{deliveryNumber}}) {{fromSite}} &rarr; {{toSite}}</a>
+        <dl class="kanban-card-fields">
+          <div><dt>Delivery Date</dt><dd>{{deliveryDate}}</dd></div>
+          <div><dt>Pick Up Site</dt><dd>{{fromSite}}</dd></div>
+          <div><dt>Drop Off Site</dt><dd>{{toSite}}</dd></div>
+          <div><dt>Item Count</dt><dd>{{itemCount}}</dd></div>
+          <div><dt>Driver</dt><dd>{{#driverName}}{{.}}{{/driverName}}</dd></div>
+          <div><dt>Dispatcher</dt><dd>{{#dispatcherName}}{{.}}{{/dispatcherName}}</dd></div>
+        </dl>
+      </article>
+      {{/deliveries}}
+    </div>
+  </section>
+  {{/columns}}
+</div>
+
+<script src="/deliveries-board.js"></script>
+</body>
+</html>

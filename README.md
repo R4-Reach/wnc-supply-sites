@@ -194,6 +194,21 @@ path "/page/details/data" could easily map to a template page located at "/page/
 So, we really want every page when opened via web browser, without a web server,
 to have fully functioning CSS & JS. To do this, we need to carefully line up paths.
 
+**Watch out for controller-shadowed URLs.** A static file only serves if no
+controller claims its URL. Some controllers own an entire URL prefix via a path
+variable — e.g. `DeliveryController` maps `/delivery/{publicUrlKey}`, so *any*
+request under `/delivery/...` (including `/delivery/foo.css`) is routed to the
+controller instead of the static file, even when that file physically sits in
+`public/delivery/`. Putting a page's CSS/JS in such a directory makes it
+unreachable — the request 400s/404s and the page renders unstyled.
+
+So keep per-page CSS/JS at the public root (`public/`, served from `/`), which no
+controller shadows. That's why `delivery.css`, `deliveries-board.css`, and
+`deliveries-board.js` live at the root rather than beside their `.html` templates
+under `public/delivery/`. Reference them with an absolute path
+(`/deliveries-board.css`) so they resolve the same no matter how deep the page's
+own URL is.
+
 ### Env Variables
 
 Configuration values are in 'application.properties'.
