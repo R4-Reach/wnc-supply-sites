@@ -22,8 +22,8 @@ import org.springframework.web.servlet.ModelAndView;
 /**
  * Dispatcher kanban board for deliveries. Columns are the forward {@link DeliveryStatus} values;
  * dragging a card to another column changes that delivery's status. Reachable only by {@link
- * UserRole#DISPATCHER} (read/write). Lives under {@code /dispatch}, so {@code AuthInterceptor}
- * login-gates it; the dispatch landing page links here.
+ * UserRole#DISPATCHER} (read/write). Lives under {@code /dispatch}, which the security filter chain
+ * login-gates; the dispatch landing page links here.
  */
 @Controller
 @Slf4j
