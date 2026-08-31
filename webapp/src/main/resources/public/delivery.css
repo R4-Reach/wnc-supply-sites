@@ -139,3 +139,45 @@ pre {
 .dispatcher-notes {
     margin: 10px;
 }
+
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+/*
+ * The manifest is printed as the working delivery paperwork, so print strips the
+ * app chrome and interactive controls and keeps just the delivery data.
+ */
+@media print {
+    .no-print,
+    .logo-image,
+    .confirm-buttons,
+    iframe {
+        display: none !important;
+    }
+
+    body {
+        margin: 0;
+    }
+
+    .content-wrapper {
+        max-width: 100%;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--text);
+    }
+
+    .page-subsection {
+        background-color: transparent;
+        border: 1px solid var(--border-strong);
+        border-radius: 0;
+        break-inside: avoid;
+    }
+}

@@ -11,8 +11,15 @@
 <div class="content-wrapper">
 
   <h2 class="delivery-title">
-    <a href="/"><img alt="site-logo" src="/logo/WSS-logo-40x40.png" class="logo-image"/></a>
+    <a href="/" class="no-print"><img alt="site-logo" src="/logo/WSS-logo-40x40.png" class="logo-image"/></a>
     Delivery #{{deliveryId}}</h2>
+
+  <div class="page-toolbar no-print">
+    <button type="button" class="nav-button print-button" onclick="window.print()">Print manifest</button>
+    {{#isDispatcherView}}
+    <a class="nav-button public-manifest-link" href="{{publicManifestUrl}}">View public manifest</a>
+    {{/isDispatcherView}}
+  </div>
 
   <div class="vertical meta-info-div larger">
     <div>

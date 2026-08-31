@@ -21,8 +21,15 @@ public class Delivery {
   private final long deliveryNumber;
   private final String deliveryStatus;
 
-  /** link to the delivery detail page */
+  /** Read-only link to the public delivery manifest ({@code /delivery/{key}}, no code). */
   private final String detailLink;
+
+  /**
+   * Dispatcher (read/write) link to the same manifest, carrying the dispatch code so the confirm /
+   * cancel controls render. Used by the dispatcher-gated kanban board; falls back to the read-only
+   * {@link #detailLink} when a delivery has no dispatch code yet.
+   */
+  private final String dispatcherLink;
 
   private final String publicKey;
 
@@ -122,6 +129,11 @@ public class Delivery {
     this.toHours = dbData.getToHours();
 
     this.dispatchCode = dbData.getDispatchCode();
+    this.dispatcherLink =
+        dbData.getDispatchCode() == null
+            ? this.detailLink
+            : DeliveryController.buildDeliveryPageLinkWithCode(
+                dbData.getPublicUrlKey(), dbData.getDispatchCode());
     this.driverStatus = dbData.getDriverStatus();
     this.driverCode = dbData.getDriverCode();
     this.cancelReason = dbData.getCancelReason();

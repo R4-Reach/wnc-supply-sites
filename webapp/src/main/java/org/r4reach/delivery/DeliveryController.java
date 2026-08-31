@@ -33,6 +33,10 @@ class DeliveryController {
     return "/delivery/" + publicUrlKey;
   }
 
+  public static String buildDeliveryPageLinkWithCode(String publicUrlKey, String code) {
+    return "/delivery/" + publicUrlKey + "?code=" + code;
+  }
+
   public static String buildDeliveryPageLinkForDriver(Delivery delivery) {
     return buildDeliveryPageLink(delivery, DeliveryConfirmation.ConfirmRole.DRIVER);
   }
@@ -106,6 +110,9 @@ class DeliveryController {
 
     deliveryKey,
     code,
+
+    publicManifestUrl,
+    isDispatcherView,
     ;
   }
 
@@ -167,6 +174,15 @@ class DeliveryController {
         DeliveryConfirmationController.buildCancelUrl(delivery.getPublicKey(), code));
     templateParams.put(TemplateParams.deliveryKey.name(), delivery.getPublicKey());
     templateParams.put(TemplateParams.code.name(), code);
+
+    // The same manifest serves the public read-only view (no code) and the dispatcher-gated
+    // read/write view (the dispatch code, linked from the kanban board). In the dispatcher view we
+    // surface the shareable public URL -- the code-less link the SMS recipient sees.
+    templateParams.put(
+        TemplateParams.publicManifestUrl.name(), buildDeliveryPageLink(delivery.getPublicKey()));
+    templateParams.put(
+        TemplateParams.isDispatcherView.name(),
+        code != null && code.equals(delivery.getDispatchCode()));
 
     // code == null means we have someone without a confirmation role viewing the current page
     if (code == null) {
