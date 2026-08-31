@@ -33,6 +33,7 @@ function buildChip(paramName, value) {
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
   removeButton.textContent = 'X';
+  removeButton.setAttribute('aria-label', 'Remove ' + value);
   removeButton.onclick = () => removeSelection(removeButton);
   removeCell.appendChild(removeButton);
 
@@ -50,11 +51,49 @@ function buildChip(paramName, value) {
 }
 
 function removeSelection(button) {
-  button.closest('.selection-box').remove();
+  const box = button.closest('.selection-box');
+  const list = box.parentElement;
+  // Removing the focused chip would otherwise drop focus to <body>; move it to a sensible
+  // successor first (the next remaining chip's remove button, else the group's dropdown).
+  const sibling = box.nextElementSibling || box.previousElementSibling;
+  box.remove();
+  const category = list.id.replace('-selections', '');
+  const successor =
+      (sibling && sibling.querySelector('button')) || document.getElementById(category + '-select');
+  if (successor) {
+    successor.focus();
+  }
   htmx.trigger(document.getElementById('filters-form'), 'refresh');
 }
 
 function clearSelections(category) {
-  document.getElementById(category + '-selections').innerHTML = '';
+  const list = document.getElementById(category + '-selections');
+  // Keep the empty-state placeholder; only drop the chip boxes.
+  list.querySelectorAll('.selection-box').forEach(box => box.remove());
+  document.getElementById(category + '-select').focus();
   htmx.trigger(document.getElementById('filters-form'), 'refresh');
 }
+
+// Wire the styled-but-previously-inert #error-div to htmx's failure events: a filter request that
+// times out, fails to send, or returns an error leaves the last good results in place and shows a
+// plain-language message, instead of failing silently. Any successful request clears it.
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('filters-form');
+  const errorDiv = document.getElementById('error-div');
+  if (!form || !errorDiv) {
+    return;
+  }
+  const showError = () => {
+    errorDiv.textContent =
+        'Could not update results — check your connection and try again. '
+        + 'The results below still show your last successful search.';
+  };
+  const clearError = () => {
+    errorDiv.textContent = '';
+  };
+  // Clear at the start of every request; the error events below fire later in the same request's
+  // lifecycle, so a failed request ends up showing the message and a successful one stays cleared.
+  form.addEventListener('htmx:beforeRequest', clearError);
+  ['htmx:responseError', 'htmx:sendError', 'htmx:timeout'].forEach(
+      evt => form.addEventListener(evt, showError));
+});

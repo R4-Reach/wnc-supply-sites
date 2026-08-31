@@ -44,7 +44,24 @@ public class SuppliesController {
       HttpSession session,
       @ModelAttribute(DeploymentAdvice.DEPLOYMENT_STATE_LIST) List<String> stateList,
       @ModelAttribute(DeploymentAdvice.DEPLOYMENT_FULL_STATE_LIST) List<String> fullStateList) {
-    return supplies("donate", request, session, stateList, fullStateList);
+    // "donate" mode ignores the filter params entirely (it resets to the donate-mode defaults),
+    // so pass nulls/defaults for them.
+    return supplies(
+        "donate",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false,
+        false,
+        "last-updated",
+        request,
+        session,
+        stateList,
+        fullStateList);
   }
 
   /**
@@ -57,6 +74,19 @@ public class SuppliesController {
   @GetMapping(PATH_SUPPLY_SEARCH)
   public ModelAndView supplies(
       @RequestParam(required = false) String mode,
+      // No-JS fallback: the filter form also submits as a plain GET here (with an "apply" marker
+      // from its submit button). When present, bind the filters from the query string exactly as
+      // the htmx POST endpoint does, so filtering works with scripting disabled or failed.
+      @RequestParam(required = false) String apply,
+      @RequestParam(required = false) List<String> sites,
+      @RequestParam(required = false) List<String> states,
+      @RequestParam(required = false) List<String> counties,
+      @RequestParam(required = false) List<String> items,
+      @RequestParam(required = false) List<String> itemStatus,
+      @RequestParam(required = false) List<String> siteType,
+      @RequestParam(defaultValue = "false") boolean acceptingDonations,
+      @RequestParam(defaultValue = "false") boolean notAcceptingDonations,
+      @RequestParam(defaultValue = "last-updated") String sort,
       HttpServletRequest request,
       HttpSession session,
       @ModelAttribute(DeploymentAdvice.DEPLOYMENT_STATE_LIST) List<String> stateList,
@@ -65,8 +95,24 @@ public class SuppliesController {
     List<String> effectiveStateList = stateList.isEmpty() ? fullStateList : stateList;
 
     FilterState state = (FilterState) session.getAttribute(FILTER_SESSION_KEY);
-    if (mode != null || state == null) {
+    if (mode != null) {
       state = FilterState.defaults("donate".equalsIgnoreCase(mode));
+      session.setAttribute(FILTER_SESSION_KEY, state);
+    } else if (apply != null) {
+      state =
+          buildFilterState(
+              sites,
+              states,
+              counties,
+              items,
+              itemStatus,
+              siteType,
+              acceptingDonations,
+              notAcceptingDonations,
+              sort);
+      session.setAttribute(FILTER_SESSION_KEY, state);
+    } else if (state == null) {
+      state = FilterState.defaults(false);
       session.setAttribute(FILTER_SESSION_KEY, state);
     }
 
@@ -106,6 +152,7 @@ public class SuppliesController {
             state.getSort());
     model.put("results", buildRows(results));
     model.put("resultCount", results.size());
+    model.put("resultCountLabel", resultCountLabel(results.size()));
 
     return new ModelAndView("supplies/supplies", model);
   }
@@ -137,31 +184,62 @@ public class SuppliesController {
     List<String> effectiveStateList = stateList.isEmpty() ? fullStateList : stateList;
 
     FilterState state =
-        new FilterState(
-            nullSafe(sites),
-            nullSafe(states),
-            nullSafe(counties),
-            nullSafe(items),
-            nullSafe(itemStatus),
-            nullSafe(siteType),
+        buildFilterState(
+            sites,
+            states,
+            counties,
+            items,
+            itemStatus,
+            siteType,
             acceptingDonations,
             notAcceptingDonations,
             sort);
-    session.setAttribute(FILTER_SESSION_KEY, state);
 
+    // Query first, persist the selection only after it succeeds: if the query throws, the session
+    // must not be left holding a filter set the user never saw applied (it would silently restore
+    // on their next visit).
     List<SiteSupplyData> results =
         sortResults(
             getSuppliesData(state.toRequest(), authenticated, effectiveStateList).getResults(),
             sort);
+    session.setAttribute(FILTER_SESSION_KEY, state);
 
     Map<String, Object> model = new HashMap<>();
     model.put("results", buildRows(results));
     model.put("resultCount", results.size());
+    model.put("resultCountLabel", resultCountLabel(results.size()));
     return new ModelAndView("supplies/results-fragment", model);
+  }
+
+  private static FilterState buildFilterState(
+      List<String> sites,
+      List<String> states,
+      List<String> counties,
+      List<String> items,
+      List<String> itemStatus,
+      List<String> siteType,
+      boolean acceptingDonations,
+      boolean notAcceptingDonations,
+      String sort) {
+    return new FilterState(
+        nullSafe(sites),
+        nullSafe(states),
+        nullSafe(counties),
+        nullSafe(items),
+        nullSafe(itemStatus),
+        nullSafe(siteType),
+        acceptingDonations,
+        notAcceptingDonations,
+        sort);
   }
 
   private static List<String> nullSafe(List<String> input) {
     return input == null ? new ArrayList<>() : input;
+  }
+
+  /** Human-readable, correctly-singularized result count shown above the table. */
+  private static String resultCountLabel(int count) {
+    return count + (count == 1 ? " result" : " results");
   }
 
   // @VisibleForTesting

@@ -71,6 +71,63 @@ table.results-table tbody tr:nth-child(even) {
     color: var(--danger);
 }
 
+/* Filter helper / disclosure text — muted but AA-legible (tokens.css, not an ad-hoc gray). */
+.filter-help {
+    margin-bottom: .5rem;
+    color: var(--neutral-muted-text);
+}
+
+/* Placeholder shown in an empty chip box so first-time users see where selections will land.
+   Real, in-DOM text (readable by screen readers); hidden once the box holds any chip. */
+.selection-placeholder {
+    color: var(--neutral-muted-text);
+    font-style: italic;
+    padding: 3px;
+}
+.selection-list:has(.selection-box) .selection-placeholder {
+    display: none;
+}
+
+/* WCAG 2.5.8 touch targets on the stated phone-first device: enlarge the native status checkboxes
+   and pad their label rows, and give the chip remove buttons a real hit area. */
+#item-status input[type="checkbox"],
+#site-status input[type="checkbox"],
+#site-type input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+}
+.status-checkbox-container fieldset > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+}
+.selection-box button {
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.filter-actions {
+    margin: .5rem 0;
+}
+.apply-filters-button {
+    min-height: 32px;
+    min-width: 100px;
+}
+
+/* Busy indicator: htmx toggles opacity via .htmx-request; keep it muted and out of the live region
+   so it never competes with the announced result count. */
+#results-busy {
+    margin-left: 10px;
+    color: var(--neutral-muted-text);
+    font-style: italic;
+}
+
+.no-results-row td {
+    font-style: italic;
+    color: var(--neutral-muted-text);
+}
+
 /*
    Holder container for the update button and a loading indicator popup div.
  */

@@ -26,17 +26,24 @@
 <div id="error-div" class="error-div"></div>
 
 <!-- Filters + sort post to /supplies/site-data on any change; the response swaps into the
-     results table below and updates the count out-of-band. -->
+     results table below and updates the count out-of-band.
+     method="get"/action provide a no-JS fallback: with htmx unavailable, the submit button below
+     posts the same filters as a plain GET to the page itself, which re-renders server-side.
+     hx-sync cancels an in-flight request when a newer change fires, so a slow response can't land
+     stale rows over a newer one. -->
 <form id="filters-form"
+      method="get"
+      action="/supplies/site-list"
       hx-post="/supplies/site-data"
-      hx-trigger="change, refresh"
+      hx-trigger="change, refresh, submit"
       hx-target="#results-tbody"
-      hx-swap="innerHTML">
+      hx-swap="innerHTML"
+      hx-sync="this:replace">
 
 <div>
 
-<div style="margin-bottom: .5rem; color: gray">
-    * Filter your results using the options below
+<div class="filter-help">
+    Filter your results using the options below. Selections apply immediately.
 </div>
 
 <div class="filters-container">
@@ -53,7 +60,7 @@
       <!-- Filter: Select Site DropDown -->
       <td class="selection-td">
         <div class="vertical">
-          <label for="site-select">Donation Site:</label>
+          <label for="site-select">Site:</label>
           <select id="site-select" onchange="handleSelection('site')">
             <option value=""></option>
             {{#siteOptions}}<option value="{{.}}">{{.}}</option>{{/siteOptions}}
@@ -131,9 +138,10 @@
       <!-- Filter current selections: Sites -->
       <td>
         <div id="site-selections" class="selection-list">
+          <div class="selection-placeholder">No filters selected</div>
           {{#siteSelections}}
           <div class="box horizontal selection-box">
-            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)" aria-label="Remove {{.}}">X</button></div>
             <div class="selected-value">{{.}}</div>
             <input type="hidden" name="sites" value="{{.}}">
           </div>
@@ -144,9 +152,10 @@
       <!-- Filter current selections: States -->
       <td>
         <div id="state-selections" class="selection-list">
+          <div class="selection-placeholder">No filters selected</div>
           {{#stateSelections}}
           <div class="box horizontal selection-box">
-            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)" aria-label="Remove {{.}}">X</button></div>
             <div class="selected-value">{{.}}</div>
             <input type="hidden" name="states" value="{{.}}">
           </div>
@@ -157,9 +166,10 @@
       <!-- Filter current selections: Counties -->
       <td>
         <div id="county-selections" class="selection-list">
+          <div class="selection-placeholder">No filters selected</div>
           {{#countySelections}}
           <div class="box horizontal selection-box">
-            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)" aria-label="Remove {{.}}">X</button></div>
             <div class="selected-value">{{.}}</div>
             <input type="hidden" name="counties" value="{{.}}">
           </div>
@@ -170,9 +180,10 @@
       <!-- Filter current selections: Items -->
       <td>
         <div id="item-selections" class="selection-list">
+          <div class="selection-placeholder">No filters selected</div>
           {{#itemSelections}}
           <div class="box horizontal selection-box">
-            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)">X</button></div>
+            <div style="margin-right: 5px"><button type="button" onclick="removeSelection(this)" aria-label="Remove {{.}}">X</button></div>
             <div class="selected-value">{{.}}</div>
             <input type="hidden" name="items" value="{{.}}">
           </div>
@@ -192,7 +203,7 @@
 
         <div>
           <input type="checkbox" id="urgent-items" name="itemStatus" value="Urgently Needed" {{#urgentChecked}}checked{{/urgentChecked}}/>
-          <label for="urgent-items" class="urgent"><span class="status-glyph" aria-hidden="true">▲</span> Urgently Needed</label>
+          <label for="urgent-items" class="urgent"><span class="status-glyph" aria-hidden="true">▲</span> Urgent</label>
         </div>
 
         <div>
@@ -207,7 +218,7 @@
 
         <div>
           <input type="checkbox" id="oversupply-items" name="itemStatus" value="Oversupply" {{#oversupplyChecked}}checked{{/oversupplyChecked}}/>
-          <label for="oversupply-items" class="oversupply"><span class="status-glyph" aria-hidden="true">▽</span> Oversupply<br>(too many)</label>
+          <label for="oversupply-items" class="oversupply"><span class="status-glyph" aria-hidden="true">▽</span> Oversupply (too many)</label>
         </div>
       </fieldset>
     </div>
@@ -247,10 +258,22 @@
   </div>
 </div>
 </div>
+
+<!-- No-JS fallback submit. With htmx running it re-posts the current filters (harmless, and the
+     "submit" trigger keeps it in-page); with scripting off it does a plain GET to the page. -->
+<div class="filter-actions">
+  <button type="submit" name="apply" value="1" class="apply-filters-button">Search</button>
+</div>
+
 <hr>
 <div id="results-count-and-sort">
   <div id="parent-div">
-    <div class="bold" id="result-count">{{resultCount}} results</div>
+    <!-- role=status + aria-live so the settled result count is announced after each filter change;
+         the count is swapped as innerHTML (see results-fragment.html) to keep this region in place. -->
+    <div id="results-status" role="status" aria-live="polite">
+      <span class="bold" id="result-count">{{resultCountLabel}}</span>
+    </div>
+    <span class="htmx-indicator" id="results-busy" aria-hidden="true">Updating&hellip;</span>
   </div>
   <div id="sort-results-container">
     <label class="bold" for="sort-results">Sort Results By:</label>

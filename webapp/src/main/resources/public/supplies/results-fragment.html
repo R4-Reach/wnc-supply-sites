@@ -1,4 +1,5 @@
 {{! htmx response for a filter change: the new table rows (swapped into #results-tbody) plus an
-    out-of-band update of the result count. }}
+    out-of-band update of the result count. The count is swapped as innerHTML so the surrounding
+    aria-live region element stays in place and screen readers announce the settled count. }}
 {{> supplies/results-rows }}
-<div class="bold" id="result-count" hx-swap-oob="true">{{resultCount}} results</div>
+<span class="bold" id="result-count" hx-swap-oob="innerHTML">{{resultCountLabel}}</span>
