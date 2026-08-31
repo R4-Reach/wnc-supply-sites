@@ -3,6 +3,7 @@ package org.r4reach.twilio.sms;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +59,9 @@ public class SmsSender {
     } else {
       log.info("Sending SMS to: {}, message length: {}", phoneNumber, message.length());
 
-      String twilioFromNumber = siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_FROM_NUMBER);
-      if (!twilioFromNumber.startsWith("+1")) {
+      String rawFromNumber = siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_FROM_NUMBER);
+      Optional<String> twilioFromNumber = toFromE164(rawFromNumber);
+      if (twilioFromNumber.isEmpty()) {
         log.warn("Twilio from number is not set / invalid in site config; cannot send SMS");
         recordMessage(
             jdbi,
@@ -82,7 +84,7 @@ public class SmsSender {
         Message smsMessage =
             Message.creator(
                     new PhoneNumber(e164),
-                    new PhoneNumber(twilioFromNumber),
+                    new PhoneNumber(twilioFromNumber.get()),
                     TruncateString.truncate(message, 1500))
                 .create();
         recordMessage(jdbi, new MessageResult(smsMessage, message.length()));
@@ -100,6 +102,19 @@ public class SmsSender {
         return false;
       }
     }
+  }
+
+  /**
+   * Normalizes the configured Twilio "from" number to E.164 ({@code +1XXXXXXXXXX}), the same way
+   * the recipient number is normalized, so a stored value of {@code 18287444191}, {@code
+   * 8287444191}, or {@code +18287444191} all resolve alike. Empty when the config value is unset or
+   * not a valid 10- or 11-digit US number.
+   */
+  // @VisibleForTesting
+  static Optional<String> toFromE164(String rawFromNumber) {
+    return PhoneNumberUtil.isValid(rawFromNumber)
+        ? Optional.of("+" + PhoneNumberUtil.toCanonical(rawFromNumber))
+        : Optional.empty();
   }
 
   @Builder
