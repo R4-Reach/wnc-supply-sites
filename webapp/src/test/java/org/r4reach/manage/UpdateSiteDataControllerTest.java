@@ -29,17 +29,30 @@ class UpdateSiteDataControllerTest {
           default -> field.getFrontEndName() + " " + UUID.randomUUID().toString().substring(0, 10);
         };
 
+    long siteId = TestConfiguration.getSiteId();
     Map<String, String> params =
         Map.of(
             "siteId",
-            String.valueOf(TestConfiguration.getSiteId()),
+            String.valueOf(siteId),
             "field",
             field.getFrontEndName(),
             "newValue",
             newValue);
 
-    var response = updateSiteDataController.updateSiteData(params);
+    var response = updateSiteDataController.updateSiteData(List.of(siteId), params);
     assertThat(response.getStatusCode().value()).isEqualTo(200);
+  }
+
+  /** A caller who does not manage the target site is refused (no per-site IDOR). */
+  @org.junit.jupiter.api.Test
+  void updateSiteData_forbiddenWhenSiteNotOwned() {
+    long siteId = TestConfiguration.getSiteId();
+    Map<String, String> params =
+        Map.of("siteId", String.valueOf(siteId), "field", "siteName", "newValue", "hijacked");
+
+    var response = updateSiteDataController.updateSiteData(List.of(), params);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(403);
   }
 
   static List<ManageSiteDao.SiteField> updateSiteDataThrowsNoErrors() {

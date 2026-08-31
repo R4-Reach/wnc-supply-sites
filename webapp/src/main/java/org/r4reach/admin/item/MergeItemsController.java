@@ -9,10 +9,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
+import org.r4reach.auth.LoggedInAdvice;
+import org.r4reach.auth.UserRole;
 import org.r4reach.util.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
@@ -25,7 +28,12 @@ public class MergeItemsController {
   private final Jdbi jdbi;
 
   @GetMapping("/admin/merge-items")
-  ModelAndView showMergeItems() {
+  ModelAndView showMergeItems(@ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles) {
+    // Merging catalog items is an irreversible data operation; gate it to DATA_ADMIN. The
+    // /admin/** login gate alone lets any logged-in user reach this.
+    if (!UserRole.isDataAdmin(roles)) {
+      return new ModelAndView("redirect:/");
+    }
     Map<String, Object> params = new HashMap<>();
     params.put("items", fetchAllItems(jdbi));
     // The shared item-table partial references these; the do-merge POST supplies them, so the
@@ -69,8 +77,13 @@ public class MergeItemsController {
    */
   @PostMapping("/admin/merge-items/do-merge")
   ModelAndView doMergeForm(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
       @RequestParam(required = false) Long mergeInto,
       @RequestParam(name = "mergeItems", required = false) List<Long> mergeItems) {
+    if (!UserRole.isDataAdmin(roles)) {
+      log.warn("Unauthorized merge-items attempt, roles: {}", roles);
+      return new ModelAndView("redirect:/");
+    }
     Map<String, Object> params = new HashMap<>();
     params.put("mergeInto", mergeInto == null ? 0L : mergeInto);
     // Never merge the "keep" item into itself, even if its checkbox was also ticked.

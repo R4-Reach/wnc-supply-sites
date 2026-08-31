@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.TestConfiguration.ItemResult;
+import org.r4reach.auth.UserRole;
 import org.r4reach.data.ItemStatus;
 import org.r4reach.delivery.DeliveryDao;
 import org.r4reach.delivery.DeliveryFixture;
@@ -143,6 +144,16 @@ class MergeItemsControllerTest {
   static List<String> fetchAllItems() {
     return jdbiTest.withHandle(
         h -> h.createQuery("select name from item").mapTo(String.class).list());
+  }
+
+  /** Only DATA_ADMIN may run a merge; a plain logged-in user is redirected away. */
+  @Test
+  void doMerge_forbiddenWithoutDataAdmin() {
+    var view =
+        new MergeItemsController(jdbiTest)
+            .doMergeForm(List.of(UserRole.AUTHORIZED), 1L, List.of(2L));
+
+    assertThat(view.getViewName()).isEqualTo("redirect:/");
   }
 
   @Test

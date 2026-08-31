@@ -3,10 +3,12 @@ package org.r4reach.manage.add.site;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
+import org.r4reach.auth.UserRole;
 import org.r4reach.data.SiteType;
 import org.r4reach.supplies.site.details.SiteDetailDao;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +37,8 @@ class AddSiteControllerTest {
     newSiteParams.put("contactName", "contactName");
     newSiteParams.put("additionalContacts", "additionalContacts");
 
-    ResponseEntity<String> result = addSiteController.postNewSite("1233334444", newSiteParams);
+    ResponseEntity<String> result =
+        addSiteController.postNewSite("1233334444", List.of(UserRole.SITE_MANAGER), newSiteParams);
 
     assertThat(result.getStatusCode().value()).isEqualTo(200);
     assertThat(result.getBody()).contains("manageSiteUrl");
@@ -59,5 +62,24 @@ class AddSiteControllerTest {
 
     assertThat(data.getContactName()).isEqualTo("contactName");
     assertThat(data.getContactNumber()).isEqualTo("11233334444");
+  }
+
+  /** A logged-in user without a site-managing role cannot create sites. */
+  @Test
+  void addSite_forbiddenWithoutManageRole() {
+    Map<String, String> newSiteParams = new HashMap<>();
+    newSiteParams.put("siteName", UUID.randomUUID().toString());
+    newSiteParams.put("streetAddress", "address");
+    newSiteParams.put("city", "city");
+    newSiteParams.put("state", "NC");
+    newSiteParams.put("county", "Watauga");
+    newSiteParams.put("siteType", SiteType.SUPPLY_HUB.getText());
+    newSiteParams.put("maxSupplyLoad", "Car");
+    newSiteParams.put("contactName", "contactName");
+
+    ResponseEntity<String> result =
+        addSiteController.postNewSite("1233334444", List.of(UserRole.AUTHORIZED), newSiteParams);
+
+    assertThat(result.getStatusCode().value()).isEqualTo(403);
   }
 }

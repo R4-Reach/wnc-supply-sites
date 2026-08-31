@@ -81,6 +81,21 @@ class DeliveryConfirmationControllerTest {
     assertThat(confirmation.getConfirmed()).isFalse();
   }
 
+  /**
+   * A cancel request with a code that matches no confirmation must not cancel the delivery: the
+   * status flip and notifications are gated on a matching code, not just the audit record.
+   */
+  @Test
+  void cancel_doesNothingIfCodeIsWrong() {
+    Delivery delivery = DeliveryHelper.withDispatcherConfirmedDelivery();
+
+    controller.cancelRequest(delivery.getPublicKey(), "WRONG-CODE", "cancelReason");
+
+    delivery = fetchDeliveryByPublicKey(jdbiTest, delivery.getPublicKey()).orElseThrow();
+    assertThat(delivery.getDeliveryStatus())
+        .isNotEqualTo(DeliveryStatus.DELIVERY_CANCELLED.getAirtableName());
+  }
+
   @EnumSource(DriverStatus.class)
   @ParameterizedTest
   void buildDriverStatusLink(DriverStatus status) {

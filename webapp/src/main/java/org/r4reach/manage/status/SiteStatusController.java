@@ -15,6 +15,7 @@ import org.r4reach.manage.SelectSiteController;
 import org.r4reach.manage.UserSiteAuthorization;
 import org.r4reach.supplies.site.details.SiteDetailDao;
 import org.r4reach.util.EnumUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -91,19 +92,23 @@ public class SiteStatusController {
    */
   @PostMapping("/manage/update-status")
   @ResponseBody
-  ResponseEntity<?> updateStatus(@RequestParam Map<String, String> params) {
+  ResponseEntity<?> updateStatus(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
     String siteId = params.get("siteId");
     String statusFlag = params.get("statusFlag");
     String newValue = params.get("newValue");
 
-    String siteName = ManageSiteDao.fetchSiteName(jdbi, Long.parseLong(siteId));
-    if (siteName == null) {
-      log.warn(
-          "Invalid site update value received, invalid site id (not found), params: {}", params);
-      return ResponseEntity.badRequest().body("Invalid site id: " + siteId);
+    // Ownership check: only a manager of this site may flip its status flags (mirrors the read
+    // path above). Without it, any logged-in user could deactivate/hide any site by id.
+    SiteDetailDao.SiteDetailData siteData =
+        UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).orElse(null);
+    if (siteData == null) {
+      log.warn("Unauthorized status update, siteId: {}, params: {}", siteId, params);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized for site");
     }
 
-    log.info("Site update received, site name: {}, params; {}", siteName, params);
+    log.info("Site update received, site name: {}, params; {}", siteData.getSiteName(), params);
 
     var flag = EnumStatusUpdateFlag.fromText(statusFlag).orElse(null);
     if (flag == null) {

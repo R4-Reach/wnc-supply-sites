@@ -31,4 +31,22 @@ class LoginControllerTest {
 
     assertThat(modelAndView.getViewName()).isEqualTo("redirect:/login/setup-password");
   }
+
+  @Test
+  void safeRedirect_allowsLocalPaths() {
+    assertThat(LoginController.safeRedirect("/manage/select-site"))
+        .isEqualTo("/manage/select-site");
+    assertThat(LoginController.safeRedirect("/")).isEqualTo("/");
+  }
+
+  @Test
+  void safeRedirect_rejectsOffSiteTargets() {
+    // Protocol-relative, backslash-normalized, absolute-URL, and empty inputs all fall back to "/".
+    assertThat(LoginController.safeRedirect("//evil.com")).isEqualTo("/");
+    assertThat(LoginController.safeRedirect("/\\evil.com")).isEqualTo("/");
+    assertThat(LoginController.safeRedirect("https://evil.com")).isEqualTo("/");
+    assertThat(LoginController.safeRedirect("evil.com")).isEqualTo("/");
+    assertThat(LoginController.safeRedirect(null)).isEqualTo("/");
+    assertThat(LoginController.safeRedirect("")).isEqualTo("/");
+  }
 }

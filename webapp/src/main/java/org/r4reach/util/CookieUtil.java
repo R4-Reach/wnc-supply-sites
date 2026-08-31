@@ -13,6 +13,9 @@ public class CookieUtil {
     cookie.setMaxAge(14 * 24 * 60 * 60); // expires in 14 days
     cookie.setSecure(true);
     cookie.setHttpOnly(true);
+    // SameSite=Lax so the auth cookie isn't sent on cross-site POSTs, blunting CSRF while full
+    // Spring Security CSRF tokens remain deferred. Lax still allows top-level GET navigations.
+    cookie.setAttribute("SameSite", "Lax");
     response.addCookie(cookie);
   }
 
@@ -24,6 +27,7 @@ public class CookieUtil {
     cookie.setMaxAge(0);
     cookie.setSecure(true);
     cookie.setHttpOnly(true);
+    cookie.setAttribute("SameSite", "Lax");
     response.addCookie(cookie);
   }
 

@@ -11,6 +11,7 @@ import org.r4reach.auth.LoggedInAdvice;
 import org.r4reach.manage.SelectSiteController;
 import org.r4reach.manage.UserSiteAuthorization;
 import org.r4reach.supplies.site.details.SiteDetailDao;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,8 +76,17 @@ public class SiteContactController {
    */
   @PostMapping("/manage/remove-manager")
   @ResponseBody
-  ResponseEntity<String> removeManager(@RequestParam Map<String, String> params) {
+  ResponseEntity<String> removeManager(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
     log.info("/manage/remove-manager received params: {}", params);
+
+    // Ownership check: only a manager of this site may strip its managers. Without it, any
+    // logged-in user could revoke anyone's access on any site by id.
+    if (UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, params.get("siteId")).isEmpty()) {
+      log.warn("Unauthorized remove-manager, params: {}", params);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized for site");
+    }
 
     long siteId = Long.parseLong(params.get("siteId"));
     Long managerId =
@@ -96,8 +106,17 @@ public class SiteContactController {
    * saved row plus a fresh blank add-form for a new manager, so the user can keep adding.
    */
   @PostMapping("/manage/add-manager")
-  ModelAndView addManager(@RequestParam Map<String, String> params) {
+  ModelAndView addManager(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
     log.info("/manage/add-manager received params: {}", params);
+
+    // Ownership check: only a manager of this site may add managers to it. Without it, any
+    // logged-in user could self-add as SITE_MANAGER of any site by id.
+    if (UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, params.get("siteId")).isEmpty()) {
+      log.warn("Unauthorized add-manager, params: {}", params);
+      return new ModelAndView("redirect:" + SelectSiteController.PATH_SELECT_SITE);
+    }
 
     long siteId = Long.parseLong(params.get("siteId"));
     Long managerId =

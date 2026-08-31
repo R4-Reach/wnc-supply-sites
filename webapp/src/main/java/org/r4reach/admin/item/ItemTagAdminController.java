@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * Item-tagging admin UI, gated to {@link UserRole#DATA_ADMIN}. Lets a data admin manage the tag
@@ -125,7 +126,8 @@ public class ItemTagAdminController {
       return htmlBadRequest(formatError);
     }
     if (TagAdminDao.createTag(jdbi, name).isEmpty()) {
-      return htmlBadRequest("A tag named “" + name.trim() + "” already exists.");
+      return htmlBadRequest(
+          "A tag named “" + HtmlUtils.htmlEscape(name.trim()) + "” already exists.");
     }
     return refresh();
   }
@@ -143,7 +145,8 @@ public class ItemTagAdminController {
       return htmlBadRequest(formatError);
     }
     if (!TagAdminDao.renameTag(jdbi, tagId, name)) {
-      return htmlBadRequest("Another tag is already named “" + name.trim() + "”.");
+      return htmlBadRequest(
+          "Another tag is already named “" + HtmlUtils.htmlEscape(name.trim()) + "”.");
     }
     return refresh();
   }

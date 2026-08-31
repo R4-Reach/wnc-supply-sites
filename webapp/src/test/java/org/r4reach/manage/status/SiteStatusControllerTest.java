@@ -2,6 +2,7 @@ package org.r4reach.manage.status;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ class SiteStatusControllerTest {
 
     private void toggleFlag(SiteStatusController.EnumStatusUpdateFlag flag, String value) {
       selectSiteController.updateStatus(
+          List.of(siteId),
           Map.of(
               "siteId",
               String.valueOf(siteId), //
@@ -29,6 +31,22 @@ class SiteStatusControllerTest {
 
     private void toggleFlag(SiteStatusController.EnumStatusUpdateFlag flag, boolean value) {
       toggleFlag(flag, String.valueOf(value));
+    }
+
+    /** A caller who does not manage the site cannot flip its status flags (no per-site IDOR). */
+    @Test
+    void forbiddenWhenSiteNotOwned() {
+      var response =
+          selectSiteController.updateStatus(
+              List.of(),
+              Map.of(
+                  "siteId",
+                  String.valueOf(siteId),
+                  "statusFlag",
+                  SiteStatusController.EnumStatusUpdateFlag.ACTIVE.getText(),
+                  "newValue",
+                  "false"));
+      assertThat(response.getStatusCode().value()).isEqualTo(403);
     }
 
     @Test

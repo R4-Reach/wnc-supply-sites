@@ -30,9 +30,25 @@ public class LoginController {
   @GetMapping("/login/login")
   public ModelAndView login(@RequestParam(required = false) String redirectUri) {
     Map<String, String> pageParams = new HashMap<>();
-    pageParams.put("redirectUri", Optional.ofNullable(redirectUri).orElse("/"));
+    pageParams.put("redirectUri", safeRedirect(redirectUri));
     pageParams.put("errorMessage", "");
     return new ModelAndView("login/login", pageParams);
+  }
+
+  /**
+   * Restricts post-login redirects to same-site absolute paths so a crafted {@code redirectUri}
+   * can't send the user to an external host. Rejects protocol-relative ({@code //host}) and
+   * backslash ({@code /\host}) forms that browsers normalize to an off-site URL.
+   */
+  static String safeRedirect(String redirectUri) {
+    if (redirectUri == null
+        || redirectUri.isBlank()
+        || !redirectUri.startsWith("/")
+        || redirectUri.startsWith("//")
+        || redirectUri.startsWith("/\\")) {
+      return "/";
+    }
+    return redirectUri;
   }
 
   @GetMapping("/login/setup-password")
@@ -51,7 +67,8 @@ public class LoginController {
     String user = params.get("user").getFirst();
     String password = params.get("password").getFirst();
     String redirectUri =
-        Optional.ofNullable(params.get("redirectUri")).map(List::getFirst).orElse("/");
+        safeRedirect(
+            Optional.ofNullable(params.get("redirectUri")).map(List::getFirst).orElse("/"));
 
     if (user == null || user.isEmpty() || password == null || password.isEmpty()) {
       Map<String, String> pageParams = new HashMap<>();

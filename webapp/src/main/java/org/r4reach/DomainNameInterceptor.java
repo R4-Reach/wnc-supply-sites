@@ -27,7 +27,7 @@ public class DomainNameInterceptor implements WebMvcConfigurer {
 
       String host = request.getHeader("host");
 
-      if (host.contains("wnc-supply-sites.com") || host.contains("localhost")) {
+      if (host != null && (host.contains("wnc-supply-sites.com") || host.contains("localhost"))) {
         return true;
       } else {
         response.sendRedirect("https://wnc-supply-sites.com");

@@ -1,11 +1,15 @@
 package org.r4reach.manage;
 
+import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
+import org.r4reach.auth.LoggedInAdvice;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -23,7 +27,9 @@ public class UpdateSiteDataController {
    */
   @PostMapping("/manage/update-site")
   @ResponseBody
-  ResponseEntity<?> updateSiteData(@RequestParam Map<String, String> params) {
+  ResponseEntity<?> updateSiteData(
+      @ModelAttribute(LoggedInAdvice.USER_SITES) List<Long> sites,
+      @RequestParam Map<String, String> params) {
     log.info("Update site data request received: {}", params);
 
     String siteId = params.get("siteId");
@@ -34,9 +40,11 @@ public class UpdateSiteDataController {
       newValue = newValue.trim();
     }
 
-    if (ManageSiteDao.fetchSiteName(jdbi, Long.parseLong(siteId)) == null) {
-      log.warn("invalid site id: {}, params: {}", siteId, params);
-      return ResponseEntity.badRequest().body("Invalid site id");
+    // Ownership check: the caller may only edit a site they manage (mirrors the read paths and
+    // InventoryController). Without this, any logged-in user could edit any site by id.
+    if (UserSiteAuthorization.isAuthorizedForSite(jdbi, sites, siteId).isEmpty()) {
+      log.warn("Unauthorized site update, siteId: {}, params: {}", siteId, params);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized for site");
     }
 
     var siteField = ManageSiteDao.SiteField.lookupField(field).orElse(null);

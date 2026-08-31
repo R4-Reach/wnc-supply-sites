@@ -10,10 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.DeploymentAdvice;
 import org.r4reach.auth.LoggedInAdvice;
+import org.r4reach.auth.UserRole;
 import org.r4reach.data.CountyDao;
 import org.r4reach.data.SiteType;
 import org.r4reach.manage.ManageSiteDao;
 import org.r4reach.manage.SelectSiteController;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,7 +78,14 @@ public class AddSiteController {
   @ResponseBody
   ResponseEntity<String> postNewSite(
       @ModelAttribute(LoggedInAdvice.USER_PHONE) String phone,
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
       @RequestParam Map<String, String> params) {
+    // Role check: creating sites is a site-manager/admin capability, not something every
+    // logged-in user may do. Without it, any user could pollute the catalog with arbitrary sites.
+    if (!UserRole.canManageSites(roles)) {
+      log.warn("Unauthorized add-site attempt, roles: {}, params: {}", roles, params);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized to add sites");
+    }
     log.info("Received add new site data: {}", params);
     var addSiteData =
         AddSiteData.builder()

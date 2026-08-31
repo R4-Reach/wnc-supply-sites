@@ -171,19 +171,29 @@ class DeliveryConfirmationController {
             .orElseThrow(
                 () -> new IllegalArgumentException("Invalid delivery code: " + deliveryKey));
 
-    Arrays.stream(DeliveryConfirmation.ConfirmRole.values())
-        .map(delivery::getConfirmation)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .filter(c -> c.getCode().equals(code))
-        .findAny()
-        .ifPresent(
-            confirm ->
-                ConfirmationDao.cancelDelivery(
-                    jdbi,
-                    deliveryKey,
-                    cancelReason,
-                    DeliveryConfirmation.ConfirmRole.valueOf(confirm.getConfirmRole())));
+    // The whole cancellation — audit record, notifications, and the status change — must be gated
+    // on a confirmation code that actually matches. Previously only the audit record was guarded
+    // while the status flip and SMS ran unconditionally, so any known publicUrlKey plus any code
+    // cancelled the delivery.
+    DeliveryConfirmation matched =
+        Arrays.stream(DeliveryConfirmation.ConfirmRole.values())
+            .map(delivery::getConfirmation)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .filter(c -> c.getCode().equals(code))
+            .findAny()
+            .orElse(null);
+
+    if (matched == null) {
+      log.warn("Cancel request with no matching confirmation code, delivery: {}", deliveryKey);
+      return new ModelAndView("redirect:/delivery/" + deliveryKey);
+    }
+
+    ConfirmationDao.cancelDelivery(
+        jdbi,
+        deliveryKey,
+        cancelReason,
+        DeliveryConfirmation.ConfirmRole.valueOf(matched.getConfirmRole()));
 
     var messages =
         notificationStateMachine.cancel(
