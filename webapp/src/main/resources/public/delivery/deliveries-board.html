@@ -33,9 +33,9 @@
     <div class="kanban-cards" data-status="{{statusName}}">
       {{#deliveries}}
       <article class="kanban-card" draggable="true" data-public-key="{{publicKey}}">
-        <a class="kanban-card-title" href="{{detailLink}}">{{deliveryDate}} (#{{deliveryNumber}}) {{fromSite}} &rarr; {{toSite}}</a>
+        <a class="kanban-card-title" href="{{detailLink}}">{{#deliveryDate}}{{.}} {{/deliveryDate}}(#{{deliveryNumber}}) {{fromSite}} &rarr; {{toSite}}</a>
         <dl class="kanban-card-fields">
-          <div><dt>Delivery Date</dt><dd>{{deliveryDate}}</dd></div>
+          <div><dt>Delivery Date</dt><dd>{{#deliveryDate}}{{.}}{{/deliveryDate}}</dd></div>
           <div><dt>Pick Up Site</dt><dd>{{fromSite}}</dd></div>
           <div><dt>Drop Off Site</dt><dd>{{toSite}}</dd></div>
           <div><dt>Item Count</dt><dd>{{itemCount}}</dd></div>
