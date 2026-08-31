@@ -52,6 +52,7 @@ class DeliveryControllerTest {
       List<String> expectedTemplateParams =
           Arrays.stream(TemplateParams.values())
               .filter(e -> e != TemplateParams.confirmMessage)
+              .filter(e -> e != TemplateParams.matchGoodsMessage)
               .filter(e -> e != TemplateParams.unableToConfirmMessages)
               .map(Enum::name)
               .sorted()
@@ -86,6 +87,7 @@ class DeliveryControllerTest {
                               TemplateParams.driverStatus,
                               TemplateParams.dropOffConfirmed,
                               TemplateParams.fromContactPhone,
+                              TemplateParams.matchGoodsMessage,
                               TemplateParams.pickupConfirmed,
                               TemplateParams.toContactPhone,
                               TemplateParams.unableToConfirmMessages)
@@ -365,7 +367,12 @@ class DeliveryControllerTest {
       ModelAndView result = deliveryController.matchGoods(publicKey, code);
 
       assertThat(result.getViewName())
-          .isEqualTo("redirect:/delivery/" + publicKey + "?code=" + code);
+          .isEqualTo(
+              "redirect:/delivery/"
+                  + publicKey
+                  + "?code="
+                  + code
+                  + "&matchAdded=1&matchCandidates=2");
       assertThat(fetchItems(publicKey)).containsExactlyInAnyOrder("gloves", "batteries");
 
       // Re-running is idempotent: the already-added goods are not duplicated.

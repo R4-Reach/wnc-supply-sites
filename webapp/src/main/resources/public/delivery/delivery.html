@@ -1,4 +1,4 @@
-<html xmlns="http://www.w3.org/1999/html" lang="en">
+<html lang="en">
 <head>
   <title>WNC Supply Sites - Delivery</title>
   <link rel="stylesheet" href="../delivery.css"/>
@@ -10,25 +10,29 @@
 
 <div class="content-wrapper">
 
-  <h2 class="delivery-title">
+  <h1 class="delivery-title">
     <a href="/" class="no-print"><img alt="site-logo" src="/logo/WSS-logo-40x40.png" class="logo-image"/></a>
-    Delivery #{{deliveryId}}</h2>
+    Delivery #{{deliveryId}}</h1>
 
   <div class="page-toolbar no-print">
     <button type="button" class="nav-button print-button" onclick="window.print()">Print manifest</button>
     {{#isDispatcherView}}
-    <a class="nav-button public-manifest-link" href="{{publicManifestUrl}}">View public manifest</a>
+    <a class="nav-button public-manifest-link" href="{{publicManifestUrl}}" target="_blank" rel="noopener">View public manifest</a>
     <form class="match-goods-form" method="post" action="/delivery/{{deliveryKey}}/match-goods">
       <input type="hidden" name="code" value="{{code}}">
-      <button type="submit" class="nav-button match-goods-button">Match goods between sites</button>
+      <button type="submit" class="nav-button match-goods-button">Add matched items to manifest</button>
     </form>
     {{/isDispatcherView}}
   </div>
 
   <div class="vertical meta-info-div larger">
     <div>
-      Delivery Status: <span class="bold">{{deliveryStatus}}</span>
+      Delivery Status: <span class="bold {{deliveryStatusClass}}">{{deliveryStatus}}</span>
     </div>
+
+    {{#matchGoodsMessage}}
+    <span class="no-print {{#matchGoodsMessageIsError}}errorMessage{{/matchGoodsMessageIsError}}{{^matchGoodsMessageIsError}}confirm-message{{/matchGoodsMessageIsError}}">{{matchGoodsMessage}}</span>
+    {{/matchGoodsMessage}}
     {{#driverStatus}}
     <div>
       Driver Status: <span class="bold">{{.}}</span>
@@ -102,31 +106,40 @@
         <td>
           {{#driverConfirmed}}
             {{#confirmed}}
-            <div class="green-check">&#10003;</div>
+            <div class="green-check">&#10003;<span class="visually-hidden">Confirmed</span></div>
             {{/confirmed}}
             {{#cancelled}}
-            <div class="">&#x274c;</div>
+            <div class="cancelled-glyph">&#x274c;<span class="visually-hidden">Cancelled</span></div>
             {{/cancelled}}
+            {{#pending}}
+            <div class="pending-marker">&#9711;<span class="visually-hidden">Awaiting confirmation</span></div>
+            {{/pending}}
           {{/driverConfirmed}}
         </td>
         <td>
           {{#pickupConfirmed}}
             {{#confirmed}}
-            <div class="green-check">&#10003;</div>
+            <div class="green-check">&#10003;<span class="visually-hidden">Confirmed</span></div>
             {{/confirmed}}
             {{#cancelled}}
-            <div class="">&#x274c;</div>
+            <div class="cancelled-glyph">&#x274c;<span class="visually-hidden">Cancelled</span></div>
             {{/cancelled}}
+            {{#pending}}
+            <div class="pending-marker">&#9711;<span class="visually-hidden">Awaiting confirmation</span></div>
+            {{/pending}}
           {{/pickupConfirmed}}
         </td>
         <td>
           {{#dropOffConfirmed}}
             {{#confirmed}}
-            <div class="green-check">&#10003;</div>
+            <div class="green-check">&#10003;<span class="visually-hidden">Confirmed</span></div>
             {{/confirmed}}
             {{#cancelled}}
-            <div class="">&#x274c;</div>
+            <div class="cancelled-glyph">&#x274c;<span class="visually-hidden">Cancelled</span></div>
             {{/cancelled}}
+            {{#pending}}
+            <div class="pending-marker">&#9711;<span class="visually-hidden">Awaiting confirmation</span></div>
+            {{/pending}}
           {{/dropOffConfirmed}}
         </td>
       </tr>
@@ -148,30 +161,30 @@
 
     <!-- Pickup Site -->
     <div class="vertical left-column page-subsection narrow-sub-section">
-      <div class="large-section-header">Pick Up</div>
+      <h3 class="large-section-header">Pick Up</h3>
       <div>{{#fromSiteLink}}<a href="{{.}}">{{#fromSiteName}} {{.}} {{/fromSiteName}}</a>{{/fromSiteLink}}{{^fromSiteLink}}{{#fromSiteName}} {{.}} {{/fromSiteName}}{{/fromSiteLink}}</div>
       <div>{{#fromAddress}}{{.}}{{/fromAddress}}</div>
       <div>{{#fromAddressLine2}}{{.}}{{/fromAddressLine2}}</div>
 
-      <div class="sub-section-header">Contact</div>
+      <h4 class="sub-section-header">Contact</h4>
       <div>{{#fromContactName}}{{.}}{{/fromContactName}}</div>
       <div>{{^fromContactPhone}}-{{/fromContactPhone}}{{#fromContactPhone}}<a href="tel:{{fromContactPhone}}">{{.}}</a>{{/fromContactPhone}}</div>
 
-      <div class="sub-section-header">Hours</div>
+      <h4 class="sub-section-header">Hours</h4>
       <div><pre>{{#fromHours}}{{.}}{{/fromHours}}</pre></div>
     </div>
 
     <!-- DROP OFF -->
     <div class="vertical page-subsection narrow-sub-section right-column">
-      <div class="large-section-header">Drop Off</div>
+      <h3 class="large-section-header">Drop Off</h3>
       <div>{{#toSiteLink}}<a href="{{.}}"> {{#toSiteName}}{{.}}{{/toSiteName}}</a>{{/toSiteLink}}{{^toSiteLink}}{{#toSiteName}}{{.}}{{/toSiteName}}{{/toSiteLink}}</div>
       <div>{{#toAddress}}{{.}}{{/toAddress}}</div>
       <div>{{#toAddressLine2}}{{.}}{{/toAddressLine2}}</div>
 
-      <div class="sub-section-header">Contact</div>
+      <h4 class="sub-section-header">Contact</h4>
       <div>{{#toContactName}}{{.}}{{/toContactName}}</div>
       <div>{{^toContactPhone}}-{{/toContactPhone}}{{#toContactPhone}}<a href="tel:{{toContactPhone}}">{{.}}</a>{{/toContactPhone}}</div>
-      <div class="sub-section-header">Hours</div>
+      <h4 class="sub-section-header">Hours</h4>
       <div><pre>{{#toHours}}{{.}}{{/toHours}}</pre></div>
     </div>
   </div>
@@ -179,15 +192,15 @@
   <div class="horizontal page-section">
 
     <div class="vertical left-column page-subsection narrow-sub-section">
-      <div class="large-section-header">Driver</div>
+      <h3 class="large-section-header">Driver</h3>
       <div>{{#driverName}}{{.}}{{/driverName}}</div>
       <div>{{^driverPhone}}-{{/driverPhone}}{{#driverPhone}}<a href="tel:{{driverPhone}}">{{.}}</a>{{/driverPhone}}</div>
-      <div class="sub-section-header">License Plate</div>
+      <h4 class="sub-section-header">License Plate</h4>
       <div>{{#licensePlate}}{{.}}{{/licensePlate}}</div>
     </div>
 
     <div class="vertical page-subsection narrow-sub-section">
-      <div class="large-section-header">Dispatcher</div>
+      <h3 class="large-section-header">Dispatcher</h3>
       <div>{{#dispatcherName}}{{.}}{{/dispatcherName}}</div>
       <div>{{^dispatcherPhone}}-{{/dispatcherPhone}}{{#dispatcherPhone}}<a href="tel:{{dispatcherPhone}}">{{.}}</a>{{/dispatcherPhone}}</div>
     </div>
@@ -197,15 +210,16 @@
 
   {{#dispatcherNotes}}
   <div class="page-subsection">
-    <div class="large-section-header">Dispatcher Notes</div>
+    <h3 class="large-section-header">Dispatcher Notes</h3>
     <div class="dispatcher-notes">{{.}}</div>
   </div>
   {{/dispatcherNotes}}
 
     <!-- ITEMS -->
   <div class="page-subsection">
-    <div class="large-section-header">Items ({{itemCount}})</div>
+    <h3 class="large-section-header">Items ({{itemCount}})</h3>
 
+    {{#hasItems}}
     <div class="horizontal">
       <ul>
         {{#items1}}
@@ -224,10 +238,15 @@
       </ul>
 
     </div>
+    {{/hasItems}}
+    {{^hasItems}}
+    <div class="empty-items">No items on this manifest yet.</div>
+    {{/hasItems}}
   </div>
 
   {{#googleMapLink}}
   <iframe
+      title="Route map from pickup to drop-off"
       width="380"
       height="420"
       style="border:0"

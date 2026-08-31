@@ -25,6 +25,18 @@ public class DeliveryConfirmation {
 
   @Nonnull private String code;
 
+  /**
+   * A confirmation is cancelled when a decision was made and it was a decline (confirmed == false).
+   */
+  public boolean isCancelled() {
+    return Boolean.FALSE.equals(confirmed);
+  }
+
+  /** Pending means no decision has been made yet (confirmed == null). */
+  public boolean isPending() {
+    return confirmed == null;
+  }
+
   public enum ConfirmRole {
     DRIVER,
     PICKUP_SITE,

@@ -8,6 +8,9 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    /* Keep the promoted <h1> visually identical to the prior <h2>. */
+    font-size: 1.5em;
+    margin: 0.83em 0;
 }
 
 .content-wrapper {
@@ -41,6 +44,8 @@ body {
     text-align: center;
     font-weight: bold;
     font-size: larger;
+    /* Promoted from <div> to <h3>: zero the heading's default top margin so spacing is unchanged. */
+    margin-top: 0;
     margin-bottom: 5px;
     font-family: sans-serif;
 }
@@ -52,10 +57,14 @@ body {
     text-align: center;
     font-weight: bold;
     font-family: sans-serif;
+    /* Promoted from <div> to <h4>: keep the inherited body size rather than the heading default. */
+    font-size: inherit;
 }
 
 pre {
-    font-family: serif;
+    font-family: monospace;
+    /* Hours can be long; wrap them rather than overflow the narrow column. */
+    white-space: pre-wrap;
 }
 
 .confirmation-header {
@@ -126,6 +135,47 @@ pre {
     font-style: italic;
     font-size: 1.0em;
     color: var(--danger);
+}
+
+/* Delivery-status headline colors: meaning via existing status tokens, not decoration. */
+.delivery-status-available {
+    color: var(--available);
+}
+
+.delivery-status-danger {
+    color: var(--danger);
+}
+
+.delivery-status-in-progress {
+    color: var(--warning);
+}
+
+/* Neutral "awaiting confirmation" marker in the confirmations table. */
+.pending-marker {
+    color: var(--neutral-muted-text);
+}
+
+.empty-items {
+    font-style: italic;
+    color: var(--neutral-muted-text);
+    margin: 5px;
+}
+
+/*
+ * Screen-reader-only text: pairs a spoken label with a glyph-and-color-only marker so the
+ * confirmation state isn't conveyed by appearance alone.
+ */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .confirmation-checkbox-row {

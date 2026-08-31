@@ -61,6 +61,7 @@ class DeliveryController {
     deliveryId,
     deliveryDate,
     deliveryStatus,
+    deliveryStatusClass,
     driverStatus,
 
     driverName,
@@ -90,9 +91,13 @@ class DeliveryController {
 
     dispatcherNotes,
     itemCount,
+    hasItems,
     items1,
     items2,
     items3,
+
+    matchGoodsMessage,
+    matchGoodsMessageIsError,
 
     sendConfirmationVisible,
     sendDeclineUrl,
@@ -139,10 +144,16 @@ class DeliveryController {
     }
   }
 
+  ModelAndView showDeliveryDetailPage(String publicUrlKey, String code) {
+    return showDeliveryDetailPage(publicUrlKey, code, null, null);
+  }
+
   @GetMapping("/delivery/{publicUrlKey}")
   ModelAndView showDeliveryDetailPage(
       @PathVariable("publicUrlKey") String publicUrlKey,
-      @RequestParam(required = false) String code) {
+      @RequestParam(required = false) String code,
+      @RequestParam(required = false) Integer matchAdded,
+      @RequestParam(required = false) Integer matchCandidates) {
     Map<String, Object> templateParams = new HashMap<>();
 
     Delivery delivery =
@@ -176,6 +187,25 @@ class DeliveryController {
         DeliveryConfirmationController.buildCancelUrl(delivery.getPublicKey(), code));
     templateParams.put(TemplateParams.deliveryKey.name(), delivery.getPublicKey());
     templateParams.put(TemplateParams.code.name(), code);
+
+    // Surface the outcome of a just-run match-goods action, carried back on the redirect as query
+    // params: without it "added N", "all already present", and "nothing matched" all reload as an
+    // unchanged manifest. matchAdded is non-null only when arriving from that action.
+    templateParams.put(TemplateParams.matchGoodsMessageIsError.name(), false);
+    if (matchAdded != null) {
+      String matchMessage;
+      boolean matchIsError = false;
+      if (matchAdded > 0) {
+        matchMessage = "Added " + matchAdded + (matchAdded == 1 ? " item" : " items");
+      } else if (matchCandidates != null && matchCandidates > 0) {
+        matchMessage = "No new items to add — all matched goods already on the manifest";
+      } else {
+        matchMessage = "No matching goods found between these sites";
+        matchIsError = true;
+      }
+      templateParams.put(TemplateParams.matchGoodsMessage.name(), matchMessage);
+      templateParams.put(TemplateParams.matchGoodsMessageIsError.name(), matchIsError);
+    }
 
     // The same manifest serves the public read-only view (no code) and the dispatcher-gated
     // read/write view (the dispatch code, linked from the kanban board). In the dispatcher view we
@@ -279,6 +309,9 @@ class DeliveryController {
                     new IllegalStateException(
                         "Unrecognized enum value: " + delivery.getDeliveryStatus()));
 
+    templateParams.put(
+        TemplateParams.deliveryStatusClass.name(), deliveryStatusClass(deliveryStatus));
+
     // show driver status only if the delivery is confirmed or in progress.
     if (List.of(
             DeliveryStatus.CONFIRMED,
@@ -296,6 +329,7 @@ class DeliveryController {
             ? null
             : delivery.getDispatcherNotes());
     templateParams.put(TemplateParams.itemCount.name(), delivery.getItemCount());
+    templateParams.put(TemplateParams.hasItems.name(), delivery.getItemCount() > 0);
     templateParams.put(TemplateParams.driverName.name(), nullsToDash(delivery.getDriverName()));
     templateParams.put(TemplateParams.driverPhone.name(), delivery.getDriverPhoneNumber());
     templateParams.put(
@@ -381,21 +415,43 @@ class DeliveryController {
 
     // Both endpoints must be WSS-registered sites for a match to be possible; deliveries to/from
     // external sites simply add nothing.
+    int candidates = 0;
+    int added = 0;
     if (fromWssId != null && toWssId != null) {
       List<String> matchedItems =
           NeedsMatchingController.computeNeedsMatch(jdbi, fromWssId, toWssId);
-      int added = DeliveryDao.addItemsToDelivery(jdbi, publicUrlKey, matchedItems);
+      candidates = matchedItems.size();
+      added = DeliveryDao.addItemsToDelivery(jdbi, publicUrlKey, matchedItems);
       log.info(
           "Matched goods for delivery {}: {} candidate(s), {} newly added",
           publicUrlKey,
-          matchedItems.size(),
+          candidates,
           added);
     }
 
-    return new ModelAndView("redirect:" + buildDeliveryPageLinkWithCode(publicUrlKey, code));
+    // Carry the outcome back so the reloaded dispatcher view can report what happened.
+    String redirect =
+        buildDeliveryPageLinkWithCode(publicUrlKey, code)
+            + "&matchAdded="
+            + added
+            + "&matchCandidates="
+            + candidates;
+    return new ModelAndView("redirect:" + redirect);
   }
 
   private static String nullsToDash(String input) {
     return Optional.ofNullable(input).orElse("-");
+  }
+
+  /**
+   * Maps a delivery status to a CSS class that colors the status headline with an existing status
+   * token: green for confirmed/complete, red for cancelled, amber for everything still in flight.
+   */
+  private static String deliveryStatusClass(DeliveryStatus status) {
+    return switch (status) {
+      case CONFIRMED, DELIVERY_COMPLETED -> "delivery-status-available";
+      case DELIVERY_CANCELLED -> "delivery-status-danger";
+      default -> "delivery-status-in-progress";
+    };
   }
 }
