@@ -1,7 +1,6 @@
 package org.r4reach.manage.inventory;
 
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.data.ItemStatus;
@@ -202,23 +201,6 @@ public class InventoryDao {
       }
       return true;
     }
-  }
-
-  public static Optional<Long> getInventoryWssId(Jdbi jdbi, long siteId, String itemName) {
-    String query =
-        """
-        select wss_id from site_item
-        where site_id = :siteId
-          and item_id = (select id from item where name = :itemName)
-        """;
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(query)
-                .bind("siteId", siteId)
-                .bind("itemName", itemName)
-                .mapTo(Long.class)
-                .findOne());
   }
 
   public static void markItemsAsNotNeeded(Jdbi jdbi, long siteWssId, List<Long> siteWssIds) {

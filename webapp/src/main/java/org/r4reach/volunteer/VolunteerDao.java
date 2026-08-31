@@ -150,22 +150,6 @@ public class VolunteerDao {
     ;
   }
 
-  static VolunteerService.VolunteerDelivery getVolunteerDeliveryById(Jdbi jdbi, Long deliveryId) {
-    String query =
-        """
-        SELECT id, volunteer_phone, volunteer_name, site_id, url_key
-        FROM volunteer_delivery
-        WHERE volunteer_delivery.id = :id
-        """;
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(query)
-                .bind("id", deliveryId)
-                .mapToBean(VolunteerService.VolunteerDelivery.class)
-                .one());
-  }
-
   static VolunteerService.VolunteerDeliveryRequest getVolunteerDeliveryByUrlKey(
       Jdbi jdbi, String urlKey) {
     String query =

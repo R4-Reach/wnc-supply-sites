@@ -26,20 +26,6 @@ public class GoogleDistanceApi {
     TRANSIENT_FAILURE
   }
 
-  // @VisibleForTesting
-  public static GoogleDistanceApi stubbed() {
-    return new GoogleDistanceApi((SiteConfigService) null) {
-      @Override
-      public GoogleDistanceResponse queryDistance(SiteAddress from, SiteAddress to) {
-        return GoogleDistanceResponse.builder()
-            .distance(20.0)
-            .duration(320L)
-            .status(ResponseStatus.OK)
-            .build();
-      }
-    };
-  }
-
   public GoogleDistanceApi(SiteConfigService siteConfigService) {
     this.siteConfigService = siteConfigService;
   }

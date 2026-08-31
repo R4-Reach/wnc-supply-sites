@@ -20,24 +20,6 @@ public class HtmlSelectOptionsUtil {
         .toList();
   }
 
-  public static List<ItemListing> createItemListingWithFuzzyStartsWith(
-      String selectedValue, Collection<String> allValues) {
-    return allValues.stream()
-        .map(
-            value ->
-                ItemListing.builder()
-                    .name(value)
-                    .selected(
-                        ((selectedValue == null || selectedValue.isBlank()) && value.isBlank())
-                                || (selectedValue != null
-                                    && !selectedValue.isBlank()
-                                    && value.startsWith(selectedValue))
-                            ? "selected"
-                            : null)
-                    .build())
-        .toList();
-  }
-
   @Builder
   @Data
   public static class ItemListing {

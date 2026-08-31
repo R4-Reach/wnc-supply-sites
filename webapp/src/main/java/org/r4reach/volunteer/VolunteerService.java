@@ -152,15 +152,6 @@ public class VolunteerService {
   }
 
   @Data
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class VerificationRequest {
-    String phoneNumber;
-    String urlKey;
-    String section;
-  }
-
-  @Data
   @Builder(toBuilder = true)
   public static class Access {
     Boolean hasManagerAccess;
@@ -169,13 +160,6 @@ public class VolunteerService {
     public Boolean isAuthorized() {
       return this.hasManagerAccess || this.hasVolunteerAccess;
     }
-  }
-
-  @Data
-  public static class UpdateRequest {
-    String phoneNumber;
-    String urlKey;
-    String status;
   }
 
   /** Creates a new volunteer delivery */
@@ -205,16 +189,6 @@ public class VolunteerService {
       throw new RuntimeException("Error while creating volunteer delivery. Rolling back.", e);
     } finally {
       handle.close();
-    }
-  }
-
-  /** Grabs a volunteer delivery request via ID */
-  public static VolunteerDelivery getDeliveryById(Jdbi jdbi, Long id) {
-    try {
-      return VolunteerDao.getVolunteerDeliveryById(jdbi, id);
-    } catch (Exception e) {
-      log.error("Error while looking up delivery by id: ", e);
-      throw new RuntimeException("Error while looking up delivery by id: ", e);
     }
   }
 

@@ -121,7 +121,6 @@ public class MergeItemsController {
         mergeItemsId.stream().map(itemId -> itemNameById(jdbi, itemId)).toList();
     log.info("Merging into item: {}, items: {}", mergeItemName, toMergeItemNames);
 
-    List<Long> itemsMergedWssIds = fetchWssIdsOfItems(jdbi, mergeItemsId);
     merge(jdbi, mergeIntoItemId, mergeItemsId);
     return ResponseEntity.ok("{\"result\": \"success\"}");
   }

@@ -33,10 +33,6 @@ class DeliveryController {
     return "/delivery/" + publicUrlKey;
   }
 
-  public static String buildDeliveryPageLinkWithCode(String publicUrlKey, String code) {
-    return "/delivery/" + publicUrlKey + "?code=" + code;
-  }
-
   public static String buildDeliveryPageLinkForDriver(Delivery delivery) {
     return buildDeliveryPageLink(delivery, DeliveryConfirmation.ConfirmRole.DRIVER);
   }

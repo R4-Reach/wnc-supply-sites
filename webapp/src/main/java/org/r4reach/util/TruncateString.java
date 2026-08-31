@@ -50,12 +50,5 @@ public class TruncateString {
         return input.substring(0, maxLength + spaceIndex).trim() + "...";
       }
     }
-
-    //    String searchString = input.substring(maxLength - 1);
-    //
-    //    if (searchString.endsWith(" ")) {
-    //      return searchString.substring(0, searchString.length() - 1).trim() + "...";
-    //    }
-
   }
 }
