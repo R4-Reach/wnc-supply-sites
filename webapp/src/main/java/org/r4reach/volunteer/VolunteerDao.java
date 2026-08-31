@@ -195,7 +195,10 @@ public class VolunteerDao {
                 .createQuery(query)
                 .bind("urlKey", urlKey)
                 .mapToBean(VolunteerService.VolunteerDeliveryRequest.class)
-                .one());
+                .findOne()
+                .orElseThrow(
+                    () ->
+                        new IllegalArgumentException("Invalid volunteer delivery key: " + urlKey)));
   }
 
   static List<VolunteerService.VolunteerDeliveryRequestItem> getVolunteerDeliveryItems(

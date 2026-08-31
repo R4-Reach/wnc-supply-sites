@@ -232,6 +232,8 @@ public class VolunteerService {
       volunteerDeliveryRequest.insertItems(deliveryItems);
 
       return volunteerDeliveryRequest;
+    } catch (IllegalArgumentException e) {
+      throw e;
     } catch (Exception e) {
       log.error("Error while looking up delivery by urlKey: ", e);
       throw new RuntimeException("Error while looking up delivery by urlKey: ", e);
