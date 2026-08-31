@@ -6,6 +6,7 @@ import static org.r4reach.TestConfiguration.jdbiTest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.r4reach.TestConfiguration;
 import org.r4reach.data.GoogleMapWidget;
+import org.r4reach.data.ItemStatus;
+import org.r4reach.data.SiteType;
 import org.r4reach.delivery.DeliveryController.TemplateParams;
 import org.r4reach.siteconfig.SiteConfigKey;
 import org.r4reach.siteconfig.SiteConfigService;
@@ -319,6 +322,103 @@ class DeliveryControllerTest {
   private static DeliveryConfirmation getConfirmation(
       ModelAndView response, TemplateParams confirmation) {
     return (DeliveryConfirmation) response.getModelMap().getAttribute(confirmation.name());
+  }
+
+  /**
+   * The dispatcher-only "match goods between sites" action: it reuses the needs match (pickup's
+   * available supply intersected with the drop-off's needs) and adds the matched goods as the
+   * delivery's items, skipping goods already on the manifest.
+   */
+  @Nested
+  class MatchGoods {
+
+    /**
+     * Pickup supply hub has water/gloves available and batteries as oversupply; the drop-off needs
+     * gloves, batteries and soap. The match is therefore {batteries, gloves}. Gloves is already on
+     * the delivery, so the action adds only batteries and never duplicates gloves.
+     */
+    @Test
+    void addsMatchedGoodsWithoutDuplicates() {
+      long fromSiteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "water", -901);
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "gloves", -902);
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.OVERSUPPLY, "batteries", -903);
+
+      long toSiteId =
+          TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.DISTRIBUTION_CENTER));
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "gloves", -904);
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.URGENTLY_NEEDED, "batteries", -905);
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "soap", -906);
+
+      String publicKey =
+          DeliveryDao.createDelivery(
+              jdbiTest,
+              DeliveryDao.CreateDeliveryRequest.builder()
+                  .fromSiteId(fromSiteId)
+                  .toSiteId(toSiteId)
+                  .deliveryStatus(DeliveryStatus.CREATING_DISPATCH)
+                  .items(List.of("gloves"))
+                  .build());
+      String code =
+          DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, publicKey).orElseThrow().getDispatchCode();
+
+      ModelAndView result = deliveryController.matchGoods(publicKey, code);
+
+      assertThat(result.getViewName())
+          .isEqualTo("redirect:/delivery/" + publicKey + "?code=" + code);
+      assertThat(fetchItems(publicKey)).containsExactlyInAnyOrder("gloves", "batteries");
+
+      // Re-running is idempotent: the already-added goods are not duplicated.
+      deliveryController.matchGoods(publicKey, code);
+      assertThat(fetchItems(publicKey)).containsExactlyInAnyOrder("gloves", "batteries");
+    }
+
+    /** No pickup supply overlaps the drop-off's needs: nothing is added. */
+    @Test
+    void noMatchesAddsNothing() {
+      long fromSiteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "water", -911);
+
+      long toSiteId =
+          TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.DISTRIBUTION_CENTER));
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "soap", -912);
+
+      String publicKey =
+          DeliveryDao.createDelivery(
+              jdbiTest,
+              DeliveryDao.CreateDeliveryRequest.builder()
+                  .fromSiteId(fromSiteId)
+                  .toSiteId(toSiteId)
+                  .deliveryStatus(DeliveryStatus.CREATING_DISPATCH)
+                  .build());
+      String code =
+          DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, publicKey).orElseThrow().getDispatchCode();
+
+      deliveryController.matchGoods(publicKey, code);
+
+      assertThat(fetchItems(publicKey)).isEmpty();
+    }
+
+    /** The action is gated by the dispatch code, just like the other write actions on this page. */
+    @Test
+    void rejectsWrongDispatchCode() {
+      long siteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+      String publicKey =
+          DeliveryDao.createDelivery(
+              jdbiTest,
+              DeliveryDao.CreateDeliveryRequest.builder()
+                  .fromSiteId(siteId)
+                  .toSiteId(siteId)
+                  .deliveryStatus(DeliveryStatus.CREATING_DISPATCH)
+                  .build());
+
+      Assertions.assertThatThrownBy(() -> deliveryController.matchGoods(publicKey, "wrong-code"))
+          .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private List<String> fetchItems(String publicKey) {
+      return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, publicKey).orElseThrow().getItemList();
+    }
   }
 
   /** Approve all and validate we show approval. */

@@ -73,8 +73,12 @@ public class NeedsMatchingController {
     return ResponseEntity.ok("Matches: " + neededItems.size());
   }
 
-  // @VisibleForTesting
-  static List<String> computeNeedsMatch(Jdbi jdbi, long fromSiteWssId, long toSiteWssId) {
+  /**
+   * The eligible-goods match for a delivery: the item names the drop-off ({@code toSite}) needs
+   * that the pickup ({@code fromSite}) has available to give. Reused by the delivery detail page's
+   * "match goods" action; both site ids are {@code wss_id} values.
+   */
+  public static List<String> computeNeedsMatch(Jdbi jdbi, long fromSiteWssId, long toSiteWssId) {
     String availableItemsQuery =
         """
         select

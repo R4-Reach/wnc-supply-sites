@@ -11,12 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.data.GoogleMapWidget;
 import org.r4reach.data.SiteAddress;
+import org.r4reach.incoming.webhook.NeedsMatchingController;
 import org.r4reach.util.EnumUtil;
 import org.r4reach.util.ListSplitter;
 import org.r4reach.util.TruncateString;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -347,6 +349,50 @@ class DeliveryController {
     templateParams.put(TemplateParams.items3.name(), split.size() > 2 ? split.get(2) : List.of());
 
     return new ModelAndView("delivery/delivery", templateParams);
+  }
+
+  /**
+   * Dispatcher-only action: compute the goods the drop-off site needs that the pickup site has
+   * available (the app's needs match, reused from {@link NeedsMatchingController}) and add them as
+   * this delivery's items. Gated by the dispatch code, the same secret that unlocks the dispatcher
+   * view; the button that posts here renders only in that view. Redirects back to the dispatcher
+   * view so the newly matched items show on the manifest.
+   */
+  @PostMapping("/delivery/{publicUrlKey}/match-goods")
+  ModelAndView matchGoods(
+      @PathVariable("publicUrlKey") String publicUrlKey, @RequestParam String code) {
+    Delivery delivery =
+        DeliveryDao.fetchDeliveryByPublicKey(jdbi, publicUrlKey)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Invalid delivery key: " + publicUrlKey));
+
+    if (delivery.getDispatchCode() == null || !delivery.getDispatchCode().equals(code)) {
+      throw new IllegalArgumentException("Invalid dispatch code for delivery: " + publicUrlKey);
+    }
+
+    Long fromWssId =
+        delivery.getFromSiteId() == null
+            ? null
+            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getFromSiteId()).orElse(null);
+    Long toWssId =
+        delivery.getToSiteId() == null
+            ? null
+            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getToSiteId()).orElse(null);
+
+    // Both endpoints must be WSS-registered sites for a match to be possible; deliveries to/from
+    // external sites simply add nothing.
+    if (fromWssId != null && toWssId != null) {
+      List<String> matchedItems =
+          NeedsMatchingController.computeNeedsMatch(jdbi, fromWssId, toWssId);
+      int added = DeliveryDao.addItemsToDelivery(jdbi, publicUrlKey, matchedItems);
+      log.info(
+          "Matched goods for delivery {}: {} candidate(s), {} newly added",
+          publicUrlKey,
+          matchedItems.size(),
+          added);
+    }
+
+    return new ModelAndView("redirect:" + buildDeliveryPageLinkWithCode(publicUrlKey, code));
   }
 
   private static String nullsToDash(String input) {

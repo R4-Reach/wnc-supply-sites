@@ -18,6 +18,10 @@
     <button type="button" class="nav-button print-button" onclick="window.print()">Print manifest</button>
     {{#isDispatcherView}}
     <a class="nav-button public-manifest-link" href="{{publicManifestUrl}}">View public manifest</a>
+    <form class="match-goods-form" method="post" action="/delivery/{{deliveryKey}}/match-goods">
+      <input type="hidden" name="code" value="{{code}}">
+      <button type="submit" class="nav-button match-goods-button">Match goods between sites</button>
+    </form>
     {{/isDispatcherView}}
   </div>
 

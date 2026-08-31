@@ -3,10 +3,13 @@ package org.r4reach.delivery;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -236,6 +239,78 @@ public class DeliveryDao {
 
   private static String blankToNull(String input) {
     return input == null || input.isBlank() ? null : input.strip();
+  }
+
+  /** The public-facing {@code wss_id} for a site's internal id, used to drive needs matching. */
+  public static Optional<Long> fetchSiteWssId(Jdbi jdbi, long siteId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery("select wss_id from site where id = :id")
+                .bind("id", siteId)
+                .mapTo(Long.class)
+                .findOne());
+  }
+
+  /**
+   * Adds item names to a delivery as {@code delivery_item} rows, skipping any already on the
+   * delivery (case-insensitive, across both item-referenced and free-text rows) and any duplicates
+   * within the batch. Returns the number of rows actually inserted. Blank names are ignored.
+   */
+  public static int addItemsToDelivery(Jdbi jdbi, String publicUrlKey, List<String> itemNames) {
+    if (itemNames == null || itemNames.isEmpty()) {
+      return 0;
+    }
+
+    String existingNamesQuery =
+        """
+        select distinct name from (
+          select i.name
+          from delivery_item di
+          join item i on i.id = di.item_id
+          where di.delivery_id = (select id from delivery where public_url_key = :publicUrlKey)
+          union
+          select di.item_name name
+          from delivery_item di
+          where di.delivery_id = (select id from delivery where public_url_key = :publicUrlKey)
+        ) A
+        where name is not null
+        """;
+    List<String> existingNames =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(existingNamesQuery)
+                    .bind("publicUrlKey", publicUrlKey)
+                    .mapTo(String.class)
+                    .list());
+    Set<String> seen = new HashSet<>();
+    existingNames.stream().map(name -> name.toLowerCase(Locale.ROOT)).forEach(seen::add);
+
+    String insertItem =
+        """
+        insert into delivery_item(delivery_id, item_name)
+        values((select id from delivery where public_url_key = :publicUrlKey), :itemName)
+        """;
+    int added = 0;
+    for (String itemName : itemNames) {
+      if (itemName == null || itemName.isBlank()) {
+        continue;
+      }
+      String stripped = itemName.strip();
+      if (!seen.add(stripped.toLowerCase(Locale.ROOT))) {
+        continue;
+      }
+      jdbi.withHandle(
+          handle ->
+              handle
+                  .createUpdate(insertItem)
+                  .bind("publicUrlKey", publicUrlKey)
+                  .bind("itemName", stripped)
+                  .execute());
+      added++;
+    }
+    return added;
   }
 
   // Folds the encrypted wss_user identity columns into the display fields, reproducing the old SQL

@@ -149,6 +149,21 @@ pre {
     margin: 8px 0;
 }
 
+.match-goods-form {
+    margin: 0;
+}
+
+/*
+ * Dispatcher-only "match goods between sites" action. Solid green with white text: a green status
+ * token (dark enough to clear WCAG AA against white, unlike the lighter --success) signals the
+ * available supply being pulled onto the manifest.
+ */
+.match-goods-button {
+    background-color: var(--available) !important;
+    color: var(--surface) !important;
+    font-weight: bold;
+}
+
 /*
  * The manifest is printed as the working delivery paperwork, so print strips the
  * app chrome and interactive controls and keeps just the delivery data.
