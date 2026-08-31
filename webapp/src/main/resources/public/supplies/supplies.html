@@ -11,51 +11,6 @@
 <body>
 {{> header }}
 
-<dialog id="getInvolvedModal">
-  <div class="vertical flex-gap-10">
-    <div>
-      <h1> Get Involved! </h1>
-      <p class="italic font-large"> Thank you for visiting WNC Supply Sites! <br/> Want to get involved in what we're doing? Check out these helpful links below: </p>
-    </div>
-
-    <div class="get-involved-links flex-gap-20">
-      <a class="get-involved-link" href="https://app.jotform.com/243556240110141" target="_blank">
-        <h3>Make a donation!</h3>
-        <span class="italic">
-          Don't have time to donate but still want to help? (p.s., it's at the bottom)
-        </span>
-      </a>
-
-      <a class="get-involved-link" href="https://app.jotform.com/243556240110141/243318098770059" target="_blank">
-        <h3>Sign up as a Volunteer!</h3>
-        <span class="italic">
-          Have a skill you want to volunteer to disaster relief?
-        </span>
-      </a>
-
-      <a class="get-involved-link" href="https://app.jotform.com/243556240110141/243316609742054" target="_blank">
-        <h3>Sign up as a driver!</h3>
-
-        <span class="italic">
-          Have a car? Want to meet wonderful people and volunteer your time?
-        </span>
-      </a>
-
-      <a class="get-involved-link" href="https://app.jotform.com/243556240110141/243364430721046" target="_blank">
-        <h3> Partner with us!</h3>
-        <span class="italic">
-          Are you an organization and want to increase your reach?
-        </span>
-      </a>
-    </div>
-
-    <form method="dialog">
-      <button class="get-involved-link">Close</button>
-    </form>
-  </div>
-</dialog>
-
-
 <button class="scroll-to-top-btn hidden">
   &#8679;
   Top
@@ -330,11 +285,6 @@
 
 <script>
   instantiateScrollToTopEvenListener();
-  // Show the "Get Involved" modal once, then remember via a cookie so it doesn't reappear.
-  if (!document.cookie.split("; ").includes("getInvolvedSeen=1")) {
-    document.getElementById("getInvolvedModal").showModal();
-    document.cookie = "getInvolvedSeen=1; max-age=31536000; path=/";
-  }
 </script>
 </body>
 </html>

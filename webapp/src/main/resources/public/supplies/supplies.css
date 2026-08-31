@@ -1,44 +1,7 @@
-
-dialog form {
-    display: flex;
-    flex-direction: row-reverse;
-}
-
 .not-accepting-donations {
     font-size: 0.9em;
     font-style: italic;
     color: var(--danger);
-}
-
-.get-involved-image-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.get-involved-links {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.get-involved-link {
-    border-radius: 4px;
-    border: 0px;
-    box-shadow: var(--shadow-raised);
-    box-sizing: border-box;
-    color: var(--nav-btn-text);
-    cursor: pointer;
-    padding: 10px 15px 10px 15px;
-    text-decoration: none;
-}
-
-.get-involved-link h3 {
-    margin: 0px 0px 3px 0px;
-}
-
-.get-involved-image {
-    max-width: 150px;
 }
 
 .box {
