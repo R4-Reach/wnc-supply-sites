@@ -46,7 +46,7 @@ dependencies {
 
 	implementation 'org.jdbi:jdbi3-core:3.47.0'
 	implementation 'org.jdbi:jdbi3-sqlobject:3.47.0'
-	implementation 'com.zaxxer:HikariCP:6.1.0'
+	implementation 'com.zaxxer:HikariCP:7.1.0'
 	implementation 'de.siegmar:fastcsv:3.4.0'
 	implementation 'com.google.code.gson:gson:2.11.0'
 
