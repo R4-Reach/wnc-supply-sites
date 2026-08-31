@@ -5,6 +5,7 @@ import static org.r4reach.TestConfiguration.jdbiTest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import jakarta.servlet.http.Cookie;
+import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -63,7 +64,8 @@ class SiteCrawlTest {
   private static final Set<String> SKIP_PATHS = Set.of("/log-out");
 
   private static final int MAX_PAGES = 500;
-  private static final Pattern HREF = Pattern.compile("href\\s*=\\s*\"([^\"]*)\"");
+  // Both links (href) and asset references (src: scripts, images), so a missing JS/image 404s too.
+  private static final Pattern LINK_REF = Pattern.compile("(?:href|src)\\s*=\\s*\"([^\"]*)\"");
 
   @Autowired private MockMvc mockMvc;
 
@@ -111,10 +113,11 @@ class SiteCrawlTest {
         failures.put(url, "status " + status);
       } else if (status >= 300 && status < 400) {
         // Not a failure, but follow in-app redirects so the crawl reaches what they point at.
-        enqueue(result.getResponse().getHeader("Location"), queue, visited);
-      } else {
+        enqueue(url, result.getResponse().getHeader("Location"), queue, visited);
+      } else if (isHtml(result.getResponse().getContentType())) {
+        // Only HTML carries links worth following; scanning CSS/JS/JSON would invent bogus URLs.
         extractLinks(result.getResponse().getContentAsString())
-            .forEach(link -> enqueue(link, queue, visited));
+            .forEach(link -> enqueue(url, link, queue, visited));
       }
     }
 
@@ -137,29 +140,45 @@ class SiteCrawlTest {
     return cause;
   }
 
+  private boolean isHtml(String contentType) {
+    return contentType != null && contentType.contains("text/html");
+  }
+
   private List<String> extractLinks(String html) {
     List<String> links = new ArrayList<>();
-    Matcher m = HREF.matcher(html);
+    Matcher m = LINK_REF.matcher(html);
     while (m.find()) {
       links.add(m.group(1));
     }
     return links;
   }
 
-  /** Normalizes an in-app link and enqueues it if it is worth crawling and not already seen. */
-  private void enqueue(String href, Deque<String> queue, Set<String> visited) {
-    if (href == null || href.isBlank()) {
+  /**
+   * Resolves a reference (link or asset, absolute or relative) against the page it was found on and
+   * enqueues it if it is a same-app path not already seen. Skips external URLs (a scheme like
+   * http:/mailto:/javascript:), protocol-relative {@code //host} references, and fragments.
+   */
+  private void enqueue(String fromPath, String ref, Deque<String> queue, Set<String> visited) {
+    if (ref == null || ref.isBlank()) {
       return;
     }
-    // Only same-app absolute paths. Skips http(s)://, //cdn, mailto:, tel:, javascript:, fragments.
-    if (!href.startsWith("/") || href.startsWith("//")) {
+    URI resolved;
+    try {
+      resolved = URI.create(fromPath).resolve(ref.trim());
+    } catch (IllegalArgumentException malformed) {
       return;
     }
-    int fragment = href.indexOf('#');
-    String path = fragment >= 0 ? href.substring(0, fragment) : href;
-    if (path.isBlank() || SKIP_PATHS.contains(path) || visited.contains(path)) {
+    // A scheme (http:, mailto:, javascript:) or an authority (//cdn) means it leaves the app.
+    if (resolved.isAbsolute() || resolved.getAuthority() != null) {
       return;
     }
-    queue.add(path);
+    String path = resolved.getRawPath();
+    if (path == null || !path.startsWith("/") || SKIP_PATHS.contains(path)) {
+      return;
+    }
+    String target = resolved.getRawQuery() == null ? path : path + "?" + resolved.getRawQuery();
+    if (!visited.contains(target)) {
+      queue.add(target);
+    }
   }
 }
