@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.CookieUtil;
 import org.r4reach.util.HashingUtil;
+import org.r4reach.util.PiiCrypto;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -72,9 +73,9 @@ public class LoggedInAdvice {
                                 select ws.site_id
                                 from wss_user_sites ws
                                 join wss_user u on u.id = ws.wss_user_id
-                                where u.phone = :number
+                                where u.phone_hmac = :numberHmac
                                 """)
-                        .bind("number", number)
+                        .bind("numberHmac", PiiCrypto.blindIndex(number))
                         .mapTo(Long.class)
                         .list())
             .stream()
@@ -116,9 +117,9 @@ public class LoggedInAdvice {
       from wss_user wu
       join wss_user_roles wur on wur.wss_user_id = wu.id
       join wss_user_role role on role.id = wur.wss_user_role_id
-      where wu.phone = :phone
+      where wu.phone_hmac = :phoneHmac
       """)
-                    .bind("phone", userPhone)
+                    .bind("phoneHmac", PiiCrypto.blindIndex(userPhone))
                     .mapTo(String.class)
                     .list())
         .stream()
@@ -136,13 +137,14 @@ public class LoggedInAdvice {
             h.createQuery(
                     """
                   select
-                    wu.phone
+                    wu.phone_enc
                   from wss_user_auth_key wuak
                   join wss_user wu on wuak.wss_user_id = wu.id
                   where wu.removed = false and wuak.token_sha256 = :hashedToken
                   """)
                 .bind("hashedToken", HashingUtil.sha256(authKey))
                 .mapTo(String.class)
-                .findOne());
+                .findOne()
+                .map(PiiCrypto::decrypt));
   }
 }

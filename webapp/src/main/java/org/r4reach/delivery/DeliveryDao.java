@@ -1,6 +1,10 @@
 package org.r4reach.delivery;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,7 +15,9 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.StatementContext;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 import org.r4reach.util.SecretCodeGenerator;
 
 @Slf4j
@@ -37,7 +43,7 @@ public class DeliveryDao {
   /** All deliveries, newest target date first — the data behind the dispatcher deliveries board. */
   public static List<Delivery> fetchAllDeliveries(Jdbi jdbi) {
     // fetchDeliveries always binds :id; "true" simply ignores it to select every row.
-    return fetchDeliveries(jdbi, "true", "");
+    return fetchDeliveries(jdbi, "true", Map.of());
   }
 
   /** A site the dispatcher can pick as a delivery's pickup or drop-off endpoint. */
@@ -74,24 +80,30 @@ public class DeliveryDao {
    * create page.
    */
   public static List<PersonOption> fetchDispatcherOptions(Jdbi jdbi, Long selectedUserId) {
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(
-                    """
+    return jdbi
+        .withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        """
                     select distinct
                       u.id,
-                      coalesce(nullif(u.name, ''), u.phone) name,
+                      u.name_enc,
+                      u.phone_enc,
                       coalesce(u.id = cast(:selectedUserId as bigint), false) selected
                     from wss_user u
                     join wss_user_roles wur on wur.wss_user_id = u.id
                     join wss_user_role role on role.id = wur.wss_user_role_id
                     where role.name = 'DISPATCHER' and u.removed = false
-                    order by name
                     """)
-                .bind("selectedUserId", selectedUserId)
-                .mapToBean(PersonOption.class)
-                .list());
+                    .bind("selectedUserId", selectedUserId)
+                    .map(DeliveryDao::toPersonOption)
+                    .list())
+        .stream()
+        .sorted(
+            Comparator.comparing(
+                PersonOption::getName, Comparator.nullsLast(Comparator.naturalOrder())))
+        .toList();
   }
 
   /**
@@ -99,23 +111,39 @@ public class DeliveryDao {
    * {@code selectedUserId} (nullable) marks the option to preselect.
    */
   public static List<PersonOption> fetchDriverOptions(Jdbi jdbi, Long selectedUserId) {
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(
-                    """
+    return jdbi
+        .withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        """
                     select
                       u.id,
-                      coalesce(nullif(u.name, ''), u.phone) name,
+                      u.name_enc,
+                      u.phone_enc,
                       coalesce(u.id = cast(:selectedUserId as bigint), false) selected
                     from driver d
                     join wss_user u on u.id = d.wss_user_id
                     where d.black_listed = false and u.removed = false
-                    order by name
                     """)
-                .bind("selectedUserId", selectedUserId)
-                .mapToBean(PersonOption.class)
-                .list());
+                    .bind("selectedUserId", selectedUserId)
+                    .map(DeliveryDao::toPersonOption)
+                    .list())
+        .stream()
+        .sorted(
+            Comparator.comparing(
+                PersonOption::getName, Comparator.nullsLast(Comparator.naturalOrder())))
+        .toList();
+  }
+
+  // The dropdown label mirrors the old SQL `coalesce(nullif(u.name,''), u.phone)`, but name and
+  // phone are now encrypted, so decrypt both and pick the display value in Java.
+  private static PersonOption toPersonOption(ResultSet rs, StatementContext ctx)
+      throws SQLException {
+    String name = PiiCrypto.decrypt(rs.getString("name_enc"));
+    String display =
+        name == null || name.isBlank() ? PiiCrypto.decrypt(rs.getString("phone_enc")) : name;
+    return new PersonOption(rs.getLong("id"), display, rs.getBoolean("selected"));
   }
 
   /** The wss_user id for a phone number, used to preselect the current user in a dropdown. */
@@ -126,8 +154,9 @@ public class DeliveryDao {
     return jdbi.withHandle(
         handle ->
             handle
-                .createQuery("select id from wss_user where phone = :phone and removed = false")
-                .bind("phone", phone)
+                .createQuery(
+                    "select id from wss_user where phone_hmac = :phoneHmac and removed = false")
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phone)))
                 .mapTo(Long.class)
                 .findOne());
   }
@@ -209,6 +238,26 @@ public class DeliveryDao {
     return input == null || input.isBlank() ? null : input.strip();
   }
 
+  // Folds the encrypted wss_user identity columns into the display fields, reproducing the old SQL
+  // coalesce(wss_user_col, legacy_delivery_col): the decrypted wss_user value if present, else the
+  // legacy plaintext delivery.* fallback.
+  private static DeliveryData decryptContacts(DeliveryData d) {
+    d.setDispatcherName(preferDecrypted(d.getDispatcherNameEnc(), d.getDispatcherName()));
+    d.setDispatcherNumber(preferDecrypted(d.getDispatcherNumberEnc(), d.getDispatcherNumber()));
+    d.setDriverName(preferDecrypted(d.getDriverNameEnc(), d.getDriverName()));
+    d.setDriverNumber(preferDecrypted(d.getDriverNumberEnc(), d.getDriverNumber()));
+    d.setFromContactName(preferDecrypted(d.getFromContactNameEnc(), d.getFromContactName()));
+    d.setFromContactPhone(preferDecrypted(d.getFromContactPhoneEnc(), d.getFromContactPhone()));
+    d.setToContactName(preferDecrypted(d.getToContactNameEnc(), d.getToContactName()));
+    d.setToContactPhone(preferDecrypted(d.getToContactPhoneEnc(), d.getToContactPhone()));
+    return d;
+  }
+
+  private static String preferDecrypted(String enc, String legacy) {
+    String decrypted = PiiCrypto.decrypt(enc);
+    return decrypted != null ? decrypted : legacy;
+  }
+
   // get
   @Data
   @AllArgsConstructor
@@ -253,11 +302,23 @@ public class DeliveryDao {
     private String driverCode;
 
     private String cancelReason;
+
+    // Encrypted wss_user identity for the dispatcher/driver/site-contacts. Fetched alongside the
+    // legacy plaintext delivery.* fallbacks above; decryptContacts() folds them together (decrypted
+    // wss_user value if present, else the legacy fallback) to reproduce the old SQL coalesce.
+    private String dispatcherNameEnc;
+    private String dispatcherNumberEnc;
+    private String driverNameEnc;
+    private String driverNumberEnc;
+    private String fromContactNameEnc;
+    private String fromContactPhoneEnc;
+    private String toContactNameEnc;
+    private String toContactPhoneEnc;
   }
 
   public static Optional<Delivery> fetchDeliveryByPublicKey(Jdbi jdbi, String publicUrlKey) {
     String whereClause = "d.public_url_key = :id";
-    var results = fetchDeliveries(jdbi, whereClause, publicUrlKey);
+    var results = fetchDeliveries(jdbi, whereClause, Map.of("id", publicUrlKey));
     if (results.isEmpty()) {
       return Optional.empty();
     } else {
@@ -271,28 +332,35 @@ public class DeliveryDao {
     d.from_site_id = :id
     or d.to_site_id = :id
     """;
-    return fetchDeliveries(jdbi, whereClause, siteId);
+    return fetchDeliveries(jdbi, whereClause, Map.of("id", siteId));
   }
 
   public static List<Delivery> fetchDeliveriesByDriverPhoneNumber(Jdbi jdbi, String driverPhone) {
-    // The driver phone is either the referenced wss_user's canonical phone (new deliveries) or the
-    // legacy driver_number, which was synced from Airtable and not stored canonically. Canonicalize
-    // both sides: strip non-digits and prefix the country code onto 10-digit numbers.
+    // The driver phone is either the referenced wss_user's phone (new deliveries) or the legacy
+    // driver_number, synced from Airtable and not stored canonically. The wss_user phone is now
+    // encrypted, so match it via its blind index; fall back to canonicalizing the legacy
+    // driver_number in SQL only when there is no linked user.
+    String canonical = PhoneNumberUtil.toCanonical(driverPhone);
     String whereClause =
         """
-              case
-                when length(
-                  regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g'))
-                  = 10
-                  then '1'
-                    || regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g')
-                else regexp_replace(coalesce(driverUser.phone, d.driver_number), '[^0-9]+', '', 'g')
-              end = :id
+              driverUser.phone_hmac = :driverPhoneHmac
+              or (
+                driverUser.phone_hmac is null
+                and case
+                      when length(regexp_replace(d.driver_number, '[^0-9]+', '', 'g')) = 10
+                        then '1' || regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
+                      else regexp_replace(d.driver_number, '[^0-9]+', '', 'g')
+                    end = :id
+              )
             """;
-    return fetchDeliveries(jdbi, whereClause, PhoneNumberUtil.toCanonical(driverPhone));
+    return fetchDeliveries(
+        jdbi,
+        whereClause,
+        Map.of("id", canonical, "driverPhoneHmac", PiiCrypto.blindIndex(canonical)));
   }
 
-  private static List<Delivery> fetchDeliveries(Jdbi jdbi, String whereClause, Object idValue) {
+  private static List<Delivery> fetchDeliveries(
+      Jdbi jdbi, String whereClause, Map<String, Object> bindings) {
     String select =
         String.format(
             """
@@ -301,11 +369,15 @@ public class DeliveryDao {
       d.public_url_key publicUrlKey,
       d.delivery_status deliveryStatus,
       d.target_delivery_date targetDeliveryDate,
-      coalesce(dispatcher.name, d.dispatcher_name) dispatcherName,
-      coalesce(dispatcher.phone, d.dispatcher_number) dispatcherNumber,
+      d.dispatcher_name dispatcherName,
+      dispatcher.name_enc dispatcherNameEnc,
+      d.dispatcher_number dispatcherNumber,
+      dispatcher.phone_enc dispatcherNumberEnc,
       d.dispatcher_notes dispatcherNotes,
-      coalesce(driverUser.name, d.driver_name) driverName,
-      coalesce(driverUser.phone, d.driver_number) driverNumber,
+      d.driver_name driverName,
+      driverUser.name_enc driverNameEnc,
+      d.driver_number driverNumber,
+      driverUser.phone_enc driverNumberEnc,
       d.driver_license_plates licensePlateNumbers,
       d.cancel_reason cancelReason,
 
@@ -314,8 +386,10 @@ public class DeliveryDao {
       coalesce(fromSite.address, d.pickup_address) fromAddress,
       coalesce(fromSite.city, d.pickup_city) fromCity,
       coalesce(fromCounty.state, d.pickup_state) fromState,
-      coalesce(fromPc.name, d.pickup_contact_name) fromContactName,
-      coalesce(fromPc.phone, d.pickup_contact_phone) fromContactPhone,
+      d.pickup_contact_name fromContactName,
+      fromPc.name_enc fromContactNameEnc,
+      d.pickup_contact_phone fromContactPhone,
+      fromPc.phone_enc fromContactPhoneEnc,
       coalesce(fromSite.hours, d.pickup_hours) fromHours,
 
       coalesce(toSite.name, d.dropoff_site_name) toSiteName,
@@ -323,8 +397,10 @@ public class DeliveryDao {
       coalesce(toSite.address, d.dropoff_address) toAddress,
       coalesce(toSite.city, d.dropoff_city) toCity,
       coalesce(toCounty.state, d.dropoff_state) toState,
-      coalesce(toPc.name, d.dropoff_contact_name) toContactName,
-      coalesce(toPc.phone, d.dropoff_contact_phone) toContactPhone,
+      d.dropoff_contact_name toContactName,
+      toPc.name_enc toContactNameEnc,
+      d.dropoff_contact_phone toContactPhone,
+      toPc.phone_enc toContactPhoneEnc,
       coalesce(toSite.hours, d.dropoff_hours) toHours,
 
       d.dispatch_code,
@@ -348,13 +424,11 @@ public class DeliveryDao {
             .withHandle(
                 handle -> {
                   var query = handle.createQuery(select);
-                  // The "fetch all" clause has no placeholder; binding an unused :id is rejected.
-                  if (whereClause.contains(":id")) {
-                    query.bind("id", idValue);
-                  }
+                  bindings.forEach(query::bind);
                   return query.mapToBean(DeliveryData.class).list();
                 })
             .stream()
+            .map(DeliveryDao::decryptContacts)
             .map(Delivery::new)
             .toList();
 

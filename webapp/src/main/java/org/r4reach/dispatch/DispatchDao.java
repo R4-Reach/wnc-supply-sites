@@ -1,5 +1,6 @@
 package org.r4reach.dispatch;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -43,8 +44,8 @@ public class DispatchDao {
       select
         d.wss_id wssId,
         u.id wssUserId,
-        coalesce(u.name, '') fullName,
-        u.phone,
+        u.name_enc fullName,
+        u.phone_enc phone,
         coalesce(d.location, '') location,
         coalesce(d.availability, '') availability,
         coalesce(d.comments, '') comments,
@@ -60,23 +61,41 @@ public class DispatchDao {
       left join vehicle_type vt on vt.id = d.vehicle_type_id
       """;
 
+  // name/phone are encrypted, so the old SQL `order by lower(u.name) nulls last, u.phone` can't run
+  // in the database; sort the decrypted rows here to match it (blank names last).
+  private static final Comparator<DriverRow> BY_NAME_THEN_PHONE =
+      Comparator.comparing((DriverRow r) -> r.getFullName().isBlank())
+          .thenComparing(r -> r.getFullName().toLowerCase())
+          .thenComparing(DriverRow::getPhone);
+
   public static List<DriverRow> fetchAll(Jdbi jdbi) {
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(SELECT_ROWS + " order by lower(u.name) nulls last, u.phone")
-                .mapToBean(DriverRow.class)
-                .list());
+    return jdbi
+        .withHandle(handle -> handle.createQuery(SELECT_ROWS).mapToBean(DriverRow.class).list())
+        .stream()
+        .map(DispatchDao::decryptIdentity)
+        .sorted(BY_NAME_THEN_PHONE)
+        .toList();
   }
 
   public static Optional<DriverRow> fetch(Jdbi jdbi, long wssId) {
     return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(SELECT_ROWS + " where d.wss_id = :wssId")
-                .bind("wssId", wssId)
-                .mapToBean(DriverRow.class)
-                .findOne());
+            handle ->
+                handle
+                    .createQuery(SELECT_ROWS + " where d.wss_id = :wssId")
+                    .bind("wssId", wssId)
+                    .mapToBean(DriverRow.class)
+                    .findOne())
+        .map(DispatchDao::decryptIdentity);
+  }
+
+  // fullName is fetched as name_enc ciphertext (empty string when the user has no name, matching
+  // the
+  // old coalesce(u.name, '')); phone is fetched as phone_enc ciphertext. Decrypt both in place.
+  private static DriverRow decryptIdentity(DriverRow row) {
+    String name = PiiCrypto.decrypt(row.getFullName());
+    row.setFullName(name == null ? "" : name);
+    row.setPhone(PiiCrypto.decrypt(row.getPhone()));
+    return row;
   }
 
   /**
@@ -95,16 +114,13 @@ public class DispatchDao {
               handle
                   .createQuery(
                       """
-                      insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
-                      values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
-                      on conflict(phone) do update
+                      insert into wss_user(phone_enc, phone_hmac, name_enc)
+                      values (:phoneEnc, :phoneHmac, :nameEnc)
+                      on conflict(phone_hmac) do update
                         set removed = false,
-                            name = coalesce(:name, wss_user.name),
                             name_enc = coalesce(:nameEnc, wss_user.name_enc)
                       returning id
                       """)
-                  .bind("phone", phone)
-                  .bind("name", trimmedName)
                   .bind("phoneEnc", PiiCrypto.encrypt(phone))
                   .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                   .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
@@ -127,9 +143,7 @@ public class DispatchDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate(
-                    "update wss_user set name = :name, name_enc = :nameEnc where id = :id")
-                .bind("name", trimmedName)
+                .createUpdate("update wss_user set name_enc = :nameEnc where id = :id")
                 .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", wssUserId)
                 .execute());
@@ -149,8 +163,8 @@ public class DispatchDao {
                 handle ->
                     handle
                         .createQuery(
-                            "select count(*) from wss_user where phone = :phone and id <> :id")
-                        .bind("phone", phone)
+                            "select count(*) from wss_user where phone_hmac = :phoneHmac and id <> :id")
+                        .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                         .bind("id", wssUserId)
                         .mapTo(Integer.class)
                         .one())
@@ -164,10 +178,9 @@ public class DispatchDao {
                 .createUpdate(
                     """
                     update wss_user
-                    set phone = :phone, phone_enc = :phoneEnc, phone_hmac = :phoneHmac
+                    set phone_enc = :phoneEnc, phone_hmac = :phoneHmac
                     where id = :id
                     """)
-                .bind("phone", phone)
                 .bind("phoneEnc", PiiCrypto.encrypt(phone))
                 .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("id", wssUserId)

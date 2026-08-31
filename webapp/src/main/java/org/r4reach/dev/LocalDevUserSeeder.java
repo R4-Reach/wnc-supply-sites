@@ -317,17 +317,17 @@ public class LocalDevUserSeeder implements ApplicationRunner {
           // insert a seed admin user
           handle
               .createUpdate(
-                  "insert into wss_user(phone, phone_enc, phone_hmac)"
-                      + " values(:phone, :phoneEnc, :phoneHmac)"
-                      + " on conflict(phone) do update set removed = false")
-              .bind("phone", PHONE)
+                  "insert into wss_user(phone_enc, phone_hmac)"
+                      + " values(:phoneEnc, :phoneHmac)"
+                      + " on conflict(phone_hmac) do update set removed = false")
               .bind("phoneEnc", PiiCrypto.encrypt(PHONE))
               .bind("phoneHmac", PiiCrypto.blindIndex(PHONE))
               .execute();
           handle
-              .createUpdate("update wss_user set password_bcrypt = :hash where phone = :phone")
+              .createUpdate(
+                  "update wss_user set password_bcrypt = :hash where phone_hmac = :phoneHmac")
               .bind("hash", HashingUtil.bcrypt(PASSWORD))
-              .bind("phone", PHONE)
+              .bind("phoneHmac", PiiCrypto.blindIndex(PHONE))
               .execute();
           for (String role : ROLES) {
             handle
@@ -335,12 +335,12 @@ public class LocalDevUserSeeder implements ApplicationRunner {
                     """
                     insert into wss_user_roles(wss_user_id, wss_user_role_id)
                     values(
-                      (select id from wss_user where phone = :phone),
+                      (select id from wss_user where phone_hmac = :phoneHmac),
                       (select id from wss_user_role where name = :role)
                     )
                     on conflict(wss_user_id, wss_user_role_id) do nothing
                     """)
-                .bind("phone", PHONE)
+                .bind("phoneHmac", PiiCrypto.blindIndex(PHONE))
                 .bind("role", role)
                 .execute();
           }
@@ -436,10 +436,9 @@ public class LocalDevUserSeeder implements ApplicationRunner {
         handle ->
             handle
                 .createUpdate(
-                    "update wss_user set name = :name, name_enc = :nameEnc where phone = :phone")
-                .bind("name", driver.fullName())
+                    "update wss_user set name_enc = :nameEnc where phone_hmac = :phoneHmac")
                 .bind("nameEnc", PiiCrypto.encrypt(driver.fullName()))
-                .bind("phone", canonicalPhone)
+                .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
                 .execute());
     DriverDao.upsert(
         jdbi,
@@ -459,10 +458,10 @@ public class LocalDevUserSeeder implements ApplicationRunner {
                     """
                     update driver set vehicle_type_id =
                       (select id from vehicle_type where name = :vehicleType)
-                    where wss_user_id = (select id from wss_user where phone = :phone)
+                    where wss_user_id = (select id from wss_user where phone_hmac = :phoneHmac)
                     """)
                 .bind("vehicleType", driver.vehicleType())
-                .bind("phone", canonicalPhone)
+                .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
                 .execute());
   }
 
@@ -478,13 +477,11 @@ public class LocalDevUserSeeder implements ApplicationRunner {
           handle
               .createUpdate(
                   """
-                  insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
-                  values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
-                  on conflict(phone) do update
-                    set name = excluded.name, name_enc = excluded.name_enc, removed = false
+                  insert into wss_user(phone_enc, phone_hmac, name_enc)
+                  values (:phoneEnc, :phoneHmac, :nameEnc)
+                  on conflict(phone_hmac) do update
+                    set name_enc = excluded.name_enc, removed = false
                   """)
-              .bind("phone", canonicalPhone)
-              .bind("name", DISPATCHER_NAME)
               .bind("phoneEnc", PiiCrypto.encrypt(canonicalPhone))
               .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
               .bind("nameEnc", PiiCrypto.encrypt(DISPATCHER_NAME))
@@ -494,12 +491,12 @@ public class LocalDevUserSeeder implements ApplicationRunner {
                   """
                   insert into wss_user_roles(wss_user_id, wss_user_role_id)
                   values(
-                    (select id from wss_user where phone = :phone),
+                    (select id from wss_user where phone_hmac = :phoneHmac),
                     (select id from wss_user_role where name = 'DISPATCHER')
                   )
                   on conflict(wss_user_id, wss_user_role_id) do nothing
                   """)
-              .bind("phone", canonicalPhone)
+              .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
               .execute();
         });
   }

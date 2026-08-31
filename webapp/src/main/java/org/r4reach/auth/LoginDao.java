@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.HashingUtil;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class LoginDao {
 
@@ -37,7 +38,7 @@ public class LoginDao {
         """
       insert into wss_user_auth_key(wss_user_id, token_sha256)
       values(
-        (select id from wss_user where phone = :user),
+        (select id from wss_user where phone_hmac = :userHmac),
         :token_sha256
       )
       """;
@@ -45,7 +46,7 @@ public class LoginDao {
         handle ->
             handle
                 .createUpdate(insert)
-                .bind("user", phone)
+                .bind("userHmac", PiiCrypto.blindIndex(phone))
                 .bind("token_sha256", HashingUtil.sha256(token))
                 .execute());
 

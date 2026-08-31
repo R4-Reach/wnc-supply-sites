@@ -153,7 +153,7 @@ public class ManageSiteDao {
                     handle
                         .createQuery(
                             """
-                            select pc.phone
+                            select pc.phone_enc
                             from site s
                             left join wss_user pc on pc.id = s.primary_contact_wss_user_id
                             where s.id = :siteId
@@ -161,6 +161,7 @@ public class ManageSiteDao {
                         .bind("siteId", siteId)
                         .mapTo(String.class)
                         .findOne())
+            .map(PiiCrypto::decrypt)
             .orElse(null);
 
     if (newValue == null || newValue.isBlank()) {
@@ -181,8 +182,8 @@ public class ManageSiteDao {
         jdbi.withHandle(
             handle ->
                 handle
-                    .createQuery("select id from wss_user where phone = :phone")
-                    .bind("phone", PhoneNumberUtil.toCanonical(newValue))
+                    .createQuery("select id from wss_user where phone_hmac = :phoneHmac")
+                    .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(newValue)))
                     .mapTo(Long.class)
                     .findOne());
     if (userIdOpt.isEmpty()) {
@@ -219,7 +220,7 @@ public class ManageSiteDao {
                     handle
                         .createQuery(
                             """
-                            select pc.name
+                            select pc.name_enc
                             from site s
                             left join wss_user pc on pc.id = s.primary_contact_wss_user_id
                             where s.id = :siteId
@@ -227,6 +228,7 @@ public class ManageSiteDao {
                         .bind("siteId", siteId)
                         .mapTo(String.class)
                         .findOne())
+            .map(PiiCrypto::decrypt)
             .orElse(null);
     String trimmed = newValue == null || newValue.isBlank() ? null : newValue.trim();
     jdbi.withHandle(
@@ -234,10 +236,9 @@ public class ManageSiteDao {
             handle
                 .createUpdate(
                     """
-                    update wss_user set name = :name, name_enc = :nameEnc
+                    update wss_user set name_enc = :nameEnc
                     where id = (select primary_contact_wss_user_id from site where id = :siteId)
                     """)
-                .bind("name", trimmed)
                 .bind("nameEnc", PiiCrypto.encrypt(trimmed))
                 .bind("siteId", siteId)
                 .execute());

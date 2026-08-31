@@ -117,8 +117,10 @@ public class AddSiteDao {
         jdbi.withHandle(
             handle ->
                 handle
-                    .createQuery("select id from wss_user where phone = :phone")
-                    .bind("phone", PhoneNumberUtil.toCanonical(contactNumber))
+                    .createQuery("select id from wss_user where phone_hmac = :phoneHmac")
+                    .bind(
+                        "phoneHmac",
+                        PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(contactNumber)))
                     .mapTo(Long.class)
                     .findOne());
     if (userIdOpt.isEmpty()) {
@@ -132,11 +134,9 @@ public class AddSiteDao {
                 .createUpdate(
                     """
                     update wss_user
-                    set name = coalesce(:name, name),
-                        name_enc = coalesce(:nameEnc, name_enc)
+                    set name_enc = coalesce(:nameEnc, name_enc)
                     where id = :id
                     """)
-                .bind("name", trimmedName)
                 .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", userId)
                 .execute());

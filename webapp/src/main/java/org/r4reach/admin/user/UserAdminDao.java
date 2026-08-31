@@ -1,5 +1,6 @@
 package org.r4reach.admin.user;
 
+import java.util.Comparator;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,18 +34,37 @@ public class UserAdminDao {
     String roleName;
   }
 
+  // name/phone are encrypted, so the old SQL `order by removed, lower(name) nulls last, phone`
+  // can't run in the query; sort the decrypted rows here to match it.
+  private static final Comparator<UserData> USER_ORDER =
+      Comparator.comparing(UserData::isRemoved)
+          .thenComparing(u -> u.getName() == null)
+          .thenComparing(u -> u.getName() == null ? "" : u.getName().toLowerCase())
+          .thenComparing(UserData::getPhone);
+
   public static List<UserData> fetchAllUsers(Jdbi jdbi) {
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(
-                    """
-                    select id, public_id publicId, phone, name, removed
-                    from wss_user
-                    order by removed, lower(name) nulls last, phone
-                    """)
-                .mapToBean(UserData.class)
-                .list());
+    return jdbi
+        .withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        """
+                        select id, public_id publicId, phone_enc phone, name_enc name, removed
+                        from wss_user
+                        """)
+                    .mapToBean(UserData.class)
+                    .list())
+        .stream()
+        .map(UserAdminDao::decryptIdentity)
+        .sorted(USER_ORDER)
+        .toList();
+  }
+
+  // phone/name are fetched as phone_enc/name_enc ciphertext; decrypt in place.
+  private static UserData decryptIdentity(UserData user) {
+    user.setPhone(PiiCrypto.decrypt(user.getPhone()));
+    user.setName(PiiCrypto.decrypt(user.getName()));
+    return user;
   }
 
   public static List<UserRoleRow> fetchAllUserRoles(Jdbi jdbi) {
@@ -76,15 +96,12 @@ public class UserAdminDao {
             handle
                 .createUpdate(
                     """
-                    insert into wss_user(phone, name, phone_enc, phone_hmac, name_enc)
-                    values (:phone, :name, :phoneEnc, :phoneHmac, :nameEnc)
-                    on conflict(phone) do update
+                    insert into wss_user(phone_enc, phone_hmac, name_enc)
+                    values (:phoneEnc, :phoneHmac, :nameEnc)
+                    on conflict(phone_hmac) do update
                       set removed = false,
-                          name = coalesce(:name, wss_user.name),
                           name_enc = coalesce(:nameEnc, wss_user.name_enc)
                     """)
-                .bind("phone", phone)
-                .bind("name", trimmedName)
                 .bind("phoneEnc", PiiCrypto.encrypt(phone))
                 .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
@@ -97,9 +114,7 @@ public class UserAdminDao {
     jdbi.withHandle(
         handle ->
             handle
-                .createUpdate(
-                    "update wss_user set name = :name, name_enc = :nameEnc where id = :id")
-                .bind("name", trimmedName)
+                .createUpdate("update wss_user set name_enc = :nameEnc where id = :id")
                 .bind("nameEnc", PiiCrypto.encrypt(trimmedName))
                 .bind("id", userId)
                 .execute());

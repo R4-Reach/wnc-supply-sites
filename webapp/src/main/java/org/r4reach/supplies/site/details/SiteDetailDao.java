@@ -1,11 +1,13 @@
 package org.r4reach.supplies.site.details;
 
 import jakarta.annotation.Nullable;
+import java.util.Comparator;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
+import org.r4reach.util.PiiCrypto;
 
 public class SiteDetailDao {
 
@@ -56,8 +58,8 @@ public class SiteDetailDao {
                             select
                               s.name siteName,
                               st.name siteType,
-                              pc.name contactName,
-                              pc.phone contactNumber,
+                              pc.name_enc contactName,
+                              pc.phone_enc contactNumber,
                               s.additional_contacts,
                               s.address,
                               s.city,
@@ -85,7 +87,15 @@ public class SiteDetailDao {
                 .bind("siteId", idToLookup)
                 .mapToBean(SiteDetailData.class)
                 .findOne()
+                .map(SiteDetailDao::decryptContact)
                 .orElse(null));
+  }
+
+  // contactName/contactNumber are fetched as name_enc/phone_enc ciphertext; decrypt in place.
+  private static SiteDetailData decryptContact(SiteDetailData data) {
+    data.setContactName(PiiCrypto.decrypt(data.getContactName()));
+    data.setContactNumber(PiiCrypto.decrypt(data.getContactNumber()));
+    return data;
   }
 
   @Data
@@ -102,22 +112,34 @@ public class SiteDetailDao {
    */
   public static List<SiteContact> lookupAdditionalSiteContacts(Jdbi jdbi, long siteId) {
 
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(
-                    """
-                    select u.name, u.phone
+    return jdbi
+        .withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        """
+                    select u.name_enc name, u.phone_enc phone
                     from wss_user_sites ws
                     join wss_user u on u.id = ws.wss_user_id
                     join site s on s.id = ws.site_id
                     where ws.site_id = :siteId
                       and ws.wss_user_id is distinct from s.primary_contact_wss_user_id
                       and ws.wss_user_id is distinct from s.og_contact_wss_user_id
-                    order by u.name
                     """)
-                .bind("siteId", siteId)
-                .mapToBean(SiteContact.class)
-                .list());
+                    .bind("siteId", siteId)
+                    .mapToBean(SiteContact.class)
+                    .list())
+        .stream()
+        .map(
+            c -> {
+              c.setName(PiiCrypto.decrypt(c.getName()));
+              c.setPhone(PiiCrypto.decrypt(c.getPhone()));
+              return c;
+            })
+        // name/phone are encrypted, so the old `order by u.name` sorts here instead.
+        .sorted(
+            Comparator.comparing(
+                SiteContact::getName, Comparator.nullsLast(Comparator.naturalOrder())))
+        .toList();
   }
 }

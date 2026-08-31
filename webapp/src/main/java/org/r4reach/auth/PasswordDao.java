@@ -3,6 +3,7 @@ package org.r4reach.auth;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.HashingUtil;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class PasswordDao {
 
@@ -20,14 +21,14 @@ public class PasswordDao {
         """
         select password_bcrypt
         from wss_user
-        where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
+        where phone_hmac = :phoneHmac
     """;
     String passwordHash =
         jdbi.withHandle(
                 handle ->
                     handle
                         .createQuery(select)
-                        .bind("phoneNumber", cleanedPhoneNumber)
+                        .bind("phoneHmac", PiiCrypto.blindIndex(cleanedPhoneNumber))
                         .mapTo(String.class)
                         .findOne())
             .orElse(null);
@@ -42,13 +43,13 @@ public class PasswordDao {
    * Whether a wss_user account row exists for the phone (regardless of whether a password is set).
    */
   public static boolean hasPassword(Jdbi jdbi, String phoneNumber) {
-    String select =
-        "select 1 from wss_user where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber";
+    String select = "select 1 from wss_user where phone_hmac = :phoneHmac";
     return jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(select)
-                    .bind("phoneNumber", PhoneNumberUtil.toCanonical(phoneNumber))
+                    .bind(
+                        "phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phoneNumber)))
                     .mapTo(Long.class)
                     .findOne())
         .isPresent();
@@ -63,14 +64,15 @@ public class PasswordDao {
     String select =
         """
         select 1 from wss_user
-        where regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
+        where phone_hmac = :phoneHmac
           and password_bcrypt is not null
         """;
     return jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(select)
-                    .bind("phoneNumber", PhoneNumberUtil.toCanonical(phoneNumber))
+                    .bind(
+                        "phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phoneNumber)))
                     .mapTo(Long.class)
                     .findOne())
         .isPresent();

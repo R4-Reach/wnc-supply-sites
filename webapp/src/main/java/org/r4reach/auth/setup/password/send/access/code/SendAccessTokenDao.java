@@ -26,7 +26,7 @@ public class SendAccessTokenDao {
         """
         select count(*)
         from sms_passcode
-        where wss_user_id = (select id from wss_user where phone = :phone)
+        where wss_user_id = (select id from wss_user where phone_hmac = :phoneHmac)
           and date_created > now() - (:minutes * interval '1 minute')
         """;
     int recentRequests =
@@ -34,7 +34,8 @@ public class SendAccessTokenDao {
             handle ->
                 handle
                     .createQuery(query)
-                    .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
+                    .bind(
+                        "phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phoneNumber)))
                     .bind("minutes", THROTTLE_MINUTES)
                     .mapTo(Integer.class)
                     .one());
@@ -55,13 +56,13 @@ public class SendAccessTokenDao {
         select 1
         from wss_user
         where removed = false
-          and regexp_replace(phone, '[^0-9]+', '', 'g') = :phoneNumber
+          and phone_hmac = :phoneHmac
         """;
     return jdbi.withHandle(
         handle ->
             handle
                 .createQuery(query)
-                .bind("phoneNumber", phoneNumber)
+                .bind("phoneHmac", PiiCrypto.blindIndex(phoneNumber))
                 .mapTo(Integer.class)
                 .findOne()
                 .isPresent());
@@ -71,14 +72,13 @@ public class SendAccessTokenDao {
     String phone = PhoneNumberUtil.toCanonical(number);
     String insert =
         """
-        insert into wss_user(phone, phone_enc, phone_hmac)
-        values(:phone, :phoneEnc, :phoneHmac)
+        insert into wss_user(phone_enc, phone_hmac)
+        values(:phoneEnc, :phoneHmac)
         """;
     jdbi.withHandle(
         handle ->
             handle
                 .createUpdate(insert)
-                .bind("phone", phone)
                 .bind("phoneEnc", PiiCrypto.encrypt(phone))
                 .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .execute());
@@ -87,13 +87,14 @@ public class SendAccessTokenDao {
   static boolean userAccountExists(Jdbi jdbi, String phoneNumber) {
     String query =
         """
-        select 1 from wss_user where phone = :phone
+        select 1 from wss_user where phone_hmac = :phoneHmac
         """;
     return jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(query)
-                    .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
+                    .bind(
+                        "phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phoneNumber)))
                     .mapTo(Integer.class)
                     .findOne())
         .isPresent();
@@ -121,7 +122,7 @@ public class SendAccessTokenDao {
 
         insert into sms_passcode(wss_user_id, passcode_sha256, csrf_sha256)
         values(
-          (select id from wss_user where phone = :phoneNumber),
+          (select id from wss_user where phone_hmac = :phoneHmac),
           :passcode,
           :csrf
           )
@@ -130,7 +131,9 @@ public class SendAccessTokenDao {
         handle ->
             handle
                 .createUpdate(insert)
-                .bind("phoneNumber", PhoneNumberUtil.toCanonical(params.getPhoneNumber()))
+                .bind(
+                    "phoneHmac",
+                    PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(params.getPhoneNumber())))
                 .bind("passcode", params.getAccessCode())
                 .bind("csrf", params.getCsrfToken())
                 .execute());

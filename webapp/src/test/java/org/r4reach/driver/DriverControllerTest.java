@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 class DriverControllerTest {
 
@@ -253,8 +254,10 @@ class DriverControllerTest {
         handle ->
             handle
                 .createUpdate(
-                    "insert into wss_user(phone) values(:phone) on conflict(phone) do nothing")
-                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                    "insert into wss_user(phone_enc, phone_hmac)"
+                        + " values(:phoneEnc, :phoneHmac) on conflict(phone_hmac) do nothing")
+                .bind("phoneEnc", PiiCrypto.encrypt(PhoneNumberUtil.toCanonical(phone)))
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phone)))
                 .execute());
   }
 }

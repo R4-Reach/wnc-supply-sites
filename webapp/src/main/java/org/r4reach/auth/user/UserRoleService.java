@@ -36,11 +36,10 @@ public class UserRoleService {
             handle
                 .createUpdate(
                     """
-                    insert into wss_user(phone, phone_enc, phone_hmac)
-                    values (:phone, :phoneEnc, :phoneHmac)
-                    on conflict(phone) do nothing
+                    insert into wss_user(phone_enc, phone_hmac)
+                    values (:phoneEnc, :phoneHmac)
+                    on conflict(phone_hmac) do nothing
                     """)
-                .bind("phone", phone)
                 .bind("phoneEnc", PiiCrypto.encrypt(phone))
                 .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .execute());
@@ -52,11 +51,11 @@ public class UserRoleService {
                     """
                     insert into wss_user_roles(wss_user_id, wss_user_role_id)
                     values(
-                      (select id from wss_user where phone = :phone),
+                      (select id from wss_user where phone_hmac = :phoneHmac),
                       (select id from wss_user_role where name = :role))
                     on conflict (wss_user_id, wss_user_role_id) do nothing
                     """)
-                .bind("phone", phone)
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("role", role.name())
                 .execute());
   }

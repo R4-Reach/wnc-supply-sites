@@ -1,5 +1,6 @@
 package org.r4reach.manage.contact;
 
+import java.util.Comparator;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,19 +61,36 @@ public class ContactDao {
   static List<SiteManager> getManagers(Jdbi jdbi, long siteId) {
     String select =
         """
-            select ws.id, u.name, u.phone
+            select ws.id, u.name_enc name, u.phone_enc phone
             from wss_user_sites ws
             join wss_user u on u.id = ws.wss_user_id
             join site s on s.id = ws.site_id
             where ws.site_id = :siteId
               and ws.wss_user_id is distinct from s.primary_contact_wss_user_id
               and ws.wss_user_id is distinct from s.og_contact_wss_user_id
-            order by u.name
             """;
 
-    return jdbi.withHandle(
-        handle ->
-            handle.createQuery(select).bind("siteId", siteId).mapToBean(SiteManager.class).list());
+    return jdbi
+        .withHandle(
+            handle ->
+                handle
+                    .createQuery(select)
+                    .bind("siteId", siteId)
+                    .mapToBean(SiteManager.class)
+                    .list())
+        .stream()
+        .map(ContactDao::decryptIdentity)
+        // name/phone are encrypted, so the old `order by u.name` sorts here instead.
+        .sorted(
+            Comparator.comparing(
+                SiteManager::getName, Comparator.nullsLast(Comparator.naturalOrder())))
+        .toList();
+  }
+
+  private static SiteManager decryptIdentity(SiteManager manager) {
+    manager.setName(PiiCrypto.decrypt(manager.getName()));
+    manager.setPhone(PiiCrypto.decrypt(manager.getPhone()));
+    return manager;
   }
 
   /**
@@ -103,8 +121,8 @@ public class ContactDao {
     return jdbi.withHandle(
         handle ->
             handle
-                .createQuery("select id from wss_user where phone = :phone")
-                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                .createQuery("select id from wss_user where phone_hmac = :phoneHmac")
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phone)))
                 .mapTo(Long.class)
                 .one());
   }
@@ -117,11 +135,9 @@ public class ContactDao {
                 .createUpdate(
                     """
                     update wss_user
-                    set name = coalesce(:name, name),
-                        name_enc = coalesce(:nameEnc, name_enc)
+                    set name_enc = coalesce(:nameEnc, name_enc)
                     where id = :id
                     """)
-                .bind("name", trimmed)
                 .bind("nameEnc", PiiCrypto.encrypt(trimmed))
                 .bind("id", userId)
                 .execute());

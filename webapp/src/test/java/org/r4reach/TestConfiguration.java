@@ -14,6 +14,7 @@ import org.r4reach.manage.add.site.AddSiteDao;
 import org.r4reach.manage.add.site.AddSiteData;
 import org.r4reach.test.util.TestDataFile;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class TestConfiguration {
 
@@ -187,10 +188,12 @@ public class TestConfiguration {
         handle ->
             handle
                 .createUpdate(
-                    "insert into wss_user(phone, name) values(:phone, :name)"
-                        + " on conflict(phone) do nothing")
-                .bind("phone", canonicalPhone)
-                .bind("name", driver.getFullName())
+                    "insert into wss_user(phone_enc, phone_hmac, name_enc)"
+                        + " values(:phoneEnc, :phoneHmac, :nameEnc)"
+                        + " on conflict(phone_hmac) do nothing")
+                .bind("phoneEnc", PiiCrypto.encrypt(canonicalPhone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
+                .bind("nameEnc", PiiCrypto.encrypt(driver.getFullName()))
                 .execute());
     jdbiTest.withHandle(
         handle ->
@@ -202,12 +205,12 @@ public class TestConfiguration {
                       license_plates, comments, availability, can_lift_50lbs, pallet_capacity)
                     values(
                       :wssId,
-                      (select id from wss_user where phone = :phone),
+                      (select id from wss_user where phone_hmac = :phoneHmac),
                       :location, :active, :blacklisted,
                       :licensePlates, :comments, :availability, :canLift, :pallet)
                     """)
                 .bind("wssId", driver.getWssId())
-                .bind("phone", canonicalPhone)
+                .bind("phoneHmac", PiiCrypto.blindIndex(canonicalPhone))
                 .bind("location", driver.getLocation())
                 .bind("active", driver.isActive())
                 .bind("blacklisted", driver.isBlacklisted())

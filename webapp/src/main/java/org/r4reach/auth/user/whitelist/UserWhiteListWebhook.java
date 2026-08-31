@@ -81,15 +81,14 @@ public class UserWhiteListWebhook {
     String phone = request.getPhoneNumber();
     String script =
         """
-        insert into wss_user(phone, phone_enc, phone_hmac)
-        values (:phone, :phoneEnc, :phoneHmac)
-        on conflict(phone) do update set removed = :removed
+        insert into wss_user(phone_enc, phone_hmac)
+        values (:phoneEnc, :phoneHmac)
+        on conflict(phone_hmac) do update set removed = :removed
         """;
     jdbi.withHandle(
         handle ->
             handle
                 .createUpdate(script)
-                .bind("phone", phone)
                 .bind("phoneEnc", PiiCrypto.encrypt(phone))
                 .bind("phoneHmac", PiiCrypto.blindIndex(phone))
                 .bind("removed", request.getRemoved())
@@ -99,24 +98,32 @@ public class UserWhiteListWebhook {
   private static void updateRoles(Jdbi jdbi, String phoneNumber, List<String> roles) {
     String removeOldRoles =
         """
-      delete from wss_user_roles where wss_user_id = (select id from wss_user where phone = :phone);
+      delete from wss_user_roles where wss_user_id = (select id from wss_user where phone_hmac = :phoneHmac);
     """;
     jdbi.withHandle(
-        handle -> handle.createUpdate(removeOldRoles).bind("phone", phoneNumber).execute());
+        handle ->
+            handle
+                .createUpdate(removeOldRoles)
+                .bind("phoneHmac", PiiCrypto.blindIndex(phoneNumber))
+                .execute());
 
     for (String role : roles) {
       String insert =
           """
       insert into wss_user_roles(wss_user_id, wss_user_role_id)
       values(
-        (select id from wss_user where phone = :phone),
+        (select id from wss_user where phone_hmac = :phoneHmac),
         (select id from wss_user_role where name = :role)
 
       )
       """;
       jdbi.withHandle(
           handle ->
-              handle.createUpdate(insert).bind("phone", phoneNumber).bind("role", role).execute());
+              handle
+                  .createUpdate(insert)
+                  .bind("phoneHmac", PiiCrypto.blindIndex(phoneNumber))
+                  .bind("role", role)
+                  .execute());
     }
   }
 

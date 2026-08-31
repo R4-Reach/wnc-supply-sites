@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.r4reach.auth.UserRole;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 class UserWhiteListWebhookTest {
   UserWhiteListWebhook webhook = new UserWhiteListWebhook(jdbiTest);
@@ -104,14 +105,14 @@ class UserWhiteListWebhookTest {
             from wss_user wu
             join wss_user_roles roles on wu.id = roles.wss_user_id
             join wss_user_role roleName on roleName.id = roles.wss_user_role_id
-            where wu.phone = :phone;
+            where wu.phone_hmac = :phoneHmac;
             """;
 
     return jdbiTest.withHandle(
         handle ->
             handle
                 .createQuery(query)
-                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phone)))
                 .mapTo(String.class)
                 .list());
   }

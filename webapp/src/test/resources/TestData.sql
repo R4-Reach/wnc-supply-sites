@@ -35,7 +35,14 @@ insert into max_supply_load(id, sort_order, name, default_selection)
 values( -100, 25, 'test-value', false) on conflict do nothing;
 
 -- Primary contact for site1 (asserted by SiteDetailDaoTest). Identity lives on wss_user now.
-insert into wss_user(phone, name) values('18280000001', 'contact me');
+-- phone/name are encrypted at rest; raw SQL can't run the app cipher, so these are pinned values,
+-- precomputed with the local/test DB_PII_KEY (the all-zero default): phone_enc / name_enc are
+-- AES-GCM ciphertext of '18280000001' and 'contact me', phone_hmac is the blind-index HMAC of the
+-- phone. Regenerate them if the test key ever changes.
+insert into wss_user(phone_enc, phone_hmac, name_enc) values(
+  'dkXOVne+qeYMRznsP8y34b6tgEFZRbGXDegbBciJwn5OebTlKkdp',
+  '7def9b5f18d4b821919a756d938e986544df197fa7a2ea0f6c75df5c92a5fbb9',
+  'iTH37RIbDqAld0DkZ1lZaSHwQechXh0XUn1k+4EQ5ZfM8bXGqj0=');
 
 insert into site(
   name,
@@ -57,8 +64,8 @@ insert into site(
   inactive_reason)
 values (
         'site1',
-        (select id from wss_user where phone = '18280000001'),
-        (select id from wss_user where phone = '18280000001'),
+        (select id from wss_user where phone_hmac = '7def9b5f18d4b821919a756d938e986544df197fa7a2ea0f6c75df5c92a5fbb9'),
+        (select id from wss_user where phone_hmac = '7def9b5f18d4b821919a756d938e986544df197fa7a2ea0f6c75df5c92a5fbb9'),
         'address1',
         'city1',
         (select id from county where name = 'Watauga' and state = 'NC'),
@@ -76,7 +83,7 @@ values (
        );
 
 insert into wss_user_sites(wss_user_id, site_id)
-  select (select id from wss_user where phone = '18280000001'),
+  select (select id from wss_user where phone_hmac = '7def9b5f18d4b821919a756d938e986544df197fa7a2ea0f6c75df5c92a5fbb9'),
          (select id from site where name = 'site1');
 
 

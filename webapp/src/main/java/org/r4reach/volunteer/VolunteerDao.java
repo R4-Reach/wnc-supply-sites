@@ -3,6 +3,7 @@ package org.r4reach.volunteer;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
+import org.r4reach.util.PiiCrypto;
 import org.r4reach.volunteer.VolunteerService.DeliveryForm;
 import org.r4reach.volunteer.VolunteerService.Item;
 import org.r4reach.volunteer.VolunteerService.Site;
@@ -179,8 +180,8 @@ public class VolunteerDao {
           site.name as site_name,
           site.address,
           site.city,
-          pc.phone as site_contact_number,
-          pc.name as site_contact_name
+          pc.phone_enc as site_contact_number,
+          pc.name_enc as site_contact_name
         FROM volunteer_delivery vd
         LEFT JOIN site
         ON vd.site_id = site.id
@@ -189,16 +190,22 @@ public class VolunteerDao {
         WHERE vd.url_key = :urlKey
         """;
 
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(query)
-                .bind("urlKey", urlKey)
-                .mapToBean(VolunteerService.VolunteerDeliveryRequest.class)
-                .findOne()
-                .orElseThrow(
-                    () ->
-                        new IllegalArgumentException("Invalid volunteer delivery key: " + urlKey)));
+    VolunteerService.VolunteerDeliveryRequest request =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(query)
+                    .bind("urlKey", urlKey)
+                    .mapToBean(VolunteerService.VolunteerDeliveryRequest.class)
+                    .findOne()
+                    .orElseThrow(
+                        () ->
+                            new IllegalArgumentException(
+                                "Invalid volunteer delivery key: " + urlKey)));
+    // site contact name/phone come from the encrypted wss_user columns; decrypt for display.
+    request.setSiteContactNumber(PiiCrypto.decrypt(request.getSiteContactNumber()));
+    request.setSiteContactName(PiiCrypto.decrypt(request.getSiteContactName()));
+    return request;
   }
 
   static List<VolunteerService.VolunteerDeliveryRequestItem> getVolunteerDeliveryItems(

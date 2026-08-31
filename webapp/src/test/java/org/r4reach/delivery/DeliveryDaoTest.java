@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.r4reach.TestConfiguration;
 import org.r4reach.dispatch.DispatchDao;
+import org.r4reach.util.PiiCrypto;
 
 class DeliveryDaoTest {
 
@@ -145,12 +146,14 @@ class DeliveryDaoTest {
             handle
                 .createQuery(
                     """
-                    insert into wss_user(phone, name) values (:phone, :name)
-                    on conflict(phone) do update set name = excluded.name, removed = false
+                    insert into wss_user(phone_enc, phone_hmac, name_enc)
+                    values (:phoneEnc, :phoneHmac, :nameEnc)
+                    on conflict(phone_hmac) do update set name_enc = excluded.name_enc, removed = false
                     returning id
                     """)
-                .bind("phone", phone)
-                .bind("name", name)
+                .bind("phoneEnc", PiiCrypto.encrypt(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(phone))
+                .bind("nameEnc", PiiCrypto.encrypt(name))
                 .mapTo(Long.class)
                 .one());
   }

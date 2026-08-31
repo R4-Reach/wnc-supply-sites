@@ -3,6 +3,7 @@ package org.r4reach.driver;
 import java.util.Optional;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.util.PhoneNumberUtil;
+import org.r4reach.util.PiiCrypto;
 
 public class DriverDao {
 
@@ -13,8 +14,8 @@ public class DriverDao {
                     """
                     select
                       d.wss_id,
-                      u.name fullName,
-                      u.phone,
+                      u.name_enc fullName,
+                      u.phone_enc phone,
                       d.active,
                       d.black_listed,
                       d.location,
@@ -25,11 +26,12 @@ public class DriverDao {
                       d.pallet_capacity
                     from driver d
                     join wss_user u on u.id = d.wss_user_id
-                    where u.phone = :phone
+                    where u.phone_hmac = :phoneHmac
                     """)
-                .bind("phone", PhoneNumberUtil.toCanonical(phoneNumber))
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phoneNumber)))
                 .mapToBean(Driver.class)
-                .findOne());
+                .findOne()
+                .map(DriverDao::decryptIdentity));
   }
 
   /**
@@ -49,7 +51,7 @@ public class DriverDao {
               wss_user_id, location, license_plates, availability, comments,
               can_lift_50lbs, pallet_capacity)
             values(
-              (select id from wss_user where phone = :phone),
+              (select id from wss_user where phone_hmac = :phoneHmac),
               :location, :licensePlates, :availability, :comments,
               :can_lift_50lbs, :pallet_capacity)
             on conflict(wss_user_id) do update set
@@ -61,7 +63,9 @@ public class DriverDao {
                pallet_capacity = excluded.pallet_capacity,
                last_updated = now()
             """)
-                .bind("phone", PhoneNumberUtil.toCanonical(driver.getPhone()))
+                .bind(
+                    "phoneHmac",
+                    PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(driver.getPhone())))
                 .bind("location", driver.getLocation())
                 .bind("licensePlates", driver.getLicensePlates())
                 .bind("comments", driver.getComments())
@@ -81,12 +85,19 @@ public class DriverDao {
                 .createUpdate(
                     """
                         insert into driver(wss_user_id, active)
-                        values((select id from wss_user where phone = :phone), false)
+                        values((select id from wss_user where phone_hmac = :phoneHmac), false)
                         on conflict(wss_user_id) do update set
                           active = not driver.active,
                           last_updated = now()
                         """)
-                .bind("phone", PhoneNumberUtil.toCanonical(phone))
+                .bind("phoneHmac", PiiCrypto.blindIndex(PhoneNumberUtil.toCanonical(phone)))
                 .execute());
+  }
+
+  /** Decrypts the wss_user identity columns fetched as ciphertext into the {@link Driver}. */
+  private static Driver decryptIdentity(Driver driver) {
+    driver.setFullName(PiiCrypto.decrypt(driver.getFullName()));
+    driver.setPhone(PiiCrypto.decrypt(driver.getPhone()));
+    return driver;
   }
 }
