@@ -37,7 +37,8 @@ public class HttpGetSender {
     }
 
     var uri = URI.create(buildUrl(url, params));
-    log.info("Sending get request to uri: {}", uri);
+    // Log only scheme/host/path — the query string can carry secrets (e.g. the Maps API key).
+    log.info("Sending get request to: {}://{}{}", uri.getScheme(), uri.getHost(), uri.getPath());
     try (var client = HttpClient.newHttpClient()) {
       var request = HttpRequest.newBuilder(uri).GET().build();
 

@@ -75,6 +75,14 @@ public class LoginController {
       pageParams.put("redirectUri", redirectUri);
       pageParams.put("errorMessage", "Invalid Login");
       return new ModelAndView("login/login", pageParams);
+    } else if (LoginDao.isLoginThrottled(jdbi, user)) {
+      // Too many recent failures for this number — lock out to blunt online password guessing.
+      log.warn("Login throttled after too many failed attempts");
+      Map<String, String> pageParams = new HashMap<>();
+      pageParams.put("redirectUri", redirectUri);
+      pageParams.put(
+          "errorMessage", "Too many failed attempts. Please wait a few minutes and try again.");
+      return new ModelAndView("login/login", pageParams);
     } else if (PasswordDao.confirmPassword(jdbi, user, password)) {
       LoginDao.recordLoginSuccess(jdbi, user);
       String authToken = LoginDao.generateAuthToken(jdbi, user);
@@ -87,7 +95,7 @@ public class LoginController {
       return new ModelAndView("redirect:/login/setup-password");
     } else {
       LoginDao.recordLoginFailure(jdbi, user);
-      log.info("User login failed: {}", user);
+      log.info("User login failed");
       Map<String, String> pageParams = new HashMap<>();
       pageParams.put("redirectUri", redirectUri);
       pageParams.put("errorMessage", "Invalid Login");

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.auth.setup.password.SetupPasswordHelper;
 import org.r4reach.auth.user.UserRoleService;
-import org.r4reach.auth.user.whitelist.UserWhiteListWebhook;
 import org.r4reach.manage.ManageSiteDao;
 import org.r4reach.manage.contact.ContactDao;
 
@@ -70,12 +69,7 @@ class LoggedInAdviceTest {
   /** Dispatcher role is only granted through the wss_roles table and white listing. */
   @Test
   void dispatcherRole() {
-    UserWhiteListWebhook.updateUserAndRoles(
-        jdbiTest,
-        UserWhiteListWebhook.UserWhiteListRequest.builder()
-            .roles(List.of(UserRole.DISPATCHER.name()))
-            .phoneNumber(number)
-            .build());
+    UserRoleService.grantRole(jdbiTest, number, UserRole.DISPATCHER);
     assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
         .containsExactly(UserRole.AUTHORIZED, UserRole.DISPATCHER);
   }
@@ -83,12 +77,7 @@ class LoggedInAdviceTest {
   /** Data admin role is only granted through the wss_roles table and white listing. */
   @Test
   void dataAdminRole() {
-    UserWhiteListWebhook.updateUserAndRoles(
-        jdbiTest,
-        UserWhiteListWebhook.UserWhiteListRequest.builder()
-            .roles(List.of(UserRole.DATA_ADMIN.name()))
-            .phoneNumber(number)
-            .build());
+    UserRoleService.grantRole(jdbiTest, number, UserRole.DATA_ADMIN);
     assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
         .containsExactly(UserRole.AUTHORIZED, UserRole.DATA_ADMIN);
   }
@@ -96,12 +85,7 @@ class LoggedInAdviceTest {
   /** User-admin role is granted through the wss_user_roles table. */
   @Test
   void userAdminRole() {
-    UserWhiteListWebhook.updateUserAndRoles(
-        jdbiTest,
-        UserWhiteListWebhook.UserWhiteListRequest.builder()
-            .roles(List.of(UserRole.USER_ADMIN.name()))
-            .phoneNumber(number)
-            .build());
+    UserRoleService.grantRole(jdbiTest, number, UserRole.USER_ADMIN);
     assertThat(LoggedInAdvice.computeUserRoles(jdbiTest, token))
         .containsExactly(UserRole.AUTHORIZED, UserRole.USER_ADMIN);
   }

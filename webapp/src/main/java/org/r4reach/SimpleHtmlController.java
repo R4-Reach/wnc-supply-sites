@@ -11,7 +11,9 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.LoggedInAdvice;
+import org.r4reach.auth.LoginDao;
 import org.r4reach.auth.UserRole;
+import org.r4reach.util.CookieUtil;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -77,12 +79,11 @@ public class SimpleHtmlController {
   }
 
   @GetMapping("/log-out")
-  public RedirectView logout(HttpServletResponse response) {
-    Cookie cookie = new Cookie("auth", null);
-    cookie.setMaxAge(0);
-    cookie.setSecure(true);
-    cookie.setHttpOnly(true);
-    response.addCookie(cookie);
+  public RedirectView logout(HttpServletRequest request, HttpServletResponse response) {
+    // Revoke the token server-side too — clearing the cookie alone leaves a captured token valid.
+    CookieUtil.readAuthCookie(request).ifPresent(token -> LoginDao.revokeToken(jdbi, token));
+    CookieUtil.deleteCookie(response, "auth");
+    CookieUtil.deleteCookie(response, "user");
     return new RedirectView("/");
   }
 

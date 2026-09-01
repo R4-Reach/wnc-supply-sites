@@ -39,11 +39,12 @@ public class ConfirmAccessCodeController {
 
   @PostMapping("/confirm-access-code")
   ResponseEntity<ConfirmAccessCodeResponse> confirmAccessCode(@RequestBody String input) {
-    log.info("Confirm access code: {}", input);
+    // Never log the body: it carries the one-time passcode and csrf token that gate password setup.
+    log.info("Confirm access code request received");
 
     ConfirmAccessCodeRequest confirmAccessCodeRequest = ConfirmAccessCodeRequest.parse(input);
     if (!confirmAccessCodeRequest.isValid()) {
-      log.warn("Invalid confirm access code request: {}", input);
+      log.warn("Invalid confirm access code request");
       throw new IllegalArgumentException("Invalid confirm access code request");
     }
 

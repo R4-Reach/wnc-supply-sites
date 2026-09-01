@@ -69,6 +69,21 @@ class SetPasswordDao {
                 .bind("validationToken", HashingUtil.sha256(validationToken))
                 .execute());
 
+    // End all existing sessions on a password change so a reset evicts anyone holding an old token.
+    String revokeAuthTokens =
+        """
+        delete from wss_user_auth_key
+        where wss_user_id = (
+          select wss_user_id from sms_passcode where validation_key_sha256 = :validationToken
+        )
+        """;
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(revokeAuthTokens)
+                .bind("validationToken", HashingUtil.sha256(validationToken))
+                .execute());
+
     return true;
   }
 }

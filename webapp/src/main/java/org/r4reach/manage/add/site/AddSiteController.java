@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.HtmlUtils;
 
 @Controller
 @AllArgsConstructor
@@ -127,8 +128,13 @@ public class AddSiteController {
       return ResponseEntity.badRequest()
           .body("{\"result\": \"fail\", \"error\": \"site name already exists\"}");
     } catch (IllegalArgumentException e) {
+      // The message echoes user-supplied input (e.g. the county) and the page inserts this body via
+      // innerHTML, so escape it — an unescaped value would be a reflected-XSS sink.
       return ResponseEntity.badRequest()
-          .body(String.format("{\"result\": \"fail\", \"error\": \"%s\"}", e.getMessage()));
+          .body(
+              String.format(
+                  "{\"result\": \"fail\", \"error\": \"%s\"}",
+                  HtmlUtils.htmlEscape(e.getMessage())));
     }
   }
 }

@@ -40,11 +40,14 @@ public class SmsSender {
   public boolean send(String phoneNumber, String message) {
     if (phoneNumber == null || message == null) {
       throw new IllegalArgumentException(
-          String.format("Null input, phoneNumber: %s, message: %s", phoneNumber, message));
+          String.format(
+              "Null input, phoneNumber present: %s, message present: %s",
+              phoneNumber != null, message != null));
     }
 
     if (!twilioSmsEnabled) {
-      log.info("SMS disabled, would have sent to: {}, message: {}", phoneNumber, message);
+      // Never log the message body — it carries the one-time passcode — or the recipient phone.
+      log.info("SMS disabled, skipping send (message length: {})", message.length());
       recordMessage(
           jdbi,
           MessageResult.builder()
@@ -57,7 +60,7 @@ public class SmsSender {
               .build());
       return true;
     } else {
-      log.info("Sending SMS to: {}, message length: {}", phoneNumber, message.length());
+      log.info("Sending SMS (message length: {})", message.length());
 
       String rawFromNumber = siteConfigService.getOrEmpty(SiteConfigKey.TWILIO_FROM_NUMBER);
       Optional<String> twilioFromNumber = toFromE164(rawFromNumber);
@@ -90,7 +93,7 @@ public class SmsSender {
         recordMessage(jdbi, new MessageResult(smsMessage, message.length()));
         return true;
       } catch (Exception e) {
-        log.warn("Failed to send SMS to: {}, with message: {}", phoneNumber, message, e);
+        log.warn("Failed to send SMS", e);
         recordMessage(
             jdbi,
             MessageResult.builder()

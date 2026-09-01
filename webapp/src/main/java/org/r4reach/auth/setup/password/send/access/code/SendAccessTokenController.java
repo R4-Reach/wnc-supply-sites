@@ -45,11 +45,12 @@ public class SendAccessTokenController {
 
   @PostMapping("/send-access-code")
   ResponseEntity<SendAccessCodeResponse> sendAccessCode(@RequestBody String request) {
-    log.info("Access code request for: {}", request);
+    // Don't log the body: it carries a phone number (PII kept encrypted at rest).
+    log.info("Access code request received");
 
     SendAccessCodeRequest sendAccessCodeRequest = SendAccessCodeRequest.parse(request);
     if (!sendAccessCodeRequest.isValid()) {
-      log.warn("Invalid phone number received for access code request: {}", request);
+      log.warn("Invalid phone number received for access code request");
       throw new IllegalArgumentException("Invalid phone number");
     }
 
@@ -89,7 +90,7 @@ public class SendAccessTokenController {
   /** Core send-access-code logic, shared by the JSON endpoint and the htmx wizard endpoint. */
   private ResponseEntity<SendAccessCodeResponse> sendAccessCodeForNumber(String phoneNumber) {
     if (!SendAccessTokenDao.isPhoneNumberRegistered(jdbi, phoneNumber)) {
-      log.warn("Access code requested for unregistered phone number: {}", phoneNumber);
+      log.warn("Access code requested for unregistered phone number");
       return ResponseEntity.status(401)
           .body(
               SendAccessCodeResponse.invalid(
@@ -105,7 +106,7 @@ public class SendAccessTokenController {
     }
 
     if (SendAccessTokenDao.isThrottled(jdbi, phoneNumber)) {
-      log.warn("Too many access code requests for phone number: {}", phoneNumber);
+      log.warn("Too many access code requests for a phone number");
       return ResponseEntity.status(429)
           .body(
               SendAccessCodeResponse.invalid(

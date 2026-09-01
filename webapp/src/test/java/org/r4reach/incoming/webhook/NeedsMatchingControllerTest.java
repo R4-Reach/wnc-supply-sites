@@ -3,29 +3,13 @@ package org.r4reach.incoming.webhook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.data.ItemStatus;
 import org.r4reach.data.SiteType;
 import org.r4reach.supplies.site.details.SiteDetailDao;
-import org.springframework.http.ResponseEntity;
 
 class NeedsMatchingControllerTest {
-
-  @Nested
-  class ControllerParsing {
-    @Test
-    void controller() {
-      String input =
-          """
-          {"deliveryId":35,"fromSiteWssId":[337],"toSiteWssId":[115]}
-          """;
-      NeedsMatchingController controller = new NeedsMatchingController(TestConfiguration.jdbiTest);
-      ResponseEntity<String> response = controller.addSuppliesToDelivery(input);
-      assertThat(response.getStatusCode().value()).isEqualTo(200);
-    }
-  }
 
   private static long supplySiteId;
   private static long supplySiteWssId;

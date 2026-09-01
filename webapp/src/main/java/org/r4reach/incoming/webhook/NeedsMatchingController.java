@@ -1,82 +1,23 @@
 package org.r4reach.incoming.webhook;
 
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Supports a webhook endpoint that can take a 'from' site, 'to' site, then invokes a MAKE webhook
- * to send an update of which supplies can be delivered between the two.
+ * Computes the eligible-goods match between two sites: the items a drop-off site needs that a
+ * pickup site has available to give. Formerly also exposed an Airtable webhook that pushed matches
+ * into a MAKE job; that integration is retired, so only the reusable match computation remains,
+ * driving the delivery detail page's "match goods" action.
  */
-@Slf4j
-@RestController
-public class NeedsMatchingController {
+public final class NeedsMatchingController {
 
-  private static final String PATH_ADD_NEEDS = "/webhook/add-supplies-to-delivery";
-  private final Jdbi jdbi;
-
-  NeedsMatchingController(Jdbi jdbi) {
-    this.jdbi = jdbi;
-  }
-
-  /**
-   * Data result for a needs match request. A needs match are all eligible items at a 'from' site
-   * that match match the needs of a 'to' site.
-   */
-  @Builder
-  @lombok.Value
-  public static class ComputedNeeds {
-    /** ID of the delivery, as received from Airtable */
-    long deliveryId;
-
-    /** Results, list of items names */
-    List<String> itemList;
-  }
-
-  /**
-   * Given inputs: [from site, to site, delivery id]<br>
-   * Compute which needs can be sent from site to the to site.<br>
-   * Invoke make job to update the target delivery id with the computed needs.
-   */
-  @PostMapping(PATH_ADD_NEEDS)
-  ResponseEntity<String> addSuppliesToDelivery(
-      @RequestBody String body) { // Map<String, String> body) {
-    log.info("{}, received data: {}", PATH_ADD_NEEDS, body);
-    LinkedTreeMap json = new Gson().fromJson(body, LinkedTreeMap.class);
-    long deliveryId = ((Double) json.get("deliveryId")).longValue();
-
-    List<Double> fromSite = (List<Double>) json.get("fromSiteWssId");
-    List<Double> toSite = (List<Double>) json.get("toSiteWssId");
-
-    if (fromSite.isEmpty() || toSite.isEmpty()) {
-      log.warn(
-          "Add items requested, except the requested sites are not in WSS though. "
-              + "No results are being returned. Request: {}",
-          body);
-      return ResponseEntity.ok("No matches, sites are not in WSS");
-    }
-
-    long fromWssId = fromSite.getFirst().longValue();
-    long toSiteWssId = toSite.getFirst().longValue();
-
-    List<String> neededItems = computeNeedsMatch(jdbi, fromWssId, toSiteWssId);
-    log.info("Received needs computation request: {}, matched with needs: {}", body, neededItems);
-
-    return ResponseEntity.ok("Matches: " + neededItems.size());
-  }
+  private NeedsMatchingController() {}
 
   /**
    * The eligible-goods match for a delivery: the item names the drop-off ({@code toSite}) needs
-   * that the pickup ({@code fromSite}) has available to give. Reused by the delivery detail page's
-   * "match goods" action; both site ids are {@code wss_id} values.
+   * that the pickup ({@code fromSite}) has available to give. Both site ids are {@code wss_id}
+   * values.
    */
   public static List<String> computeNeedsMatch(Jdbi jdbi, long fromSiteWssId, long toSiteWssId) {
     String availableItemsQuery =

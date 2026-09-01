@@ -54,11 +54,17 @@ public class SetPasswordController {
     return new ModelAndView("login/fragments/set-password", model);
   }
 
+  /** Minimum length for a newly set password. */
+  static final int MIN_PASSWORD_LENGTH = 8;
+
   /** Core set-password logic, shared by the JSON endpoint and the htmx wizard endpoint. */
   private ResponseEntity<SetPasswordResponse> doSetPassword(
       String validationToken, String password, HttpServletResponse response) {
-    if (password == null || password.length() < 5) {
-      return ResponseEntity.badRequest().body(new SetPasswordResponse("Password too short"));
+    if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
+      return ResponseEntity.badRequest()
+          .body(
+              new SetPasswordResponse(
+                  "Password must be at least " + MIN_PASSWORD_LENGTH + " characters"));
     } else if (EasyPasswordList.isEasyPassword(password)) {
       return ResponseEntity.badRequest()
           .body(new SetPasswordResponse("Password is too easy to guess"));
