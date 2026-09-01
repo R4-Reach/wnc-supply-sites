@@ -56,14 +56,67 @@ public class DeliveryDao {
   public static class SiteOption {
     long id;
     String name;
+    boolean selected;
   }
 
   public static List<SiteOption> fetchSiteOptions(Jdbi jdbi) {
+    return fetchSiteOptions(jdbi, null);
+  }
+
+  /**
+   * Site dropdown options. {@code selectedId} (nullable) marks the option to preselect — used by
+   * the edit form to show a delivery's current pickup / drop-off site.
+   */
+  public static List<SiteOption> fetchSiteOptions(Jdbi jdbi, Long selectedId) {
+    List<SiteOption> options =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("select id, name from site order by lower(name)")
+                    .mapToBean(SiteOption.class)
+                    .list());
+    if (selectedId != null) {
+      options.forEach(option -> option.setSelected(option.getId() == selectedId));
+    }
+    return options;
+  }
+
+  /**
+   * The inventory item names a pickup site has to give, as the picker's "available at this site"
+   * suggestions. Mirrors the giveable-goods rule used by needs matching (see {@link
+   * org.r4reach.incoming.webhook.NeedsMatchingController#computeNeedsMatch}): a supply hub can give
+   * items marked available or oversupply; a distribution center only its oversupply. Ordered by
+   * name.
+   */
+  public static List<String> fetchAvailableItemNamesForSite(Jdbi jdbi, long siteId) {
+    String query =
+        """
+        select i.name
+        from site_item si
+        join site s on s.id = si.site_id
+        join site_type st on st.id = s.site_type_id
+        join item_status its on its.id = si.item_status_id
+        join item i on i.id = si.item_id
+        where s.id = :siteId
+          and
+          (
+            ( upper(st.name) = 'SUPPLY HUB' and upper(its.name) in ('AVAILABLE', 'OVERSUPPLY') )
+            or
+            ( upper(st.name) = 'DISTRIBUTION CENTER' and upper(its.name) = 'OVERSUPPLY' )
+          )
+        order by lower(i.name)
+        """;
+    return jdbi.withHandle(
+        handle -> handle.createQuery(query).bind("siteId", siteId).mapTo(String.class).list());
+  }
+
+  /** Every inventory item name, ordered — the full catalog the picker's search can reach. */
+  public static List<String> fetchAllItemNames(Jdbi jdbi) {
     return jdbi.withHandle(
         handle ->
             handle
-                .createQuery("select id, name from site order by lower(name)")
-                .mapToBean(SiteOption.class)
+                .createQuery("select name from item order by lower(name)")
+                .mapTo(String.class)
                 .list());
   }
 
@@ -217,24 +270,70 @@ public class DeliveryDao {
                 .bind("driverCode", SecretCodeGenerator.generateCode())
                 .execute());
 
-    String insertItem =
-        """
-        insert into delivery_item(delivery_id, item_name)
-        values((select id from delivery where public_url_key = :publicUrlKey), :itemName)
-        """;
-    for (String itemName : request.getItems()) {
-      if (itemName == null || itemName.isBlank()) {
-        continue;
-      }
-      jdbi.withHandle(
-          handle ->
-              handle
-                  .createUpdate(insertItem)
-                  .bind("publicUrlKey", publicUrlKey)
-                  .bind("itemName", itemName.strip())
-                  .execute());
-    }
+    addItemsToDelivery(jdbi, publicUrlKey, request.getItems());
     return publicUrlKey;
+  }
+
+  /** The dispatcher-editable fields of an existing delivery. Items are saved separately. */
+  @Value
+  @Builder
+  public static class UpdateDeliveryRequest {
+    Long fromSiteId;
+    Long toSiteId;
+    DeliveryStatus deliveryStatus;
+    String targetDeliveryDate;
+    Long dispatcherWssUserId;
+    Long driverWssUserId;
+    String dispatcherNotes;
+  }
+
+  /**
+   * Applies dispatcher edits to a delivery's core fields (not its items — see {@link
+   * #setDeliveryItems}).
+   */
+  public static void updateDelivery(Jdbi jdbi, String publicUrlKey, UpdateDeliveryRequest request) {
+    String update =
+        """
+        update delivery set
+          from_site_id = :fromSiteId,
+          to_site_id = :toSiteId,
+          delivery_status = :deliveryStatus,
+          target_delivery_date = to_date(:targetDeliveryDate, 'YYYY-MM-DD'),
+          dispatcher_wss_user_id = :dispatcherWssUserId,
+          driver_wss_user_id = :driverWssUserId,
+          dispatcher_notes = :dispatcherNotes
+        where public_url_key = :publicUrlKey
+        """;
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(update)
+                .bind("fromSiteId", request.getFromSiteId())
+                .bind("toSiteId", request.getToSiteId())
+                .bind("deliveryStatus", request.getDeliveryStatus().getAirtableName())
+                .bind("targetDeliveryDate", blankToNull(request.getTargetDeliveryDate()))
+                .bind("dispatcherWssUserId", request.getDispatcherWssUserId())
+                .bind("driverWssUserId", request.getDriverWssUserId())
+                .bind("dispatcherNotes", blankToNull(request.getDispatcherNotes()))
+                .bind("publicUrlKey", publicUrlKey)
+                .execute());
+  }
+
+  /**
+   * Replaces a delivery's entire item list with the given names (dispatcher edit). Existing rows
+   * are cleared and the submitted set re-inserted deduped; blank names are ignored. This is the
+   * save path for the detail-page item picker, whose chip set is the authoritative list.
+   */
+  public static void setDeliveryItems(Jdbi jdbi, String publicUrlKey, List<String> itemNames) {
+    jdbi.withHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "delete from delivery_item where delivery_id ="
+                        + " (select id from delivery where public_url_key = :publicUrlKey)")
+                .bind("publicUrlKey", publicUrlKey)
+                .execute());
+    addItemsToDelivery(jdbi, publicUrlKey, itemNames);
   }
 
   private static String blankToNull(String input) {
@@ -341,6 +440,8 @@ public class DeliveryDao {
     long deliveryId;
     String publicUrlKey;
     String deliveryStatus;
+    Long dispatcherWssUserId;
+    Long driverWssUserId;
     String dispatcherName;
     String dispatcherNumber;
     String dispatcherNotes;
@@ -444,6 +545,8 @@ public class DeliveryDao {
       d.public_url_key publicUrlKey,
       d.delivery_status deliveryStatus,
       d.target_delivery_date targetDeliveryDate,
+      d.dispatcher_wss_user_id dispatcherWssUserId,
+      d.driver_wss_user_id driverWssUserId,
       d.dispatcher_name dispatcherName,
       dispatcher.name_enc dispatcherNameEnc,
       d.dispatcher_number dispatcherNumber,

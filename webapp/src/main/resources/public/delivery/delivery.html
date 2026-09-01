@@ -16,13 +16,6 @@
 
   <div class="page-toolbar no-print">
     <button type="button" class="nav-button print-button" onclick="window.print()">Print manifest</button>
-    {{#isDispatcherView}}
-    <a class="nav-button public-manifest-link" href="{{publicManifestUrl}}" target="_blank" rel="noopener">View public manifest</a>
-    <form class="match-goods-form" method="post" action="/delivery/{{deliveryKey}}/match-goods">
-      <input type="hidden" name="code" value="{{code}}">
-      <button type="submit" class="nav-button match-goods-button">Add matched items to manifest</button>
-    </form>
-    {{/isDispatcherView}}
   </div>
 
   <div class="vertical meta-info-div larger">
@@ -30,9 +23,6 @@
       Delivery Status: <span class="bold {{deliveryStatusClass}}">{{deliveryStatus}}</span>
     </div>
 
-    {{#matchGoodsMessage}}
-    <span class="no-print {{#matchGoodsMessageIsError}}errorMessage{{/matchGoodsMessageIsError}}{{^matchGoodsMessageIsError}}confirm-message{{/matchGoodsMessageIsError}}">{{matchGoodsMessage}}</span>
-    {{/matchGoodsMessage}}
     {{#driverStatus}}
     <div>
       Driver Status: <span class="bold">{{.}}</span>

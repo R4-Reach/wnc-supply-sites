@@ -11,14 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.data.GoogleMapWidget;
 import org.r4reach.data.SiteAddress;
-import org.r4reach.incoming.webhook.NeedsMatchingController;
 import org.r4reach.util.EnumUtil;
 import org.r4reach.util.ListSplitter;
 import org.r4reach.util.TruncateString;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -96,9 +94,6 @@ class DeliveryController {
     items2,
     items3,
 
-    matchGoodsMessage,
-    matchGoodsMessageIsError,
-
     sendConfirmationVisible,
     sendDeclineUrl,
     sendDeclineVisible,
@@ -117,9 +112,6 @@ class DeliveryController {
 
     deliveryKey,
     code,
-
-    publicManifestUrl,
-    isDispatcherView,
     ;
   }
 
@@ -144,16 +136,10 @@ class DeliveryController {
     }
   }
 
-  ModelAndView showDeliveryDetailPage(String publicUrlKey, String code) {
-    return showDeliveryDetailPage(publicUrlKey, code, null, null);
-  }
-
   @GetMapping("/delivery/{publicUrlKey}")
   ModelAndView showDeliveryDetailPage(
       @PathVariable("publicUrlKey") String publicUrlKey,
-      @RequestParam(required = false) String code,
-      @RequestParam(required = false) Integer matchAdded,
-      @RequestParam(required = false) Integer matchCandidates) {
+      @RequestParam(required = false) String code) {
     Map<String, Object> templateParams = new HashMap<>();
 
     Delivery delivery =
@@ -187,34 +173,6 @@ class DeliveryController {
         DeliveryConfirmationController.buildCancelUrl(delivery.getPublicKey(), code));
     templateParams.put(TemplateParams.deliveryKey.name(), delivery.getPublicKey());
     templateParams.put(TemplateParams.code.name(), code);
-
-    // Surface the outcome of a just-run match-goods action, carried back on the redirect as query
-    // params: without it "added N", "all already present", and "nothing matched" all reload as an
-    // unchanged manifest. matchAdded is non-null only when arriving from that action.
-    templateParams.put(TemplateParams.matchGoodsMessageIsError.name(), false);
-    if (matchAdded != null) {
-      String matchMessage;
-      boolean matchIsError = false;
-      if (matchAdded > 0) {
-        matchMessage = "Added " + matchAdded + (matchAdded == 1 ? " item" : " items");
-      } else if (matchCandidates != null && matchCandidates > 0) {
-        matchMessage = "No new items to add — all matched goods already on the manifest";
-      } else {
-        matchMessage = "No matching goods found between these sites";
-        matchIsError = true;
-      }
-      templateParams.put(TemplateParams.matchGoodsMessage.name(), matchMessage);
-      templateParams.put(TemplateParams.matchGoodsMessageIsError.name(), matchIsError);
-    }
-
-    // The same manifest serves the public read-only view (no code) and the dispatcher-gated
-    // read/write view (the dispatch code, linked from the kanban board). In the dispatcher view we
-    // surface the shareable public URL -- the code-less link the SMS recipient sees.
-    templateParams.put(
-        TemplateParams.publicManifestUrl.name(), buildDeliveryPageLink(delivery.getPublicKey()));
-    templateParams.put(
-        TemplateParams.isDispatcherView.name(),
-        code != null && code.equals(delivery.getDispatchCode()));
 
     // code == null means we have someone without a confirmation role viewing the current page
     if (code == null) {
@@ -383,60 +341,6 @@ class DeliveryController {
     templateParams.put(TemplateParams.items3.name(), split.size() > 2 ? split.get(2) : List.of());
 
     return new ModelAndView("delivery/delivery", templateParams);
-  }
-
-  /**
-   * Dispatcher-only action: compute the goods the drop-off site needs that the pickup site has
-   * available (the app's needs match, reused from {@link NeedsMatchingController}) and add them as
-   * this delivery's items. Gated by the dispatch code, the same secret that unlocks the dispatcher
-   * view; the button that posts here renders only in that view. Redirects back to the dispatcher
-   * view so the newly matched items show on the manifest.
-   */
-  @PostMapping("/delivery/{publicUrlKey}/match-goods")
-  ModelAndView matchGoods(
-      @PathVariable("publicUrlKey") String publicUrlKey, @RequestParam String code) {
-    Delivery delivery =
-        DeliveryDao.fetchDeliveryByPublicKey(jdbi, publicUrlKey)
-            .orElseThrow(
-                () -> new IllegalArgumentException("Invalid delivery key: " + publicUrlKey));
-
-    if (delivery.getDispatchCode() == null || !delivery.getDispatchCode().equals(code)) {
-      throw new IllegalArgumentException("Invalid dispatch code for delivery: " + publicUrlKey);
-    }
-
-    Long fromWssId =
-        delivery.getFromSiteId() == null
-            ? null
-            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getFromSiteId()).orElse(null);
-    Long toWssId =
-        delivery.getToSiteId() == null
-            ? null
-            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getToSiteId()).orElse(null);
-
-    // Both endpoints must be WSS-registered sites for a match to be possible; deliveries to/from
-    // external sites simply add nothing.
-    int candidates = 0;
-    int added = 0;
-    if (fromWssId != null && toWssId != null) {
-      List<String> matchedItems =
-          NeedsMatchingController.computeNeedsMatch(jdbi, fromWssId, toWssId);
-      candidates = matchedItems.size();
-      added = DeliveryDao.addItemsToDelivery(jdbi, publicUrlKey, matchedItems);
-      log.info(
-          "Matched goods for delivery {}: {} candidate(s), {} newly added",
-          publicUrlKey,
-          candidates,
-          added);
-    }
-
-    // Carry the outcome back so the reloaded dispatcher view can report what happened.
-    String redirect =
-        buildDeliveryPageLinkWithCode(publicUrlKey, code)
-            + "&matchAdded="
-            + added
-            + "&matchCandidates="
-            + candidates;
-    return new ModelAndView("redirect:" + redirect);
   }
 
   private static String nullsToDash(String input) {

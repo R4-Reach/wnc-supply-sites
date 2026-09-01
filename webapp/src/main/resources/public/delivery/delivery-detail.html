@@ -1,6 +1,6 @@
 <html xmlns="http://www.w3.org/1999/html" lang="en">
 <head>
-  <title>WNC Supply Sites - New Delivery</title>
+  <title>WNC Supply Sites - Delivery #{{deliveryId}}</title>
   <link rel="stylesheet" href="/style.css"/>
   <link rel="stylesheet" href="/mobile.css"/>
   <link rel="stylesheet" href="/delivery-create.css"/>
@@ -15,17 +15,37 @@
   <div class="back-link">
     <a href="/dispatch/deliveries">[&larr; Go Back]</a>
   </div>
-  <span class="page-title-sub-header">New Delivery</span>
+  <span class="page-title-sub-header">Delivery #{{deliveryId}}</span>
 </div>
+
+<div class="detail-toolbar">
+  <span class="detail-status">Status: <strong>{{deliveryStatusLabel}}</strong></span>
+  <a class="nav-button" href="{{publicManifestUrl}}" target="_blank" rel="noopener">Preview manifest</a>
+  <a class="nav-button" href="{{dispatcherManifestUrl}}">Send / manage confirmations</a>
+</div>
+
+{{#matchMessage}}
+<div class="{{#matchMessageIsError}}errorMessage{{/matchMessageIsError}}{{^matchMessageIsError}}confirm-message{{/matchMessageIsError}} form-error">{{matchMessage}}</div>
+{{/matchMessage}}
+
+{{#missingData}}
+{{#-first}}
+<div class="detail-missing">
+  <p class="detail-missing-title">Before confirmations can be sent:</p>
+  <ul>
+{{/-first}}
+    <li>{{.}}</li>
+{{#-last}}
+  </ul>
+</div>
+{{/-last}}
+{{/missingData}}
 
 {{#errorMessage}}
 <div class="errorMessage form-error">{{errorMessage}}</div>
 {{/errorMessage}}
 
-<form class="delivery-form" method="post" action="/dispatch/deliveries/create">
-  <input type="hidden" name="status" value="{{statusName}}"/>
-
-  <p>Starting column: <strong>{{statusLabel}}</strong></p>
+<form class="delivery-form" method="post" action="/dispatch/deliveries/{{publicKey}}">
 
   <label>
     Pick Up Site <span class="required">*</span>
@@ -50,6 +70,15 @@
   <label>
     Delivery Date
     <input type="date" name="targetDeliveryDate" value="{{targetDeliveryDate}}"/>
+  </label>
+
+  <label>
+    Status
+    <select name="status">
+      {{#statuses}}
+      <option value="{{name}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+      {{/statuses}}
+    </select>
   </label>
 
   <label>
@@ -80,9 +109,14 @@
   {{> delivery/item-picker }}
 
   <div class="form-actions">
-    <button type="submit" class="nav-button">Create Delivery</button>
+    <button type="submit" class="nav-button">Save changes</button>
     <a href="/dispatch/deliveries">Cancel</a>
   </div>
+</form>
+
+<form class="match-goods-form" method="post" action="/dispatch/deliveries/{{publicKey}}/match-goods">
+  <button type="submit" class="nav-button">Add matched goods (pickup has &amp; drop-off needs)</button>
+  <span class="match-goods-note">Saves and reloads — save your edits first.</span>
 </form>
 
 <script src="/item-picker.js"></script>

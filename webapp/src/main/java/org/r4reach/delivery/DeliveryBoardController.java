@@ -4,19 +4,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Jdbi;
 import org.r4reach.auth.LoggedInAdvice;
 import org.r4reach.auth.UserRole;
+import org.r4reach.incoming.webhook.NeedsMatchingController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -34,6 +40,14 @@ public class DeliveryBoardController {
   public static final String PATH_SET_STATUS = "/dispatch/deliveries/set-status";
   public static final String PATH_NEW = "/dispatch/deliveries/new";
   public static final String PATH_CREATE = "/dispatch/deliveries/create";
+  public static final String PATH_AVAILABLE_ITEMS = "/dispatch/deliveries/available-items";
+  public static final String PATH_DETAIL = "/dispatch/deliveries/{publicUrlKey}";
+  public static final String PATH_MATCH_GOODS = "/dispatch/deliveries/{publicUrlKey}/match-goods";
+
+  /** The dispatcher detail (read/write) page for one delivery. */
+  public static String buildDetailLink(String publicUrlKey) {
+    return "/dispatch/deliveries/" + publicUrlKey;
+  }
 
   /**
    * The forward pipeline columns, in order. {@link DeliveryStatus#DELIVERY_CANCELLED} is a terminal
@@ -104,7 +118,8 @@ public class DeliveryBoardController {
     // The create page is dispatcher-only, so the current user is always a dispatcher: preselect
     // them in the dispatcher dropdown.
     Long currentDispatcherId = DeliveryDao.fetchUserIdByPhone(jdbi, userPhone).orElse(null);
-    return createForm(startStatus, new HashMap<>(), currentDispatcherId, null, null);
+    return createForm(
+        startStatus, null, null, null, null, List.of(), currentDispatcherId, null, null);
   }
 
   @PostMapping(PATH_CREATE)
@@ -117,20 +132,21 @@ public class DeliveryBoardController {
       @RequestParam(required = false) Long dispatcherUserId,
       @RequestParam(required = false) Long driverUserId,
       @RequestParam(required = false) String dispatcherNotes,
-      @RequestParam(required = false) String items) {
+      @RequestParam(required = false) List<String> items) {
     if (!UserRole.canManageDeliveries(roles)) {
       return new ModelAndView("redirect:/");
     }
     DeliveryStatus startStatus = parseBoardStatus(status).orElse(DeliveryStatus.DRIVER_VOLUNTEERED);
+    List<String> cleanedItems = cleanItems(items);
 
     if (fromSiteId == null || toSiteId == null) {
-      Map<String, Object> entered = new HashMap<>();
-      entered.put("targetDeliveryDate", targetDeliveryDate);
-      entered.put("dispatcherNotes", dispatcherNotes);
-      entered.put("items", items);
       return createForm(
           startStatus,
-          entered,
+          fromSiteId,
+          toSiteId,
+          targetDeliveryDate,
+          dispatcherNotes,
+          cleanedItems,
           dispatcherUserId,
           driverUserId,
           "Pickup and drop-off sites are both required.");
@@ -146,42 +162,330 @@ public class DeliveryBoardController {
             .dispatcherWssUserId(dispatcherUserId)
             .driverWssUserId(driverUserId)
             .dispatcherNotes(dispatcherNotes)
-            .items(splitItems(items))
+            .items(cleanedItems)
             .build());
     return new ModelAndView("redirect:" + PATH_BOARD);
   }
 
   /**
-   * The create form's text fields, whose values it echoes back via {@code {{field}}}. The template
-   * references every one unconditionally, and Mustache is strict (a missing variable throws), so
-   * the form must always supply them — blank on the initial GET, prior input on a rejected
-   * submission.
-   */
-  private static final List<String> FORM_TEXT_FIELDS =
-      List.of("targetDeliveryDate", "dispatcherNotes", "items");
-
-  /**
-   * Builds the create-delivery form, re-populating text fields from a rejected submission. The
-   * dispatcher and driver are dropdowns; {@code selectedDispatcherUserId} / {@code
-   * selectedDriverUserId} (either nullable) mark the option to preselect.
+   * Builds the create-delivery form, re-populating fields from a rejected submission. The template
+   * references every text field unconditionally and Mustache is strict (a missing variable throws),
+   * so blank values are always supplied. The dispatcher, driver, and both sites are dropdowns whose
+   * selected option is marked from the (nullable) selected ids.
    */
   private ModelAndView createForm(
       DeliveryStatus startStatus,
-      Map<String, Object> enteredValues,
+      Long fromSiteId,
+      Long toSiteId,
+      String targetDeliveryDate,
+      String dispatcherNotes,
+      List<String> selectedItemNames,
       Long selectedDispatcherUserId,
       Long selectedDriverUserId,
       String errorMessage) {
-    Map<String, Object> params = new HashMap<>(enteredValues);
-    FORM_TEXT_FIELDS.forEach(field -> params.putIfAbsent(field, ""));
-    params.put("sites", DeliveryDao.fetchSiteOptions(jdbi));
+    Map<String, Object> params = new HashMap<>();
+    params.put("targetDeliveryDate", targetDeliveryDate == null ? "" : targetDeliveryDate);
+    params.put("dispatcherNotes", dispatcherNotes == null ? "" : dispatcherNotes);
+    params.put("sitesFrom", DeliveryDao.fetchSiteOptions(jdbi, fromSiteId));
+    params.put("sitesTo", DeliveryDao.fetchSiteOptions(jdbi, toSiteId));
     params.put("dispatchers", DeliveryDao.fetchDispatcherOptions(jdbi, selectedDispatcherUserId));
     params.put("drivers", DeliveryDao.fetchDriverOptions(jdbi, selectedDriverUserId));
     params.put("statusName", startStatus.name());
     params.put("statusLabel", startStatus.getAirtableName());
+    putItemPickerParams(params, selectedItemNames, fromSiteId);
     if (errorMessage != null) {
       params.put("errorMessage", errorMessage);
     }
     return new ModelAndView("delivery/delivery-create", params);
+  }
+
+  /**
+   * JSON list of the item names a pickup site has to give — drives the picker's live refresh when
+   * the dispatcher changes the pickup site on the form.
+   */
+  @GetMapping(PATH_AVAILABLE_ITEMS)
+  @ResponseBody
+  ResponseEntity<List<String>> availableItems(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @RequestParam(required = false) Long fromSiteId) {
+    if (!UserRole.canManageDeliveries(roles)) {
+      return ResponseEntity.status(403).build();
+    }
+    if (fromSiteId == null) {
+      return ResponseEntity.ok(List.of());
+    }
+    return ResponseEntity.ok(DeliveryDao.fetchAvailableItemNamesForSite(jdbi, fromSiteId));
+  }
+
+  /** The dispatcher read/write detail page for one delivery (reached from a kanban card). */
+  @GetMapping(PATH_DETAIL)
+  ModelAndView detail(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @PathVariable("publicUrlKey") String publicUrlKey,
+      @RequestParam(required = false) Integer matchAdded,
+      @RequestParam(required = false) Integer matchCandidates) {
+    if (!UserRole.canManageDeliveries(roles)) {
+      return new ModelAndView("redirect:/");
+    }
+    Optional<Delivery> found = DeliveryDao.fetchDeliveryByPublicKey(jdbi, publicUrlKey);
+    if (found.isEmpty()) {
+      return new ModelAndView("redirect:" + PATH_BOARD);
+    }
+    Delivery delivery = found.get();
+    DeliveryStatus status =
+        DeliveryStatus.fromAirtableName(delivery.getDeliveryStatus())
+            .orElse(DeliveryStatus.CREATING_DISPATCH);
+
+    String matchMessage = null;
+    Boolean matchIsError = null;
+    if (matchAdded != null) {
+      matchIsError = false;
+      if (matchAdded > 0) {
+        matchMessage = "Added " + matchAdded + (matchAdded == 1 ? " item" : " items");
+      } else if (matchCandidates != null && matchCandidates > 0) {
+        matchMessage = "No new items to add — all matched goods are already on this delivery";
+      } else {
+        matchMessage = "No matching goods found between these sites";
+        matchIsError = true;
+      }
+    }
+
+    return detailForm(
+        delivery,
+        delivery.getFromSiteId(),
+        delivery.getToSiteId(),
+        status,
+        delivery.getDeliveryDate(),
+        delivery.getDispatcherNotes(),
+        delivery.getDispatcherWssUserId(),
+        delivery.getDriverWssUserId(),
+        delivery.getItemList(),
+        null,
+        matchMessage,
+        matchIsError);
+  }
+
+  /** Persists dispatcher edits to a delivery and its item list, then reloads the detail page. */
+  @PostMapping(PATH_DETAIL)
+  ModelAndView update(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @PathVariable("publicUrlKey") String publicUrlKey,
+      @RequestParam(required = false) Long fromSiteId,
+      @RequestParam(required = false) Long toSiteId,
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String targetDeliveryDate,
+      @RequestParam(required = false) Long dispatcherUserId,
+      @RequestParam(required = false) Long driverUserId,
+      @RequestParam(required = false) String dispatcherNotes,
+      @RequestParam(required = false) List<String> items) {
+    if (!UserRole.canManageDeliveries(roles)) {
+      return new ModelAndView("redirect:/");
+    }
+    Optional<Delivery> found = DeliveryDao.fetchDeliveryByPublicKey(jdbi, publicUrlKey);
+    if (found.isEmpty()) {
+      return new ModelAndView("redirect:" + PATH_BOARD);
+    }
+    Delivery delivery = found.get();
+    DeliveryStatus current =
+        DeliveryStatus.fromAirtableName(delivery.getDeliveryStatus())
+            .orElse(DeliveryStatus.CREATING_DISPATCH);
+    DeliveryStatus newStatus = parseBoardStatus(status).orElse(current);
+    List<String> cleanedItems = cleanItems(items);
+
+    if (fromSiteId == null || toSiteId == null) {
+      return detailForm(
+          delivery,
+          fromSiteId,
+          toSiteId,
+          newStatus,
+          targetDeliveryDate,
+          dispatcherNotes,
+          dispatcherUserId,
+          driverUserId,
+          cleanedItems,
+          "Pickup and drop-off sites are both required.",
+          null,
+          null);
+    }
+
+    DeliveryDao.updateDelivery(
+        jdbi,
+        publicUrlKey,
+        DeliveryDao.UpdateDeliveryRequest.builder()
+            .fromSiteId(fromSiteId)
+            .toSiteId(toSiteId)
+            .deliveryStatus(newStatus)
+            .targetDeliveryDate(targetDeliveryDate)
+            .dispatcherWssUserId(dispatcherUserId)
+            .driverWssUserId(driverUserId)
+            .dispatcherNotes(dispatcherNotes)
+            .build());
+    DeliveryDao.setDeliveryItems(jdbi, publicUrlKey, cleanedItems);
+    return new ModelAndView("redirect:" + buildDetailLink(publicUrlKey));
+  }
+
+  /**
+   * Dispatcher action: add the goods the drop-off needs that the pickup has available (the app's
+   * needs match, reused from {@link NeedsMatchingController}) to this delivery's items, skipping
+   * any already present. Role-gated like the rest of the board; redirects back to the detail page
+   * with the outcome so the picker can report what was added.
+   */
+  @PostMapping(PATH_MATCH_GOODS)
+  ModelAndView matchGoods(
+      @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles,
+      @PathVariable("publicUrlKey") String publicUrlKey) {
+    if (!UserRole.canManageDeliveries(roles)) {
+      return new ModelAndView("redirect:/");
+    }
+    Optional<Delivery> found = DeliveryDao.fetchDeliveryByPublicKey(jdbi, publicUrlKey);
+    if (found.isEmpty()) {
+      return new ModelAndView("redirect:" + PATH_BOARD);
+    }
+    Delivery delivery = found.get();
+
+    Long fromWssId =
+        delivery.getFromSiteId() == null
+            ? null
+            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getFromSiteId()).orElse(null);
+    Long toWssId =
+        delivery.getToSiteId() == null
+            ? null
+            : DeliveryDao.fetchSiteWssId(jdbi, delivery.getToSiteId()).orElse(null);
+
+    // Both endpoints must be WSS-registered sites for a match to be possible; deliveries to/from
+    // external sites simply add nothing.
+    int candidates = 0;
+    int added = 0;
+    if (fromWssId != null && toWssId != null) {
+      List<String> matchedItems =
+          NeedsMatchingController.computeNeedsMatch(jdbi, fromWssId, toWssId);
+      candidates = matchedItems.size();
+      added = DeliveryDao.addItemsToDelivery(jdbi, publicUrlKey, matchedItems);
+      log.info(
+          "Matched goods for delivery {}: {} candidate(s), {} newly added",
+          publicUrlKey,
+          candidates,
+          added);
+    }
+
+    return new ModelAndView(
+        "redirect:"
+            + buildDetailLink(publicUrlKey)
+            + "?matchAdded="
+            + added
+            + "&matchCandidates="
+            + candidates);
+  }
+
+  /**
+   * Builds the dispatcher detail (read/write) page for a delivery, populating the edit form from
+   * the supplied field values (the delivery's stored values on a GET, or a rejected submission's
+   * values on a failed save).
+   */
+  private ModelAndView detailForm(
+      Delivery delivery,
+      Long fromSiteId,
+      Long toSiteId,
+      DeliveryStatus status,
+      String targetDeliveryDate,
+      String dispatcherNotes,
+      Long dispatcherUserId,
+      Long driverUserId,
+      List<String> selectedItemNames,
+      String errorMessage,
+      String matchMessage,
+      Boolean matchIsError) {
+    Map<String, Object> params = new HashMap<>();
+    params.put("publicKey", delivery.getPublicKey());
+    params.put("deliveryId", delivery.getDeliveryNumber());
+    params.put("deliveryStatusLabel", delivery.getDeliveryStatus());
+    params.put("targetDeliveryDate", targetDeliveryDate == null ? "" : targetDeliveryDate);
+    params.put("dispatcherNotes", dispatcherNotes == null ? "" : dispatcherNotes);
+    params.put("sitesFrom", DeliveryDao.fetchSiteOptions(jdbi, fromSiteId));
+    params.put("sitesTo", DeliveryDao.fetchSiteOptions(jdbi, toSiteId));
+    params.put("dispatchers", DeliveryDao.fetchDispatcherOptions(jdbi, dispatcherUserId));
+    params.put("drivers", DeliveryDao.fetchDriverOptions(jdbi, driverUserId));
+    params.put("statuses", statusOptions(status));
+    params.put(
+        "publicManifestUrl", DeliveryController.buildDeliveryPageLink(delivery.getPublicKey()));
+    params.put(
+        "dispatcherManifestUrl",
+        delivery.getDispatchCode() == null
+            ? DeliveryController.buildDeliveryPageLink(delivery.getPublicKey())
+            : DeliveryController.buildDeliveryPageLinkWithCode(
+                delivery.getPublicKey(), delivery.getDispatchCode()));
+    params.put("missingData", delivery.missingData());
+    putItemPickerParams(params, selectedItemNames, fromSiteId);
+    if (errorMessage != null) {
+      params.put("errorMessage", errorMessage);
+    }
+    if (matchMessage != null) {
+      params.put("matchMessage", matchMessage);
+      params.put("matchMessageIsError", Boolean.TRUE.equals(matchIsError));
+    }
+    return new ModelAndView("delivery/delivery-detail", params);
+  }
+
+  /** Board-status dropdown options, marking {@code current} selected. */
+  private static List<Map<String, Object>> statusOptions(DeliveryStatus current) {
+    List<Map<String, Object>> options = new ArrayList<>();
+    for (DeliveryStatus status : BOARD_STATUSES) {
+      Map<String, Object> option = new HashMap<>();
+      option.put("name", status.name());
+      option.put("label", status.getAirtableName());
+      option.put("selected", status == current);
+      options.add(option);
+    }
+    return options;
+  }
+
+  /**
+   * Populates the shared item-picker partial: the current selection as chips (flagging any that no
+   * longer resolve to an inventory item as legacy), the pickup site's available items as
+   * checkboxes, and the full catalog for the search datalist.
+   */
+  private void putItemPickerParams(
+      Map<String, Object> params, List<String> selectedItemNames, Long fromSiteId) {
+    List<String> catalog = DeliveryDao.fetchAllItemNames(jdbi);
+    Set<String> catalogLower =
+        catalog.stream().map(name -> name.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
+    List<String> available =
+        fromSiteId == null
+            ? List.of()
+            : DeliveryDao.fetchAvailableItemNamesForSite(jdbi, fromSiteId);
+    Set<String> selectedLower =
+        selectedItemNames.stream()
+            .map(name -> name.toLowerCase(Locale.ROOT))
+            .collect(Collectors.toSet());
+
+    List<Map<String, Object>> selectedChips = new ArrayList<>();
+    for (String name : selectedItemNames) {
+      Map<String, Object> chip = new HashMap<>();
+      chip.put("name", name);
+      chip.put("legacy", !catalogLower.contains(name.toLowerCase(Locale.ROOT)));
+      selectedChips.add(chip);
+    }
+
+    List<Map<String, Object>> availableOptions = new ArrayList<>();
+    for (String name : available) {
+      Map<String, Object> option = new HashMap<>();
+      option.put("name", name);
+      option.put("checked", selectedLower.contains(name.toLowerCase(Locale.ROOT)));
+      availableOptions.add(option);
+    }
+
+    List<Map<String, Object>> catalogOptions = new ArrayList<>();
+    for (String name : catalog) {
+      Map<String, Object> option = new HashMap<>();
+      option.put("name", name);
+      catalogOptions.add(option);
+    }
+
+    params.put("selectedItems", selectedChips);
+    params.put("availableItems", availableOptions);
+    params.put("catalogItems", catalogOptions);
+    params.put("pickupSiteChosen", fromSiteId != null);
+    params.put("pickupHasItems", !available.isEmpty());
   }
 
   /** Parses an enum name, accepting it only if it is a board column (never cancelled/unknown). */
@@ -197,11 +501,13 @@ public class DeliveryBoardController {
     }
   }
 
-  private static List<String> splitItems(String items) {
-    if (items == null || items.isBlank()) {
+  /** Strips and drops blank item names from a submitted picker selection. */
+  private static List<String> cleanItems(List<String> items) {
+    if (items == null) {
       return List.of();
     }
-    return Arrays.stream(items.split("\\R"))
+    return items.stream()
+        .filter(item -> item != null)
         .map(String::strip)
         .filter(item -> !item.isEmpty())
         .toList();

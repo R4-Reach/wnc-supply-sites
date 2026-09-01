@@ -1,0 +1,51 @@
+<!--
+  Shared delivery item picker. The chip tray is the authoritative selection; both the
+  "available at pickup" checkboxes and the catalog search feed it. Every source submits under
+  name="items" so the common case still works without JavaScript (the server dedupes); with JS,
+  item-picker.js takes over, strips the raw controls' name so only the tray's hidden inputs submit,
+  and manages chips, focus, and the live "available at pickup" refresh.
+-->
+<div class="item-picker" data-available-items-url="/dispatch/deliveries/available-items">
+  <span class="item-picker-heading">Items</span>
+
+  <div class="item-tray" id="item-tray" role="list" aria-label="Items on this delivery">
+    {{#selectedItems}}
+    <span class="item-chip {{#legacy}}item-chip-legacy{{/legacy}}" role="listitem" data-name="{{name}}">
+      <span class="item-chip-name">{{name}}{{#legacy}} <span class="item-chip-tag">(not in inventory)</span>{{/legacy}}</span>
+      <button type="button" class="item-chip-remove" aria-label="Remove {{name}}">&times;</button>
+      <input type="hidden" name="items" value="{{name}}">
+    </span>
+    {{/selectedItems}}
+  </div>
+  <p class="item-tray-empty {{#selectedItems}}hidden{{/selectedItems}}" id="item-tray-empty">No items added yet.</p>
+
+  <fieldset class="item-available" id="item-available">
+    <legend>Available at this pickup site</legend>
+    <div class="item-available-list" id="item-available-list">
+      {{#availableItems}}
+      <label class="item-available-option">
+        <input type="checkbox" name="items" value="{{name}}" {{#checked}}checked{{/checked}}>
+        <span>{{name}}</span>
+      </label>
+      {{/availableItems}}
+    </div>
+    <p class="item-available-empty {{#pickupHasItems}}hidden{{/pickupHasItems}}" id="item-available-empty">
+      {{#pickupSiteChosen}}No items recorded at this site — use catalog search below.{{/pickupSiteChosen}}
+      {{^pickupSiteChosen}}Choose a pickup site to see its available items.{{/pickupSiteChosen}}
+    </p>
+    <button type="button" class="nav-button item-select-all {{^pickupHasItems}}hidden{{/pickupHasItems}}" id="item-select-all">Add all available</button>
+  </fieldset>
+
+  <label class="item-catalog">
+    Add from full catalog
+    <input type="text" id="item-catalog-input" name="items" list="item-catalog-list" autocomplete="off"
+           placeholder="Type an item name…">
+    <datalist id="item-catalog-list">
+      {{#catalogItems}}
+      <option value="{{name}}"></option>
+      {{/catalogItems}}
+    </datalist>
+  </label>
+
+  <p class="item-picker-message" id="item-picker-message" role="status" aria-live="polite"></p>
+</div>

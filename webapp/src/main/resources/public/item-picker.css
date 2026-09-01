@@ -1,0 +1,121 @@
+/* Delivery item picker: chip tray fed by pickup-available checkboxes and a catalog search. */
+.item-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.item-picker-heading {
+  font-weight: bold;
+}
+
+/* Chip tray -- the authoritative selection. */
+.item-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 1.6rem;
+}
+
+.item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--well);
+}
+
+.item-chip-legacy {
+  border-style: dashed;
+  border-color: var(--warning);
+}
+
+.item-chip-tag {
+  color: var(--warning);
+  font-size: 0.75rem;
+}
+
+.item-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.item-chip-remove:hover {
+  background: var(--neutral-fill-alt);
+}
+
+.item-tray-empty,
+.item-available-empty {
+  margin: 0;
+  color: var(--neutral-muted-text);
+}
+
+/* Available-at-pickup checkbox group. */
+.item-available {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.item-available legend {
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+.item-available-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.item-available-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Undo the general .delivery-form input sizing for the native checkboxes. */
+.item-available-option input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+}
+
+.item-select-all {
+  align-self: flex-start;
+}
+
+.item-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-picker-message {
+  margin: 0;
+  min-height: 1rem;
+  color: var(--danger);
+}

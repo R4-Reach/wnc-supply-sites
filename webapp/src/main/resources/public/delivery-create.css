@@ -36,3 +36,50 @@
   gap: 12px;
   align-items: center;
 }
+
+/* Shared error/notice banner spacing for the create and detail forms. */
+.form-error {
+  margin: 0 16px 12px;
+  max-width: 480px;
+}
+
+/* Dispatcher delivery-detail page chrome (shares the create form styles). */
+.detail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 12px;
+}
+
+.detail-status {
+  margin-right: auto;
+}
+
+.detail-missing {
+  max-width: 480px;
+  margin: 0 16px 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--well);
+  font-size: 0.85rem;
+}
+
+.detail-missing-title {
+  margin: 0 0 4px;
+  font-weight: bold;
+}
+
+.match-goods-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 32px;
+}
+
+.match-goods-note {
+  font-size: 0.8rem;
+  color: var(--neutral-muted-text);
+}

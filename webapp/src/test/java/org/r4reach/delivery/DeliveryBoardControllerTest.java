@@ -6,10 +6,14 @@ import static org.r4reach.TestConfiguration.jdbiTest;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.r4reach.TestConfiguration;
 import org.r4reach.auth.UserRole;
+import org.r4reach.data.ItemStatus;
+import org.r4reach.data.SiteType;
 import org.r4reach.dispatch.DispatchDao;
+import org.springframework.web.servlet.ModelAndView;
 
 class DeliveryBoardControllerTest {
 
@@ -124,7 +128,7 @@ class DeliveryBoardControllerTest {
             null,
             driverId,
             "handle with care",
-            "Water\nBlankets");
+            List.of("Water", "Blankets"));
 
     assertThat(view.getViewName()).isEqualTo("redirect:/dispatch/deliveries");
 
@@ -141,17 +145,21 @@ class DeliveryBoardControllerTest {
   @Test
   void newDeliveryFormSeedsBlankFieldsAndDropdownOptions() {
     // The template echoes every text field via {{field}} and Mustache is strict, so the initial
-    // GET must supply them all — blank — or rendering 500s. The dispatcher and driver dropdowns
-    // need their option lists too.
+    // GET must supply them all — blank — or rendering 500s. The dropdowns and item picker need
+    // their option lists too.
     var view = controller.newDelivery(DISPATCHER, NO_PHONE, "DRIVER_VOLUNTEERED");
 
     assertThat(view.getViewName()).isEqualTo("delivery/delivery-create");
     assertThat(view.getModel())
         .containsEntry("targetDeliveryDate", "")
         .containsEntry("dispatcherNotes", "")
-        .containsEntry("items", "")
+        .containsKey("sitesFrom")
+        .containsKey("sitesTo")
         .containsKey("dispatchers")
-        .containsKey("drivers");
+        .containsKey("drivers")
+        .containsKey("selectedItems")
+        .containsKey("availableItems")
+        .containsKey("catalogItems");
   }
 
   @Test
@@ -162,7 +170,213 @@ class DeliveryBoardControllerTest {
 
     assertThat(view.getViewName()).isEqualTo("delivery/delivery-create");
     assertThat(view.getModel().get("errorMessage")).isNotNull();
-    assertThat(view.getModel().get("sites")).isNotNull();
+    assertThat(view.getModel().get("sitesFrom")).isNotNull();
+  }
+
+  @Test
+  void detailRendersEditFormForExistingDelivery() {
+    var delivery = DeliveryHelper.withNewDelivery();
+
+    var view = controller.detail(DISPATCHER, delivery.getPublicKey(), null, null);
+
+    assertThat(view.getViewName()).isEqualTo("delivery/delivery-detail");
+    assertThat(view.getModel())
+        .containsEntry("publicKey", delivery.getPublicKey())
+        .containsKey("sitesFrom")
+        .containsKey("statuses")
+        .containsKey("catalogItems")
+        .containsKey("selectedItems");
+  }
+
+  @Test
+  void detailRedirectsWhenNotDispatcher() {
+    var delivery = DeliveryHelper.withNewDelivery();
+    assertThat(controller.detail(NOT_DISPATCHER, delivery.getPublicKey(), null, null).getViewName())
+        .isEqualTo("redirect:/");
+  }
+
+  @Test
+  void detailRedirectsToBoardWhenDeliveryMissing() {
+    assertThat(controller.detail(DISPATCHER, "does-not-exist", null, null).getViewName())
+        .isEqualTo("redirect:/dispatch/deliveries");
+  }
+
+  @Test
+  void updatePersistsEditsAndReplacesItemList() {
+    long siteId = siteIdByName("site2");
+    long driverId = insertDriver("UpdateTestDriver", "444-333-9001");
+    String publicKey =
+        DeliveryDao.createDelivery(
+            jdbiTest,
+            DeliveryDao.CreateDeliveryRequest.builder()
+                .fromSiteId(siteId)
+                .toSiteId(siteId)
+                .deliveryStatus(DeliveryStatus.DRIVER_VOLUNTEERED)
+                .items(List.of("Water", "Blankets"))
+                .build());
+
+    var view =
+        controller.update(
+            DISPATCHER,
+            publicKey,
+            siteId,
+            siteId,
+            "ASSIGNING_DRIVER",
+            "2026-06-01",
+            null,
+            driverId,
+            "updated notes",
+            List.of("Blankets", "Diapers"));
+
+    assertThat(view.getViewName()).isEqualTo("redirect:/dispatch/deliveries/" + publicKey);
+
+    Delivery updated = DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, publicKey).orElseThrow();
+    assertThat(updated.getDeliveryStatus())
+        .isEqualTo(DeliveryStatus.ASSIGNING_DRIVER.getAirtableName());
+    assertThat(updated.getDriverName()).isEqualTo("UpdateTestDriver");
+    // The submitted picker set is authoritative: Water is dropped, Diapers added.
+    assertThat(updated.getItemList()).containsExactlyInAnyOrder("Blankets", "Diapers");
+  }
+
+  @Test
+  void updateWithoutSitesReturnsDetailFormWithErrorPreservingItems() {
+    var delivery = DeliveryHelper.withNewDelivery();
+
+    var view =
+        controller.update(
+            DISPATCHER,
+            delivery.getPublicKey(),
+            null,
+            null,
+            "DRIVER_VOLUNTEERED",
+            null,
+            null,
+            null,
+            null,
+            List.of("Water"));
+
+    assertThat(view.getViewName()).isEqualTo("delivery/delivery-detail");
+    assertThat(view.getModel().get("errorMessage")).isNotNull();
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> selected =
+        (List<Map<String, Object>>) view.getModel().get("selectedItems");
+    assertThat(selected).extracting(chip -> chip.get("name")).containsExactly("Water");
+  }
+
+  @Test
+  void updateForbiddenWhenNotDispatcher() {
+    var delivery = DeliveryHelper.withNewDelivery();
+    var view =
+        controller.update(
+            NOT_DISPATCHER,
+            delivery.getPublicKey(),
+            1L,
+            1L,
+            "DRIVER_VOLUNTEERED",
+            null,
+            null,
+            null,
+            null,
+            List.of());
+    assertThat(view.getViewName()).isEqualTo("redirect:/");
+  }
+
+  @Test
+  void availableItemsReturnsGiveableGoodsForPickup() {
+    long siteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+    TestConfiguration.addItemToSite(siteId, ItemStatus.AVAILABLE, "water", -931);
+    TestConfiguration.addItemToSite(siteId, ItemStatus.OVERSUPPLY, "batteries", -932);
+    TestConfiguration.addItemToSite(siteId, ItemStatus.NEEDED, "soap", -933);
+
+    var response = controller.availableItems(DISPATCHER, siteId);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    // A supply hub can give its available and oversupply goods, but not the things it needs.
+    assertThat(response.getBody()).containsExactlyInAnyOrder("water", "batteries");
+  }
+
+  @Test
+  void availableItemsForbiddenWhenNotDispatcher() {
+    assertThat(controller.availableItems(NOT_DISPATCHER, 1L).getStatusCode().value())
+        .isEqualTo(403);
+  }
+
+  /**
+   * The dispatcher "match goods" action: it reuses the needs match (pickup's available supply
+   * intersected with the drop-off's needs) and adds the matched goods to the delivery, skipping
+   * goods already on it, then reloads the detail page.
+   */
+  @Nested
+  class MatchGoods {
+
+    @Test
+    void addsMatchedGoodsWithoutDuplicates() {
+      long fromSiteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "water", -901);
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "gloves", -902);
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.OVERSUPPLY, "batteries", -903);
+
+      long toSiteId =
+          TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.DISTRIBUTION_CENTER));
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "gloves", -904);
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.URGENTLY_NEEDED, "batteries", -905);
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "soap", -906);
+
+      String publicKey =
+          DeliveryDao.createDelivery(
+              jdbiTest,
+              DeliveryDao.CreateDeliveryRequest.builder()
+                  .fromSiteId(fromSiteId)
+                  .toSiteId(toSiteId)
+                  .deliveryStatus(DeliveryStatus.CREATING_DISPATCH)
+                  .items(List.of("gloves"))
+                  .build());
+
+      ModelAndView result = controller.matchGoods(DISPATCHER, publicKey);
+
+      assertThat(result.getViewName())
+          .isEqualTo(
+              "redirect:/dispatch/deliveries/" + publicKey + "?matchAdded=1&matchCandidates=2");
+      assertThat(fetchItems(publicKey)).containsExactlyInAnyOrder("gloves", "batteries");
+
+      // Re-running is idempotent: the already-added goods are not duplicated.
+      controller.matchGoods(DISPATCHER, publicKey);
+      assertThat(fetchItems(publicKey)).containsExactlyInAnyOrder("gloves", "batteries");
+    }
+
+    @Test
+    void noMatchesAddsNothing() {
+      long fromSiteId = TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.SUPPLY_HUB));
+      TestConfiguration.addItemToSite(fromSiteId, ItemStatus.AVAILABLE, "water", -911);
+
+      long toSiteId =
+          TestConfiguration.getSiteId(TestConfiguration.addSite(SiteType.DISTRIBUTION_CENTER));
+      TestConfiguration.addItemToSite(toSiteId, ItemStatus.NEEDED, "soap", -912);
+
+      String publicKey =
+          DeliveryDao.createDelivery(
+              jdbiTest,
+              DeliveryDao.CreateDeliveryRequest.builder()
+                  .fromSiteId(fromSiteId)
+                  .toSiteId(toSiteId)
+                  .deliveryStatus(DeliveryStatus.CREATING_DISPATCH)
+                  .build());
+
+      controller.matchGoods(DISPATCHER, publicKey);
+
+      assertThat(fetchItems(publicKey)).isEmpty();
+    }
+
+    @Test
+    void forbiddenWhenNotDispatcher() {
+      var delivery = DeliveryHelper.withNewDelivery();
+      assertThat(controller.matchGoods(NOT_DISPATCHER, delivery.getPublicKey()).getViewName())
+          .isEqualTo("redirect:/");
+    }
+
+    private List<String> fetchItems(String publicKey) {
+      return DeliveryDao.fetchDeliveryByPublicKey(jdbiTest, publicKey).orElseThrow().getItemList();
+    }
   }
 
   private static long insertDriver(String name, String phone) {

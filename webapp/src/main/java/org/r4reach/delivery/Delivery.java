@@ -24,13 +24,6 @@ public class Delivery {
   /** Read-only link to the public delivery manifest ({@code /delivery/{key}}, no code). */
   private final String detailLink;
 
-  /**
-   * Dispatcher (read/write) link to the same manifest, carrying the dispatch code so the confirm /
-   * cancel controls render. Used by the dispatcher-gated kanban board; falls back to the read-only
-   * {@link #detailLink} when a delivery has no dispatch code yet.
-   */
-  private final String dispatcherLink;
-
   private final String publicKey;
 
   private final String fromSite;
@@ -45,10 +38,12 @@ public class Delivery {
   private final String driverName;
   private final String driverPhoneNumber;
   private final String driverLicensePlate;
+  private final Long driverWssUserId;
 
   private final String dispatcherName;
   private final String dispatcherPhoneNumber;
   private final String dispatcherNotes;
+  private final Long dispatcherWssUserId;
 
   @Builder.Default private List<String> itemList = new ArrayList<>();
   @Builder.Default private List<DeliveryConfirmation> confirmations = new ArrayList<>();
@@ -100,9 +95,11 @@ public class Delivery {
     this.driverName = dbData.getDriverName();
     this.driverPhoneNumber = dbData.getDriverNumber();
     this.driverLicensePlate = dbData.getLicensePlateNumbers();
+    this.driverWssUserId = dbData.getDriverWssUserId();
     this.dispatcherName = dbData.getDispatcherName();
     this.dispatcherPhoneNumber = dbData.getDispatcherNumber();
     this.dispatcherNotes = dbData.getDispatcherNotes();
+    this.dispatcherWssUserId = dbData.getDispatcherWssUserId();
     this.fromSite = dbData.getFromSiteName();
     this.fromSiteId = dbData.getFromSiteId();
     this.fromSiteLink =
@@ -129,11 +126,6 @@ public class Delivery {
     this.toHours = dbData.getToHours();
 
     this.dispatchCode = dbData.getDispatchCode();
-    this.dispatcherLink =
-        dbData.getDispatchCode() == null
-            ? this.detailLink
-            : DeliveryController.buildDeliveryPageLinkWithCode(
-                dbData.getPublicUrlKey(), dbData.getDispatchCode());
     this.driverStatus = dbData.getDriverStatus();
     this.driverCode = dbData.getDriverCode();
     this.cancelReason = dbData.getCancelReason();
