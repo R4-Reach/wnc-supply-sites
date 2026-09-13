@@ -1,4 +1,7 @@
-<div class="horizontal">
+<header class="app-topbar">
+  <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
   <h1>
     <a href="/"><img alt="site-logo" src="/logo/WSS-logo-40x40.png" class="logo-image"/></a>
     <span id="header-title"> WNC Supply Sites </span>
@@ -13,4 +16,7 @@
     <a href="/login/login">Log In</a>
   </div>
   {{/loggedIn}}
-</div>
+</header>
+{{> sidebar }}
+<div class="sidebar-scrim" id="sidebar-scrim"></div>
+<script defer src="/nav-shell.js"></script>

@@ -1,23 +1,18 @@
 package org.r4reach;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
-import org.r4reach.auth.LoggedInAdvice;
 import org.r4reach.auth.LoginDao;
-import org.r4reach.auth.UserRole;
 import org.r4reach.util.CookieUtil;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -32,7 +27,7 @@ public class SimpleHtmlController {
   public static final String CONTACT_US_LINK = "https://form.jotform.com/243608573773062";
 
   /** Cookie that opts a browser in to in-development ("beta") features. */
-  private static final String BETA_VOLUNTEER_COOKIE = "beta-volunteer";
+  static final String BETA_VOLUNTEER_COOKIE = "beta-volunteer";
 
   /**
    * All in-development ("beta") feature cookies. Source of truth for the local-only "Enable Beta"
@@ -42,17 +37,11 @@ public class SimpleHtmlController {
   private static final List<String> BETA_COOKIES = List.of(BETA_VOLUNTEER_COOKIE);
 
   @GetMapping("/")
-  public ModelAndView home(
-      HttpServletRequest request, @ModelAttribute(LoggedInAdvice.USER_ROLES) List<UserRole> roles) {
+  public ModelAndView home() {
+    // Role-gated flags, betaVolunteer, and contactUsLink come from NavModelAdvice (the left-hand
+    // nav needs them on every page); home only adds what is page-specific.
     Map<String, Object> params = new HashMap<>();
-    params.put("isAuthenticated", roles.contains(UserRole.AUTHORIZED));
-    params.put("isDriver", roles.contains(UserRole.DRIVER));
-    params.put("canViewDrivers", UserRole.canViewDrivers(roles));
-    params.put("canManageSites", UserRole.canManageSites(roles));
-    params.put("canAccessAdminArea", UserRole.canAccessAdminArea(roles));
-    params.put("betaVolunteer", hasCookie(request, BETA_VOLUNTEER_COOKIE, "true"));
     params.put("siteDescription", "Disaster Relief");
-    params.put("contactUsLink", CONTACT_US_LINK);
     params.put("localProfile", environment.matchesProfiles("local"));
     params.put("enableBetaJs", enableBetaJs());
     return new ModelAndView("home/home", params);
@@ -66,16 +55,6 @@ public class SimpleHtmlController {
             .map(cookie -> String.format("document.cookie='%s=true;path=/';", cookie))
             .collect(Collectors.joining())
         + "location.reload();";
-  }
-
-  /** Returns true if the request carries a cookie with the given name and value. */
-  private static boolean hasCookie(HttpServletRequest request, String name, String value) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies == null) {
-      return false;
-    }
-    return Arrays.stream(cookies)
-        .anyMatch(cookie -> name.equals(cookie.getName()) && value.equals(cookie.getValue()));
   }
 
   @GetMapping("/log-out")

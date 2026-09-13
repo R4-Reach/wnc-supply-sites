@@ -1,0 +1,173 @@
+/* ─────────────────────────────────────────────────
+   nav-shell.css — Site-wide app shell: fixed topbar + persistent left-hand nav.
+
+   Imported by style.css, so it loads on every page that links the site stylesheet.
+   Colors come from tokens.css (house palette) — the blue --accent marks the active
+   item, echoing the R-Commons sidebar without importing its red brand tokens.
+
+   The topbar and sidebar are position:fixed; the page body reserves room for them
+   with padding scoped to :has(.app-topbar), so headerless pages that still link
+   style.css (eg the printable delivery manifest, the error page) keep their own
+   layout and get no empty gutter.
+   ───────────────────────────────────────────────── */
+
+:root {
+  --sidebar-w: 220px;
+  --header-h:  52px;
+}
+
+/* Only pages that render the shell reserve room for the fixed topbar + sidebar. */
+body:has(.app-topbar) {
+  padding: calc(var(--header-h) + .5rem) .5rem .5rem calc(var(--sidebar-w) + .5rem);
+}
+
+/* ── TOPBAR ── */
+.app-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+}
+.app-topbar h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  align-items: center;
+}
+.app-topbar .logout {
+  margin-left: auto;
+  margin-top: 0;
+  width: auto;
+}
+
+/* Hamburger — hidden until the sidebar collapses off-canvas on narrow screens. */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.nav-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  z-index: 150;
+  overflow-y: auto;
+  padding: 12px 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+}
+.sidebar-section {
+  margin-bottom: 8px;
+}
+.sidebar-label {
+  padding: 8px 16px 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--neutral-muted-text);
+}
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav-item:hover {
+  background: var(--well);
+}
+.nav-item.active {
+  background: var(--well);
+  color: var(--accent);
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+/* External-link arrow, pushed to the trailing edge of the row. */
+.nav-ext {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--neutral-muted-text);
+}
+
+/* Overlay behind the sidebar when it is open over content on narrow screens. */
+.sidebar-scrim {
+  display: none;
+}
+
+@media only screen and (max-width: 768px) {
+  /* Sidebar is off-canvas here — reclaim the left gutter, keep the topbar offset. */
+  body:has(.app-topbar) {
+    padding-left: .5rem;
+  }
+  .nav-toggle {
+    display: flex;
+  }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-raised);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-scrim.show {
+    display: block;
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 140;
+    background: var(--overlay);
+  }
+}

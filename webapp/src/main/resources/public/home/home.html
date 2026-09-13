@@ -12,114 +12,18 @@
 </head>
 <body>
 {{> header }}
-<main class="nav-buttons-container">
+<main class="home-welcome">
 
-  <div class="nav-button-container margin-left-50">
-    <a href="/supplies/site-list">
-      <button type="button" class="nav-button wide-button button-30">
-        Search Sites and Supplies
-      </button>
-    </a>
-  </div>
-
-  {{#betaVolunteer}}
-  <div class="nav-button-container margin-left-50">
-    <a href="/rcommons/onboarding">
-      <button type="button" class="nav-button wide-button button-30">
-        Volunteer Portal
-      </button>
-    </a>
-  </div>
-  {{/betaVolunteer}}
-
-  <div class="nav-button-container margin-left-50">
-    <a href="/volunteer/delivery">
-      <button type="button" class="nav-button wide-button button-30">
-        Volunteer To make a Delivery
-      </button>
-    </a>
-  </div>
-
-  {{^isAuthenticated}}
-  <div class="nav-button-container margin-left-50">
-    <a href="login/login">
-      <button type="button" class="nav-button wide-button button-30">
-        Login - Site Managers & Drivers
-      </button>
-    </a>
-  </div>
-  {{/isAuthenticated}}
-
-  {{#isDriver}}
-  <div class="nav-button-container margin-left-50">
-    <a href="driver/portal">
-      <button type="button" class="nav-button wide-button button-30">
-        Driver Portal
-      </button>
-    </a>
-  </div>
-  {{/isDriver}}
-
-  {{#canViewDrivers}}
-  <div class="nav-button-container margin-left-50">
-    <a href="/dispatch">
-      <button type="button" class="nav-button wide-button button-30">Dispatch</button>
-    </a>
-  </div>
-  {{/canViewDrivers}}
-
-  {{#canManageSites}}
-  <div class="nav-button-container margin-left-50">
-    <a href="/manage/select-site">
-      <button type="button" class="nav-button wide-button button-30">Manager Portal</button>
-    </a>
-  </div>
-  {{/canManageSites}}
-
-  {{#canAccessAdminArea}}
-  <div class="nav-button-container margin-left-50">
-    <a href="/admin">
-      <button type="button" class="nav-button wide-button button-30">Admin</button>
-    </a>
-  </div>
-  {{/canAccessAdminArea}}
-
-  <div class="nav-button-container margin-left-50">
-    <a href="{{contactUsLink}}">
-      <button type="button" class="nav-button wide-button button-30">Contact Us</button>
-    </a>
-  </div>
-
-  <div class="nav-button-container margin-left-50">
-    <a href="https://app.jotform.com/243556240110141" target="_blank">
-      <button type="button" class="nav-button wide-button button-30">Make a Donation</button>
-    </a>
-  </div>
-
-  <div class="nav-button-container margin-left-50">
-    <a href="https://app.jotform.com/243556240110141/243318098770059" target="_blank">
-      <button type="button" class="nav-button wide-button button-30">Sign up as a Volunteer</button>
-    </a>
-  </div>
-
-  <div class="nav-button-container margin-left-50">
-    <a href="https://app.jotform.com/243556240110141/243316609742054" target="_blank">
-      <button type="button" class="nav-button wide-button button-30">Sign up as a Driver</button>
-    </a>
-  </div>
-
-  <div class="nav-button-container margin-left-50">
-    <a href="https://app.jotform.com/243556240110141/243364430721046" target="_blank">
-      <button type="button" class="nav-button wide-button button-30">Partner with Us</button>
-    </a>
-  </div>
+  <h2 class="home-title">Welcome to WNC Supply Sites</h2>
+  <p class="home-intro">
+    Use the menu on the left to search sites and supplies
+    and to volunteer.
+  </p>
 
   {{#localProfile}}
-  <div class="nav-button-container margin-left-50">
-    <button type="button" class="nav-button wide-button button-30" onclick="{{{enableBetaJs}}}">
-      (Local) Enable Beta
-    </button>
-  </div>
+  <button type="button" class="nav-button wide-button button-30" onclick="{{{enableBetaJs}}}">
+    (Local) Enable Beta
+  </button>
   {{/localProfile}}
 
 </main>
