@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <title>WNC Supply Sites - Error</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="error.css"/>
+  <!-- Absolute paths: the error page renders at arbitrary URLs, and relative hrefs would
+       resolve against a trailing-slash or sub-path 404 (e.g. /browse/style.css) and 404. -->
+  <link rel="stylesheet" href="/style.css"/>
+  <link rel="stylesheet" href="/error.css"/>
   {{> header-include }}
 </head>
 <body>
