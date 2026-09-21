@@ -7,7 +7,11 @@
 
 // ─── ONBOARDING STATE ───────────────────────────────
 
-var S = { firstName: '', lastName: '', email: '', city: '', classes: [], skills: [], availability: {}, bio: '' };
+var S = {
+  firstName: '', lastName: '', email: '', city: '',
+  classes: [], skills: [], availability: {}, bio: '',
+  waiverAccepted: false, waiverSignedName: '', waiverAcceptedAt: null
+};
 var previousScreen = 'screen-login';
 
 // ─── LOGO INJECTION ─────────────────────────────────
@@ -64,7 +68,7 @@ function doLogin() {
   S.email     = email;
   S.city      = 'Asheville, NC';
   previousScreen = 'screen-login';
-  goToScreen('screen-class');
+  goToScreen('screen-waiver');
 }
 
 function doRegister() {
@@ -83,6 +87,37 @@ function doRegister() {
   S.email     = email;
   S.city      = city || 'Asheville, NC';
   previousScreen = 'screen-register';
+  goToScreen('screen-waiver');
+}
+
+// ─── VOLUNTEER WAIVER ───────────────────────────────
+
+/** Toggles the "I agree" checkbox and re-evaluates whether Continue can be enabled. */
+function toggleWaiverAgree() {
+  var row = document.getElementById('waiver-agree-row');
+  row.classList.toggle('checked');
+  S.waiverAccepted = row.classList.contains('checked');
+  updateWaiverContinueState();
+}
+
+/** Continue is only enabled once the checkbox is checked AND a signature name is typed. */
+function updateWaiverContinueState() {
+  var nameEl = document.getElementById('waiver-signature');
+  S.waiverSignedName = nameEl.value.trim();
+  var btn = document.getElementById('btn-waiver-next');
+  var err = document.getElementById('waiver-error');
+  btn.disabled = !(S.waiverAccepted && S.waiverSignedName.length > 0);
+  if (err) err.classList.remove('show');
+}
+
+function acceptWaiver() {
+  if (!S.waiverAccepted || !S.waiverSignedName) {
+    var err = document.getElementById('waiver-error');
+    err.textContent = 'Please check the agreement box and type your full name to continue.';
+    err.classList.add('show');
+    return;
+  }
+  S.waiverAcceptedAt = new Date().toISOString();
   goToScreen('screen-class');
 }
 
@@ -141,7 +176,10 @@ function finishOnboarding() {
     availability: S.availability,
     bio:          S.bio,
     xp:           100,
-    level:        1
+    level:        1,
+    waiverAccepted:   S.waiverAccepted,
+    waiverSignedName: S.waiverSignedName,
+    waiverAcceptedAt: S.waiverAcceptedAt
   };
 
   // TODO: replace with apiSaveProfile('demo', profile).then(...)

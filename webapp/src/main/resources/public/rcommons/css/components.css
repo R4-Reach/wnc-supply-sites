@@ -333,6 +333,8 @@
   height: 28px; border-radius: 4px; border: 1px solid var(--border);
   background: var(--bg); cursor: pointer; transition: all 0.15s;
   display: flex; align-items: center; justify-content: center;
+  touch-action: none; /* let pointerdown+move "paint" cells instead of scrolling the page */
+  user-select: none;
 }
 .avail-cell:hover { border-color: var(--accent); background: var(--accent-lt); }
 .avail-cell.on  { background: var(--accent); border-color: var(--accent); }
@@ -340,3 +342,7 @@
 .avail-note { font-size: 11px; color: var(--text-3); margin-top: 8px; }
 .avail-hint { font-size: 11px; color: var(--text-3); margin-top: 6px; }
 .avail-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* While a drag-paint is in progress, stop the rest of the page (labels,
+   nearby text) from being selected as the pointer sweeps across cells. */
+body.avail-dragging { user-select: none; -webkit-user-select: none; }

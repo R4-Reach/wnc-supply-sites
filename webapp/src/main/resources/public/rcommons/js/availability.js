@@ -44,12 +44,62 @@ function availableHoursForDay(availability, dayKey) {
   return AVAIL_HOURS.filter(function(hour) { return availability[availKey(dayKey, hour)]; });
 }
 
+/**
+ * Click-and-drag ("paint") support for the availability grid.
+ * Pressing down on a cell flips it and starts a drag; every other cell the
+ * pointer moves over while the button/finger stays down is set to match
+ * the same on/off state, so a whole block of hours can be marked in one
+ * stroke instead of clicking each cell individually.
+ *
+ * State is kept in one shared object (not per-grid) and the document-level
+ * listeners are bound exactly once, since renderAvailGrid may be called
+ * many times (onboarding step re-entry, profile availability edits, preset
+ * buttons re-rendering the grid, etc.) and we don't want listeners piling up.
+ */
+var _availDrag = { active: false, mode: null, lastKey: null, availability: null, onToggle: null };
+var _availDragBound = false;
+
+function _bindAvailDragListenersOnce() {
+  if (_availDragBound) return;
+  _availDragBound = true;
+
+  function endDrag() {
+    if (!_availDrag.active) return;
+    _availDrag.active  = false;
+    _availDrag.lastKey = null;
+    document.body.classList.remove('avail-dragging');
+  }
+
+  // elementFromPoint (rather than pointer capture / pointerenter) is used so
+  // this works the same way for mouse drag and touch drag: capturing the
+  // pointer on the first cell would stop other cells from ever receiving
+  // enter/move events.
+  document.addEventListener('pointermove', function(e) {
+    if (!_availDrag.active) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el || !el.classList || !el.classList.contains('avail-cell')) return;
+    var key = el.dataset.key;
+    if (!key || key === _availDrag.lastKey) return;
+    _availDrag.lastKey = key;
+    el.classList.toggle('on', _availDrag.mode);
+    _availDrag.availability[key] = _availDrag.mode;
+    if (_availDrag.onToggle) _availDrag.onToggle(_availDrag.availability);
+  });
+
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+  // Safety net: if the pointer leaves the window entirely while dragging
+  // (e.g. released over a scrollbar or outside the viewport).
+  window.addEventListener('blur', endDrag);
+}
+
 /** (Re)builds the hourly grid inside containerEl. The header row (empty
  * corner + 7 day labels) is expected to already be in the markup — this
  * only manages the row-label + hour cells beneath it. */
 function renderAvailGrid(containerEl, availability, onToggle) {
   if (!containerEl) return;
   containerEl.querySelectorAll('.avail-row-label, .avail-cell').forEach(function(e) { e.remove(); });
+  _bindAvailDragListenersOnce();
 
   AVAIL_HOURS.forEach(function(hour) {
     var label = document.createElement('div');
@@ -62,11 +112,24 @@ function renderAvailGrid(containerEl, availability, onToggle) {
       var cell = document.createElement('div');
       cell.className = 'avail-cell' + (availability[key] ? ' on' : '');
       cell.dataset.key = key;
-      cell.onclick = function() {
-        this.classList.toggle('on');
-        availability[key] = this.classList.contains('on');
+      cell.addEventListener('pointerdown', function(e) {
+        // Only the primary mouse button / a touch/pen contact starts a drag.
+        if (e.button !== undefined && e.button !== 0) return;
+        e.preventDefault(); // stop touch-scroll and text-selection while painting
+
+        var turnOn = !cell.classList.contains('on');
+        cell.classList.toggle('on', turnOn);
+        availability[key] = turnOn;
+
+        _availDrag.active       = true;
+        _availDrag.mode         = turnOn;
+        _availDrag.lastKey      = key;
+        _availDrag.availability = availability;
+        _availDrag.onToggle     = onToggle;
+        document.body.classList.add('avail-dragging');
+
         if (onToggle) onToggle(availability);
-      };
+      });
       containerEl.appendChild(cell);
     });
   });

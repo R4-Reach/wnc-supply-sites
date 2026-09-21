@@ -75,8 +75,8 @@
   </div>
 </div>
 
-<!-- ── STEP 1: CHARACTER CLASS ── -->
-<div class="screen" id="screen-class">
+<!-- ── STEP 1: VOLUNTEER WAIVER ── -->
+<div class="screen" id="screen-waiver">
   <div class="card card-wide">
     <div class="logo-placeholder"></div>
     <div class="progress-wrap">
@@ -84,8 +84,60 @@
         <div class="progress-step active"></div>
         <div class="progress-step"></div>
         <div class="progress-step"></div>
+        <div class="progress-step"></div>
       </div>
-      <div class="progress-label">Step 1 of 3 — Character class</div>
+      <div class="progress-label">Step 1 of 4 — Volunteer waiver</div>
+    </div>
+    <h1>Before you get started.</h1>
+    <p class="subtitle">R-Commons requires every volunteer to read and accept the waiver below. You won't be matched to any opportunities until this is signed.</p>
+
+    <!-- TODO(legal): placeholder waiver text — replace with counsel-approved
+         Volunteer Waiver & Release of Liability before this ships. -->
+    <div class="waiver-box" id="waiver-box" tabindex="0">
+      <h2 class="waiver-heading">Volunteer Waiver &amp; Release of Liability</h2>
+      <p>In consideration for being permitted to participate in volunteer activities organized or facilitated through R-Commons ("the Platform"), I agree to the following:</p>
+      <p><strong>1. Assumption of Risk.</strong> I understand that volunteer activities — including disaster response, supply distribution, and related fieldwork — may involve physical risk, and I voluntarily assume all such risks.</p>
+      <p><strong>2. Release of Liability.</strong> I release R-Commons, its partner organizations, and their staff and volunteers from any claims, liabilities, or damages arising from my participation, except in cases of gross negligence or willful misconduct.</p>
+      <p><strong>3. Code of Conduct.</strong> I agree to act respectfully toward the communities, organizations, and fellow volunteers I work with, and to follow the safety instructions given by on-site coordinators.</p>
+      <p><strong>4. Accuracy of Information.</strong> I confirm that the information I provide in my volunteer profile (skills, availability, contact details) is accurate to the best of my knowledge.</p>
+      <p><strong>5. Emergency Care.</strong> I authorize R-Commons and its partner organizations to seek emergency medical care on my behalf if I am unable to consent and it is deemed necessary.</p>
+      <p><strong>6. Duration.</strong> This waiver remains in effect for the duration of my activity as a registered volunteer, until I withdraw my account or it is revoked.</p>
+      <p>By checking the box below and typing my name, I acknowledge that I have read, understood, and agree to be bound by this waiver.</p>
+    </div>
+
+    <div class="waiver-agree-row" id="waiver-agree-row" onclick="toggleWaiverAgree()">
+      <div class="waiver-checkbox" id="waiver-checkbox"></div>
+      <div class="waiver-agree-label">I have read and agree to the Volunteer Waiver &amp; Release of Liability above.</div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label">Type your full legal name to sign</label>
+      <input class="form-input" type="text" id="waiver-signature" placeholder="Full legal name"
+        oninput="updateWaiverContinueState()">
+    </div>
+    <div class="form-error" id="waiver-error"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToScreen(previousScreen)">← Back</button>
+      <button class="btn btn-primary" id="btn-waiver-next" disabled onclick="acceptWaiver()">
+        Agree &amp; continue <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 2: CHARACTER CLASS ── -->
+<div class="screen" id="screen-class">
+  <div class="card card-wide">
+    <div class="logo-placeholder"></div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-step done"></div>
+        <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
+      </div>
+      <div class="progress-label">Step 2 of 4 — Character class</div>
     </div>
     <h1>What role fits you?</h1>
     <p class="subtitle">Based on the Metachrysalis System. Pick up to 2 that feel most like you — these help match you to the right opportunities.</p>
@@ -109,7 +161,7 @@
       <div class="class-card" data-class="Welcomer"      onclick="toggleClass(this)"><span class="class-icon">📖</span><div class="class-name">Welcomer</div><div class="class-desc">You grow the circle.	You notice who isn’t here yet—and you reach out.</div></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goToScreen(previousScreen)">← Back</button>
+      <button class="btn btn-ghost" onclick="goToScreen('screen-waiver')">← Back</button>
       <button class="btn btn-primary" id="btn-class-next" disabled onclick="goToScreen('screen-skills')">
         Continue <svg viewBox="0 0 20 20"><path d="M4 10h12M10 4l6 6-6 6"/></svg>
       </button>
@@ -117,17 +169,18 @@
   </div>
 </div>
 
-<!-- ── STEP 2: SKILLS ── -->
+<!-- ── STEP 3: SKILLS ── -->
 <div class="screen" id="screen-skills">
   <div class="card card-wide">
     <div class="logo-placeholder"></div>
     <div class="progress-wrap">
       <div class="progress-bar">
         <div class="progress-step done"></div>
+        <div class="progress-step done"></div>
         <div class="progress-step active"></div>
         <div class="progress-step"></div>
       </div>
-      <div class="progress-label">Step 2 of 3 — Skills</div>
+      <div class="progress-label">Step 3 of 4 — Skills</div>
     </div>
     <h1>What are your skills?</h1>
     <p class="subtitle">Select everything that applies. Organizations use these to match you to the right roles — you can add more later.</p>
@@ -172,7 +225,7 @@
   </div>
 </div>
 
-<!-- ── STEP 3: AVAILABILITY ── -->
+<!-- ── STEP 4: AVAILABILITY ── -->
 <div class="screen" id="screen-avail">
   <div class="card card-xl">
     <div class="logo-placeholder"></div>
@@ -180,9 +233,10 @@
       <div class="progress-bar">
         <div class="progress-step done"></div>
         <div class="progress-step done"></div>
+        <div class="progress-step done"></div>
         <div class="progress-step active"></div>
       </div>
-      <div class="progress-label">Step 3 of 3 — Availability</div>
+      <div class="progress-label">Step 4 of 4 — Availability</div>
     </div>
     <h1>When are you available?</h1>
     <p class="subtitle">Tap cells to mark yourself available. Organizations use this alongside your skills to match you to shifts. Skill match is weighted 5× more than availability.</p>
