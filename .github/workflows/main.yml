@@ -64,7 +64,7 @@ jobs:
           uv tool install rust-just
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Cache Ansible Galaxy collections
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.ansible/collections
           key: ansible-collections-${{ hashFiles('deploy/ansible/requirements.yml') }}
