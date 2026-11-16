@@ -16,6 +16,14 @@ services:
       interval: 3s
       retries: 10
       timeout: 3s
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
+    ports:
+      - "5050:80"
   flyway:
     image: flyway/flyway
     volumes: [./schema/:/flyway/sql]
@@ -29,3 +37,19 @@ services:
     depends_on:
       database:
         condition: service_healthy
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    ports: ['${WSS_APP_PORT:-8080}:8080']
+    environment:
+      DB_URL: database:5432
+      DB_NAME: wnc_helene
+      DATABASE_HOST: database
+      DATABASE_TCP_5432: '5432'
+      DB_ENCRYPTION_KEY: ${DB_ENCRYPTION_KEY:-12345678901234567890123456789012}
+      DB_PII_KEY: ${DB_PII_KEY:-12345678901234567890123456789012}
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      flyway:
+        condition: service_completed_successfully

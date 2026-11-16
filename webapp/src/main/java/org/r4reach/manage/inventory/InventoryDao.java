@@ -31,6 +31,25 @@ public class InventoryDao {
     return ItemStatus.fromTextValue(status);
   }
 
+  public static boolean isItemActive(Jdbi jdbi, long siteId, String itemName) {
+    String query =
+        """
+        select count(*)
+        from site_item si
+        join item i on i.id = si.item_id
+        where si.site_id = :siteId and i.name = :itemName
+        """;
+    return jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(query)
+                    .bind("siteId", siteId)
+                    .bind("itemName", itemName)
+                    .mapTo(Integer.class)
+                    .one())
+        > 0;
+  }
+
   public static void updateSiteItemActive(
       Jdbi jdbi, long siteId, String itemName, String itemStatus) {
     String insert =
@@ -56,10 +75,12 @@ public class InventoryDao {
       if (e.getMessage().contains("already exists.")
           || (e.getCause() != null && e.getCause().getMessage().contains("duplicate key value"))) {
         log.warn(
-            "Duplicate key insert attempted, siteId: {}, itemName: {}, itemStatus: {}",
+            "Duplicate key insert attempted, siteId: {}, itemName: {}, itemStatus: {}, updating status instead",
             siteId,
             itemName,
             itemStatus);
+        updateItemStatus(jdbi, siteId, itemName, itemStatus);
+        return;
       } else {
         throw e;
       }
@@ -161,7 +182,9 @@ public class InventoryDao {
     if (updateCount != 1) {
       throw new IllegalArgumentException(String.format("Invalid item name: %s", itemName));
     }
-    updateSiteItemAudit(jdbi, siteId, itemName, oldStatus, itemStatus);
+    if (!oldStatus.equals(itemStatus)) {
+      updateSiteItemAudit(jdbi, siteId, itemName, oldStatus, itemStatus);
+    }
     ManageSiteDao.updateSiteInventoryLastUpdated(jdbi, siteId);
   }
 
