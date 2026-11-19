@@ -13,7 +13,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 class InventoryControllerTest {
 
-  private final InventoryController controller = new InventoryController(TestConfiguration.jdbiTest);
+  private final InventoryController controller =
+      new InventoryController(TestConfiguration.jdbiTest);
 
   @BeforeAll
   static void setup() {

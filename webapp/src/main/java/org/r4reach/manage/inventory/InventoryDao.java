@@ -75,7 +75,8 @@ public class InventoryDao {
       if (e.getMessage().contains("already exists.")
           || (e.getCause() != null && e.getCause().getMessage().contains("duplicate key value"))) {
         log.warn(
-            "Duplicate key insert attempted, siteId: {}, itemName: {}, itemStatus: {}, updating status instead",
+            "Duplicate key insert attempted, siteId: {}, itemName: {}, itemStatus: {}, updating"
+                + " status instead",
             siteId,
             itemName,
             itemStatus);
