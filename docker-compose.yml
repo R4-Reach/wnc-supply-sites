@@ -29,4 +29,19 @@ services:
     depends_on:
       database:
         condition: service_healthy
-  
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    ports: ['${WSS_APP_PORT:-8080}:8080']
+    environment:
+      DB_URL: database:5432
+      DB_NAME: wnc_helene
+      DATABASE_HOST: database
+      DATABASE_TCP_5432: '5432'
+      DB_ENCRYPTION_KEY: 
+      DB_PII_KEY: 
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
