@@ -49,6 +49,25 @@ class InventoryDaoTest {
   }
 
   @Test
+  void updateSiteItemActive_whenAlreadyActive_updatesStatus() {
+    long siteId = TestConfiguration.getSiteId("site1");
+
+    InventoryDao.updateSiteItemActive(jdbiTest, siteId, "gloves", ItemStatus.OVERSUPPLY.getText());
+    assertThat(InventoryDao.isItemActive(jdbiTest, siteId, "gloves")).isTrue();
+    var result = ManageSiteDao.fetchSiteInventory(jdbiTest, siteId);
+    assertThat(findItemByName(result, "gloves").getItemStatus())
+        .isEqualTo(ItemStatus.OVERSUPPLY.getText());
+
+    InventoryDao.updateSiteItemActive(jdbiTest, siteId, "gloves", ItemStatus.NEEDED.getText());
+    result = ManageSiteDao.fetchSiteInventory(jdbiTest, siteId);
+    assertThat(findItemByName(result, "gloves").getItemStatus())
+        .isEqualTo(ItemStatus.NEEDED.getText());
+
+    InventoryDao.updateSiteItemInactive(jdbiTest, siteId, "gloves");
+    assertThat(InventoryDao.isItemActive(jdbiTest, siteId, "gloves")).isFalse();
+  }
+
+  @Test
   void updateSiteItemStatus() {
     long siteId = TestConfiguration.getSiteId("site1");
 

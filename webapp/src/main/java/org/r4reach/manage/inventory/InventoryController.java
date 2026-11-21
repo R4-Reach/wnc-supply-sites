@@ -208,12 +208,21 @@ public class InventoryController {
       if (itemStatus == null || !ItemStatus.allItemStatus().contains(itemStatus)) {
         itemStatus = ItemStatus.AVAILABLE.getText();
       }
-      log.info(
-          "Activating item: {}, site: {}, status: {}",
-          itemName,
-          siteData.getSiteName(),
-          itemStatus);
-      InventoryDao.updateSiteItemActive(jdbi, id, itemName, itemStatus);
+      if (InventoryDao.isItemActive(jdbi, id, itemName)) {
+        log.info(
+            "Updating item status: {}, site: {}, status: {}",
+            itemName,
+            siteData.getSiteName(),
+            itemStatus);
+        InventoryDao.updateItemStatus(jdbi, id, itemName, itemStatus);
+      } else {
+        log.info(
+            "Activating item: {}, site: {}, status: {}",
+            itemName,
+            siteData.getSiteName(),
+            itemStatus);
+        InventoryDao.updateSiteItemActive(jdbi, id, itemName, itemStatus);
+      }
     } else {
       log.info("Deactivating item: {}, site: {}", itemName, siteData.getSiteName());
       InventoryDao.updateSiteItemInactive(jdbi, id, itemName);
