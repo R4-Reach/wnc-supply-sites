@@ -64,12 +64,13 @@ public class SuppliesDao {
     if (!request.getSites().isEmpty()) {
       query.append("and s.name in (<sites>)\n");
     }
-    if (!request.getCounties().isEmpty()) {
+    List<String> requestCounties = SuppliesController.healCounties(request.getCounties());
+    if (!requestCounties.isEmpty()) {
       // build up a string to do a lot of "or" matching of county + state
       // pairs. We encode the bind variable with a counter variable at the end
       // to make it unique, so we can bind it later.
       List<String> queryParts = new ArrayList<>();
-      for (int i = 0; i < request.getCounties().size(); i++) {
+      for (int i = 0; i < requestCounties.size(); i++) {
         queryParts.add("(c.name = :county" + i + " and c.state = :state" + i + ")");
       }
 
@@ -131,10 +132,10 @@ public class SuppliesDao {
           if (!request.getSites().isEmpty()) {
             queryBuilder.bindList("sites", decodedSites);
           }
-          if (!request.getCounties().isEmpty()) {
+          if (!requestCounties.isEmpty()) {
 
-            for (int i = 0; i < request.getCounties().size(); i++) {
-              String c = request.getCounties().get(i);
+            for (int i = 0; i < requestCounties.size(); i++) {
+              String c = requestCounties.get(i);
               if (c.contains(",")) {
                 String county = c.split(",")[0].trim();
                 String state = c.split(",")[1].trim();

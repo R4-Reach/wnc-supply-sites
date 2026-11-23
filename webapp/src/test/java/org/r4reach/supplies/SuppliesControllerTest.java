@@ -20,6 +20,9 @@ import org.r4reach.delivery.DeliveryHelper;
 import org.r4reach.delivery.DeliveryStatus;
 import org.r4reach.manage.ManageSiteDao;
 import org.r4reach.manage.inventory.InventoryDao;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.web.servlet.ModelAndView;
 
 class SuppliesControllerTest {
 
@@ -460,5 +463,56 @@ class SuppliesControllerTest {
             .toList();
     assertThat(searchResults).isNotEmpty();
     searchResults.forEach(result -> assertThat(result.getCounty()).isEqualTo("Watauga"));
+  }
+
+  @Test
+  void healCounties_healsCommaSplitCounties() {
+    assertThat(SuppliesController.healCounties(List.of("Buncombe", "NC")))
+        .containsExactly("Buncombe, NC");
+
+    assertThat(SuppliesController.healCounties(List.of("Buncombe, NC")))
+        .containsExactly("Buncombe, NC");
+
+    assertThat(SuppliesController.healCounties(List.of("Buncombe", "NC", "Watauga", "NC")))
+        .containsExactly("Buncombe, NC", "Watauga, NC");
+
+    assertThat(SuppliesController.healCounties(List.of("Buncombe, NC", "Watauga, NC")))
+        .containsExactly("Buncombe, NC", "Watauga, NC");
+
+    assertThat(SuppliesController.healCounties(List.of("Polk", "Watauga, NC")))
+        .containsExactly("Polk", "Watauga, NC");
+  }
+
+  @Test
+  void suppliesData_singleCountyFilter_returnsMatchingSites() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addParameter("counties", "Buncombe, NC");
+    MockHttpSession session = new MockHttpSession();
+
+    ModelAndView mv =
+        suppliesController.suppliesData(
+            request,
+            session,
+            List.of(),
+            List.of(),
+            List.of("Buncombe", "NC"), // comma-split by Spring MVC default converter
+            List.of(),
+            List.of(),
+            List.of(),
+            true,
+            true,
+            "last-updated",
+            List.of("NC"),
+            List.of("NC"));
+
+    @SuppressWarnings("unchecked")
+    List<SuppliesController.ResultRow> results =
+        (List<SuppliesController.ResultRow>) mv.getModel().get("results");
+    assertThat(results).isNotEmpty();
+    assertThat(results).allMatch(r -> "Buncombe".equals(r.getCounty()));
+
+    SuppliesController.FilterState state =
+        (SuppliesController.FilterState) session.getAttribute("suppliesFilterState");
+    assertThat(state.getCounties()).containsExactly("Buncombe, NC");
   }
 }
