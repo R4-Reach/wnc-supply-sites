@@ -9,6 +9,60 @@
 
 const FILTER_PARAM = {site: 'sites', state: 'states', county: 'counties', item: 'items'};
 
+let allCountyOptions = null;
+
+function updateCountyOptions() {
+  const countySelect = document.getElementById('county-select');
+  if (!countySelect) {
+    return;
+  }
+  if (!allCountyOptions && countySelect.options.length > 1) {
+    allCountyOptions = Array.from(countySelect.options).map(opt => ({
+      value: opt.value,
+      text: opt.textContent
+    }));
+  }
+  if (!allCountyOptions) {
+    return;
+  }
+
+  const stateList = document.getElementById('state-selections');
+  const selectedStates = stateList
+      ? Array.from(stateList.querySelectorAll('.selected-value')).map(e => e.textContent.trim())
+      : [];
+
+  const currentValue = countySelect.value;
+  countySelect.innerHTML = '';
+
+  const filtered = allCountyOptions.filter(opt => {
+    if (!opt.value) {
+      return true;
+    }
+    if (selectedStates.length === 0) {
+      return true;
+    }
+    const lastComma = opt.value.lastIndexOf(',');
+    if (lastComma === -1) {
+      return true;
+    }
+    const optState = opt.value.substring(lastComma + 1).trim();
+    return selectedStates.includes(optState);
+  });
+
+  for (const opt of filtered) {
+    const el = document.createElement('option');
+    el.value = opt.value;
+    el.textContent = opt.text;
+    countySelect.appendChild(el);
+  }
+
+  if (filtered.some(opt => opt.value === currentValue)) {
+    countySelect.value = currentValue;
+  } else {
+    countySelect.selectedIndex = 0;
+  }
+}
+
 function handleSelection(category) {
   const select = document.getElementById(category + '-select');
   const value = select.value;
@@ -19,6 +73,9 @@ function handleSelection(category) {
   const existing = [...list.querySelectorAll('.selected-value')].map(e => e.textContent.trim());
   if (!existing.includes(value)) {
     list.appendChild(buildChip(FILTER_PARAM[category], value));
+  }
+  if (category === 'state') {
+    updateCountyOptions();
   }
   // Reset the dropdown; the change event keeps bubbling to the form, which htmx posts.
   select.selectedIndex = 0;
@@ -63,6 +120,9 @@ function removeSelection(button) {
   if (successor) {
     successor.focus();
   }
+  if (category === 'state') {
+    updateCountyOptions();
+  }
   htmx.trigger(document.getElementById('filters-form'), 'refresh');
 }
 
@@ -71,6 +131,9 @@ function clearSelections(category) {
   // Keep the empty-state placeholder; only drop the chip boxes.
   list.querySelectorAll('.selection-box').forEach(box => box.remove());
   document.getElementById(category + '-select').focus();
+  if (category === 'state') {
+    updateCountyOptions();
+  }
   htmx.trigger(document.getElementById('filters-form'), 'refresh');
 }
 
@@ -78,6 +141,7 @@ function clearSelections(category) {
 // times out, fails to send, or returns an error leaves the last good results in place and shows a
 // plain-language message, instead of failing silently. Any successful request clears it.
 document.addEventListener('DOMContentLoaded', () => {
+  updateCountyOptions();
   const form = document.getElementById('filters-form');
   const errorDiv = document.getElementById('error-div');
   if (!form || !errorDiv) {
