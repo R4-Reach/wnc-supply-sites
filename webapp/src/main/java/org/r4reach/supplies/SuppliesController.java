@@ -101,6 +101,7 @@ public class SuppliesController {
     } else if (apply != null) {
       state =
           buildFilterState(
+              request,
               sites,
               states,
               counties,
@@ -114,6 +115,22 @@ public class SuppliesController {
     } else if (state == null) {
       state = FilterState.defaults(false);
       session.setAttribute(FILTER_SESSION_KEY, state);
+    } else {
+      List<String> healed = healCounties(state.getCounties());
+      if (!healed.equals(state.getCounties())) {
+        state =
+            new FilterState(
+                state.getSites(),
+                state.getStates(),
+                healed,
+                state.getItems(),
+                state.getItemStatus(),
+                state.getSiteType(),
+                state.isAcceptingDonations(),
+                state.isNotAcceptingDonations(),
+                state.getSort());
+        session.setAttribute(FILTER_SESSION_KEY, state);
+      }
     }
 
     FilterDataResponse filterData =
@@ -185,6 +202,7 @@ public class SuppliesController {
 
     FilterState state =
         buildFilterState(
+            httpRequest,
             sites,
             states,
             counties,
@@ -212,6 +230,7 @@ public class SuppliesController {
   }
 
   private static FilterState buildFilterState(
+      HttpServletRequest request,
       List<String> sites,
       List<String> states,
       List<String> counties,
@@ -222,15 +241,51 @@ public class SuppliesController {
       boolean notAcceptingDonations,
       String sort) {
     return new FilterState(
-        nullSafe(sites),
-        nullSafe(states),
-        nullSafe(counties),
-        nullSafe(items),
-        nullSafe(itemStatus),
-        nullSafe(siteType),
+        getParamList(request, "sites", sites),
+        getParamList(request, "states", states),
+        healCounties(getParamList(request, "counties", counties)),
+        getParamList(request, "items", items),
+        getParamList(request, "itemStatus", itemStatus),
+        getParamList(request, "siteType", siteType),
         acceptingDonations,
         notAcceptingDonations,
         sort);
+  }
+
+  private static List<String> getParamList(
+      HttpServletRequest request, String name, List<String> fallback) {
+    if (request != null) {
+      String[] values = request.getParameterValues(name);
+      if (values != null) {
+        return Arrays.asList(values);
+      }
+    }
+    return nullSafe(fallback);
+  }
+
+  static List<String> healCounties(List<String> counties) {
+    if (counties == null || counties.isEmpty()) {
+      return new ArrayList<>();
+    }
+    List<String> healed = new ArrayList<>();
+    for (int i = 0; i < counties.size(); i++) {
+      String current = counties.get(i).trim();
+      if (current.contains(",")) {
+        healed.add(current);
+      } else if (i + 1 < counties.size()
+          && !counties.get(i + 1).contains(",")
+          && isStateCode(counties.get(i + 1).trim())) {
+        healed.add(current + ", " + counties.get(i + 1).trim());
+        i++;
+      } else {
+        healed.add(current);
+      }
+    }
+    return healed;
+  }
+
+  private static boolean isStateCode(String s) {
+    return s.length() <= 3 && s.matches("[A-Za-z]+");
   }
 
   private static List<String> nullSafe(List<String> input) {
@@ -453,7 +508,7 @@ public class SuppliesController {
       return SiteSupplyRequest.builder()
           .sites(sites)
           .states(states)
-          .counties(counties)
+          .counties(healCounties(counties))
           .items(items)
           .itemStatus(itemStatus)
           .siteType(siteType)
